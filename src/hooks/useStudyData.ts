@@ -20,13 +20,17 @@ export const useStudyData = () => {
       queryClient.setQueryData<StudyData>(['studyData'], (old) => {
         return old ? { ...old, ...newData } : old;
       });
+    },
+    onError: (error) => {
+      if (import.meta.env.DEV) console.error('[useStudyData] Mutation failed:', error);
     }
   });
 
   return {
     data: query.data,
     isLoading: query.isLoading,
-    updateData: mutation.mutate,
-    isUpdating: mutation.isPending
+    updateData: mutation.mutateAsync,
+    isUpdating: mutation.isPending,
+    error: mutation.error
   };
 };

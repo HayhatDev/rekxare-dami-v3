@@ -1,0 +1,36 @@
+# Render Blueprint — Rekxare Dami API (free tier web service)
+# Deploy: connect this repo to Render, choose "Blueprint", or run:
+#   render blueprint launch
+#
+# NOTE: SlowAPI rate limits are in-memory (per-process). Render free tier runs
+# a single instance, so this stays correct. Do NOT scale to multiple replicas
+# without adding a shared rate-limit store.
+services:
+  - type: web
+    name: rekxare-dami-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    buildContext: ./backend
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      # Set these values in the Render dashboard (Service -> Environment).
+      # Never commit real secrets.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://rekxare-dami.pages.dev
+      - key: TRUST_PROXY
+        value: "true"
+      - key: ENVIRONMENT
+        value: production

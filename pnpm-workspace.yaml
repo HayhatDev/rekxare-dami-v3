@@ -1,2 +1,4 @@
 allowBuilds:
+  ecc-universal: true
   esbuild: true
+  tesseract.js: false

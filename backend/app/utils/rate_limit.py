@@ -1,0 +1,17 @@
+import os
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+TRUST_PROXY = os.getenv("TRUST_PROXY", "false").lower() in ("1", "true", "yes")
+
+
+def get_client_key(request) -> str:
+    if TRUST_PROXY:
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=get_client_key)

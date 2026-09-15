@@ -8,6 +8,18 @@ __v0_jsx-dev-runtime.ts
 
 # Environment variables
 .env*.local
+.env
+backend/.env
+
+# Build output
+dist/
+
+# Local scratch / tooling (not app code)
+demo/
+results.txt
+.claude/
+.opencode/
+SECURITY-PLAN.md
 
 # Common ignores
 node_modules

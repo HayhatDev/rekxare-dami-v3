@@ -1,8 +1,10 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import translations from './translations.json';
+import { VALID_LANGS } from '../types';
 
-const savedLang = localStorage.getItem('rekxare_lang') || 'en';
+const raw = localStorage.getItem('rekxare_lang');
+const savedLang = raw && VALID_LANGS.includes(raw as any) ? raw : 'badini';
 
 i18n
   .use(initReactI18next)
