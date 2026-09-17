@@ -10,6 +10,8 @@ __v0_jsx-dev-runtime.ts
 .env*.local
 .env
 backend/.env
+frontend/.env
+frontend/.env.production.local
 
 # Build output
 dist/
