@@ -20,6 +20,7 @@ results.txt
 .claude/
 .opencode/
 SECURITY-PLAN.md
+visual-review/
 
 # Common ignores
 node_modules

@@ -120,9 +120,11 @@
   --chart-4: 0 84% 60%;
   --chart-5: 142 71% 45%;
 
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
+  /* Fallback type for scratch/loading surfaces (auth spinner, suspense).
+     Matches the default theme (Clarity) so nothing leaks generic Inter. */
+  --app-font-sans: 'DM Sans', system-ui, sans-serif;
+  --app-font-serif: 'Fraunces', Georgia, serif;
+  --app-font-mono: 'DM Mono', ui-monospace, monospace;
   --radius: 1rem;
 
   --shadow-2xs: 0px 2px 0px 0px rgba(0,0,0,0.02);

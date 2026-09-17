@@ -61,4 +61,4 @@ export const THEME_MAP = Object.fromEntries(
   THEMES.map((t) => [t.id, t])
 ) as Record<ThemeId, ThemeConfig>;
 
-export const DEFAULT_THEME_ID: ThemeId = 'clay';
+export const DEFAULT_THEME_ID: ThemeId = 'clarity';

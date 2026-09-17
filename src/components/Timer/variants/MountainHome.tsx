@@ -77,7 +77,7 @@ export default function MountainHome() {
         </svg>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 py-8" style={{ fontFamily: '"DM Sans", sans-serif' }}>
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-8 pb-32" style={{ fontFamily: '"DM Sans", sans-serif' }}>
         {/* Top bar with nav and controls */}
         <div className="relative z-[70] flex flex-wrap items-center justify-between gap-4 mb-12">
           {/* Logo/brand */}

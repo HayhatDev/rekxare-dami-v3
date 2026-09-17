@@ -3,8 +3,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { useCycleLang } from '../../hooks/useCycleLang';
 import { useLangStore } from '../../stores/useLangStore';
-import { getThemeColors } from '../../themes/palette';
+import { getThemeColors, getThemeFont, brandGradient } from '../../themes/palette';
 import { Loader2 } from 'lucide-react';
+
+const RTL_LANGS = ['ar', 'badini', 'sorani'];
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -15,55 +17,72 @@ export default function LoginPage() {
   const { cycleLang } = useCycleLang();
 
   const c = getThemeColors(themeId, isDark);
-  const bg = c.bg;
-  const text = c.ink;
-  const card = c.card;
-  const accent = c.accent;
-  const muted = isDark ? 'rgba(232,238,228,0.5)' : 'rgba(43,52,40,0.5)';
+  const font = getThemeFont(themeId);
+  const isRTL = RTL_LANGS.includes(lang);
+  const softLine = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.10)';
 
   return (
     <div
-      className="min-h-[100dvh] flex items-center justify-center px-4"
-      style={{ backgroundColor: bg, color: text, fontFamily: "'DM Sans', system-ui, sans-serif" }}
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="min-h-[100dvh] flex items-center justify-center px-4 relative overflow-hidden"
+      style={{ backgroundColor: c.bg, color: c.ink, fontFamily: font }}
     >
+      {/* Ambient tones — a quiet echo of each theme's glow, never competing */}
+      <div
+        aria-hidden="true"
+        className="absolute -top-44 -right-44 w-[520px] h-[520px] rounded-full pointer-events-none"
+        style={{ background: `radial-gradient(circle, ${c.accent}10 0%, transparent 70%)` }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute -bottom-44 -left-44 w-[520px] h-[520px] rounded-full pointer-events-none"
+        style={{ background: `radial-gradient(circle, ${c.pink}10 0%, transparent 70%)` }}
+      />
 
-      <div className="w-full max-w-sm">
+      <div className="relative w-full max-w-sm">
         {/* Language toggle */}
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-end mb-5">
           <button
             onClick={cycleLang}
             aria-label={t('change_language', 'Change language')}
-            className="px-3 py-1.5 rounded-full text-[12px] font-bold transition-all"
-            style={{ backgroundColor: card, color: muted, border: `1px solid ${muted}` }}
+            className="px-3 py-1.5 rounded-full text-[12px] font-bold transition-all hover:opacity-80"
+            style={{ backgroundColor: c.card, color: c.inkFaint, border: `1px solid ${c.cardBorder}` }}
           >
             {lang === 'ar' ? 'AR' : lang === 'sorani' ? 'SO' : lang === 'badini' ? 'BA' : 'EN'}
           </button>
         </div>
 
         {/* Card */}
-        <div className="rounded-3xl p-8 shadow-lg" style={{ backgroundColor: card, border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}` }}>
+        <div
+          className="rounded-3xl p-8"
+          style={{
+            backgroundColor: c.card,
+            border: `1px solid ${c.cardBorder}`,
+            boxShadow: `0 28px 70px -32px color-mix(in srgb, ${c.ink} 32%, transparent)`,
+          }}
+        >
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl mb-4"
-              style={{ background: `linear-gradient(150deg, ${accent}, color-mix(in srgb, ${accent} 82%, black 18%))` }}
+              style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -12px color-mix(in srgb, ${c.accent} 65%, transparent)` }}
             >
               R
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Rekxare Dami</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight">Rekxare Dami</h1>
           </div>
 
           {loading ? (
             <div className="flex justify-center py-6">
-              <Loader2 className="w-6 h-6 animate-spin" style={{ color: accent }} />
+              <Loader2 className="w-6 h-6 animate-spin" style={{ color: c.accent }} />
             </div>
           ) : (
             <div className="space-y-3">
-              {/* Google sign in */}
+              {/* Google sign in — Google's own white button treatment */}
               <button
                 onClick={signInWithGoogle}
-                className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f5f5f5', color: text, border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#e0e0e0'}` }}
+                className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.01] hover:shadow-md active:scale-[0.99]"
+                style={{ backgroundColor: '#ffffff', color: '#1f1f1f', border: `1px solid ${softLine}` }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -76,21 +95,21 @@ export default function LoginPage() {
 
               {/* Divider */}
               <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-px" style={{ backgroundColor: muted }} />
-                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: muted }}>{t('or', 'or')}</span>
-                <div className="flex-1 h-px" style={{ backgroundColor: muted }} />
+                <div className="flex-1 h-px" style={{ backgroundColor: c.inkFaint }} />
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: c.inkFaint }}>{t('or', 'or')}</span>
+                <div className="flex-1 h-px" style={{ backgroundColor: c.inkFaint }} />
               </div>
 
               {/* Guest mode */}
               <button
                 onClick={signInAsGuest}
-                className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ backgroundColor: accent, color: '#fff' }}
+                className="w-full py-3.5 rounded-xl font-semibold text-sm text-white transition-all hover:scale-[1.01] hover:brightness-105 active:scale-[0.99]"
+                style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -14px color-mix(in srgb, ${c.accent} 70%, transparent)` }}
               >
                 {t('continue_as_guest', 'Continue as Guest')}
               </button>
 
-              <p className="text-[11px] text-center mt-4 leading-relaxed" style={{ color: muted }}>
+              <p className="text-[11px] text-center mt-4 leading-relaxed" style={{ color: c.inkFaint }}>
                 {t('guest_note', 'Your data will be stored locally on this device.')}
               </p>
             </div>

@@ -111,7 +111,7 @@ export default function ClaySchedule() {
       </header>
 
       {/* Body */}
-      <main className="flex-1 w-full max-w-[1100px] mx-auto px-6 pb-24">
+      <main className="flex-1 w-full max-w-[1100px] mx-auto px-6 pb-32 md:pb-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{clean(t('schedule_title', 'Weekly Schedule'))}</h2>

@@ -146,7 +146,7 @@ export default function ClarityHome() {
       </header>
 
       {/* ---- Body ---- */}
-      <main className="flex-1 flex flex-col lg:flex-row w-full max-w-[1280px] mx-auto w-full">
+      <main className="flex-1 flex flex-col lg:flex-row w-full max-w-[1280px] mx-auto pb-32 lg:pb-0">
         {/* Left rail */}
         <aside
           className="cl-fade-in w-full lg:w-[360px] shrink-0 flex flex-col justify-between px-6 md:px-10 lg:px-8 py-8 lg:py-10 border-b lg:border-b-0 lg:border-e"

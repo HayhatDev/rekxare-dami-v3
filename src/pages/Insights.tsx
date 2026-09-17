@@ -119,7 +119,7 @@ export default function Insights() {
       </header>
 
       {/* Body */}
-      <main className="flex-1 w-full max-w-[1280px] mx-auto px-6 pb-20 md:pb-10">
+      <main className="flex-1 w-full max-w-[1280px] mx-auto px-6 pb-32 md:pb-10">
         {isLoading ? (
           /* Skeleton loading */
           <div className="space-y-6 animate-pulse">
