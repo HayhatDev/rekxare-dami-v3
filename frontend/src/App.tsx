@@ -7,8 +7,9 @@ import { motionTokens } from './lib/motionTokens';
 import { useInitApp } from './hooks/useInitApp';
 import { useThemeStore } from './stores/useThemeStore';
 import { THEME_MAP } from './themes/config';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthGate from './components/Auth/AuthGate';
+import GuestLocked from './components/Auth/GuestLocked';
 import ErrorBoundary from './components/Auth/ErrorBoundary';
 import StudyReminder from './components/StudyReminder';
 
@@ -33,6 +34,7 @@ const queryClient = new QueryClient({
 
 function AnimatedRoutes() {
   const [location] = useLocation();
+  const { isGuest } = useAuth();
   const reduce = useReducedMotion();
   const y = reduce ? 0 : motionTokens.distance.sm;
   const pageVariants = {
@@ -59,13 +61,19 @@ function AnimatedRoutes() {
         <ErrorBoundary>
           <Switch location={location}>
             <Route path="/" component={Home} />
-            <Route path="/schedule" component={Schedule} />
+            <Route path="/schedule">
+              {isGuest ? <GuestLocked /> : <Schedule />}
+            </Route>
             <Route path="/privacy" component={Privacy} />
             <Route path="/terms" component={Terms} />
             <Route path="/insights">
-              <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-foreground">...</div>}>
-                <Insights />
-              </Suspense>
+              {isGuest ? (
+                <GuestLocked />
+              ) : (
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-foreground">...</div>}>
+                  <Insights />
+                </Suspense>
+              )}
             </Route>
             <Route path="/quiz">
               <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-foreground">...</div>}>
