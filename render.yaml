@@ -1,10 +1,3 @@
-# Render Blueprint — Rekxare Dami API (free tier web service)
-# Deploy: connect this repo to Render, choose "Blueprint", or run:
-#   render blueprint launch
-#
-# NOTE: SlowAPI rate limits are in-memory (per-process). Render free tier runs
-# a single instance, so this stays correct. Do NOT scale to multiple replicas
-# without adding a shared rate-limit store.
 services:
   - type: web
     name: rekxare-dami-api
@@ -14,7 +7,6 @@ services:
     healthCheckPath: /health
     plan: free
     envVars:
-      # Set these values in the Render dashboard (Service -> Environment).
       # Never commit real secrets.
       - key: SUPABASE_URL
         sync: false
