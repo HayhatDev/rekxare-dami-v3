@@ -106,6 +106,7 @@ export default function QuizUpload({
       }
       if (result.error === 'too-large') setLocalError(t('quiz_file_too_large', 'That file is too large (max 10 MB).'));
       else if (result.error === 'unsupported') setLocalError(t('quiz_file_unsupported', 'Unsupported file. Use an image, PDF, or paste your notes.'));
+      else if (result.error === 'ocr-unavailable') setLocalError(t('quiz_photo_unavailable', "Photo reading isn't available in this browser. Paste your notes instead."));
       else setLocalError(t('quiz_no_text', "We couldn't read any text from that file. Try pasting your notes instead."));
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';

@@ -1,7 +1,7 @@
 export interface OcrResult {
   text: string;
   source: 'image' | 'pdf' | 'none';
-  error?: 'unsupported' | 'ocr-failed' | 'pdf-failed' | 'too-large';
+  error?: 'unsupported' | 'ocr-failed' | 'ocr-unavailable' | 'pdf-failed' | 'too-large';
 }
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -15,21 +15,30 @@ function isPdf(file: File): boolean {
 }
 
 async function recognizeImage(file: File, ocrLang: 'ara' | 'eng'): Promise<OcrResult> {
+  const Tesseract = (await import('tesseract.js')).default;
+  let worker;
   try {
-    const Tesseract = (await import('tesseract.js')).default;
-    const worker = await Tesseract.createWorker(ocrLang, 1, {
+    worker = await Tesseract.createWorker(ocrLang, 1, {
       logger: () => {},
+      // Tesseract assets are vendored same-origin (frontend/public/tessdata)
+      // so the strict CSP in index.html only needs 'self' + 'wasm-unsafe-eval'.
+      workerPath: '/tessdata/worker.min.js',
+      corePath: '/tessdata/core/',
+      langPath: '/tessdata/',
     });
-    try {
-      const { data } = await worker.recognize(file);
-      const text = (data.text || '').trim();
-      return text ? { text, source: 'image' } : { text: '', source: 'image', error: 'ocr-failed' };
-    } finally {
-      await worker.terminate();
-    }
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('[OCR] Image recognition unavailable:', e);
+    return { text: '', source: 'image', error: 'ocr-unavailable' };
+  }
+  try {
+    const { data } = await worker.recognize(file);
+    const text = (data.text || '').trim();
+    return text ? { text, source: 'image' } : { text: '', source: 'image', error: 'ocr-failed' };
   } catch (e) {
     if (import.meta.env.DEV) console.warn('[OCR] Image recognition failed:', e);
     return { text: '', source: 'image', error: 'ocr-failed' };
+  } finally {
+    await worker.terminate();
   }
 }
 
