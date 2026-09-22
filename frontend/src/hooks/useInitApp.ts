@@ -17,6 +17,7 @@ export const useInitApp = () => {
 
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' || lang === 'badini' || lang === 'sorani' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
     if (i18n.language !== lang) {
       i18n.changeLanguage(lang);
     }

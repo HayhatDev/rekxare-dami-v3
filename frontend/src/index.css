@@ -298,3 +298,21 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Visible keyboard focus everywhere (WCAG 2.4.7, 2.4.11).
+   Deliberately unlayered so it wins over Tailwind `outline-none` utilities.
+   Note: element-level `:focus-visible` styles in individual variants still take
+   precedence via inline styles / higher specificity. */
+:where(
+  a:not([href='#']),
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [contenteditable='true'],
+  [tabindex]:not([tabindex='-1'])
+):focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}

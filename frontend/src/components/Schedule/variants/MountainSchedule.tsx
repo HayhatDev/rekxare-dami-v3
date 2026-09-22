@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../../stores/useThemeStore';
 import { useCycleLang } from '../../../hooks/useCycleLang';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useLangStore } from '../../../stores/useLangStore';
 import { DAYS_OF_WEEK, DAY_I18N_KEYS, STATUS_COLORS } from '../../../utils/constants';
 import { Plus, Trash2, CheckCircle, Circle, Copy, Wand2, Loader2, Calendar, Sun, Moon } from 'lucide-react';
@@ -33,6 +34,9 @@ export default function MountainSchedule() {
   } = useScheduleActions();
 
   const { cycleLang } = useCycleLang();
+
+  const closeAiModal = useCallback(() => setIsAiModalOpen(false), []);
+  const modalRef = useFocusTrap(isAiModalOpen, closeAiModal);
 
   const tok = useMemo(() => getMountainTokens(isDark), [isDark]);
   const c = {
@@ -128,7 +132,7 @@ export default function MountainSchedule() {
             return (
               <button key={day} onClick={() => setSelectedDay(day)} aria-pressed={isSelected} className="shrink-0 px-5 py-3 rounded-[20px] text-[13px] font-medium transition-all duration-300 hover:scale-105" style={{ backgroundColor: isSelected ? c.accent : c.card, color: isSelected ? c.accentInk : c.inkSoft, border: `1px solid ${isSelected ? c.accent : c.cardBorder}` }}>
                 <span className="flex items-center gap-1.5">
-                  {day.slice(0, 3)}
+                  {t(DAY_I18N_KEYS[day])}
                   {isToday && (
                     <span
                       aria-label={t('today', 'Today')}
@@ -149,7 +153,7 @@ export default function MountainSchedule() {
           <div className="lg:col-span-2">
             <div className="rounded-[30px] p-6 backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}` }}>
               <div className="flex items-center justify-between mb-5">
-                <h3 className="mt-serif text-lg font-semibold">{t('tasks_for_day', { day: selectedDay })}</h3>
+                <h3 className="mt-serif text-lg font-semibold">{t('tasks_for_day', { day: t(`day_${selectedDay.toLowerCase()}`) })}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[12px]" style={{ color: c.inkFaint }}>{Math.round(progress)}%</span>
                   <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: c.cardBorder }}>
@@ -161,7 +165,7 @@ export default function MountainSchedule() {
               {currentTasks.length === 0 ? (
                 <div className="text-center py-12 rounded-[20px]" style={{ backgroundColor: `${c.bg}80` }}>
                   <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                  <p className="text-[14px]">{t('no_tasks', { day: selectedDay })}</p>
+                  <p className="text-[14px]">{t('no_tasks', { day: t(`day_${selectedDay.toLowerCase()}`) })}</p>
                   <p className="text-[12px] mt-1" style={{ color: c.inkFaint }}>{t('add_or_use_ai', 'Add one or use AI.')}</p>
                 </div>
               ) : (
@@ -201,8 +205,8 @@ export default function MountainSchedule() {
                 <div>
                   <label className="text-[12px] font-medium block mb-1.5" style={{ color: c.inkFaint }}>{t('time', 'Time')}</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="time" value={start} onChange={e => setStart(e.target.value)} required className="w-full px-3 py-2.5 rounded-[14px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}60`, borderColor: c.cardBorder, color: c.ink }} />
-                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} required className="w-full px-3 py-2.5 rounded-[14px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}60`, borderColor: c.cardBorder, color: c.ink }} />
+                    <input type="time" value={start} onChange={e => setStart(e.target.value)} aria-label={t('start_time')} required className="w-full px-3 py-2.5 rounded-[14px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}60`, borderColor: c.cardBorder, color: c.ink }} />
+                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} aria-label={t('end_time')} required className="w-full px-3 py-2.5 rounded-[14px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}60`, borderColor: c.cardBorder, color: c.ink }} />
                   </div>
                 </div>
                 <div>
@@ -221,7 +225,7 @@ export default function MountainSchedule() {
       {/* AI Modal */}
       {isAiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: `${c.bg}cc`, backdropFilter: 'blur(8px)', animation: 'rd-fade-in 180ms ease-out both' }}>
-          <div className="rounded-[30px] p-6 w-full max-w-md backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')}>
+          <div className="rounded-[30px] p-6 w-full max-w-md backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')} ref={modalRef}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="mt-serif text-lg font-semibold flex items-center gap-2"><Wand2 className="w-4 h-4" style={{ color: c.accentWarm }} /> {t('ai_generator', 'AI Generator')}</h3>
               <button onClick={() => setIsAiModalOpen(false)} className="text-[12px] font-medium transition-opacity hover:opacity-100" style={{ color: c.inkFaint }}>{t('cancel', 'Cancel')}</button>
@@ -236,8 +240,8 @@ export default function MountainSchedule() {
                 <label className="text-[12px] font-medium block mb-1.5" style={{ color: c.inkFaint }}>{t('preferred_time', 'Preferred Time')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['any', 'morning', 'afternoon', 'evening'].map(time => (
-                    <button key={time} type="button" onClick={() => setPreferredTime(time)} className="px-3 py-2 rounded-[14px] text-[12px] font-semibold transition-all duration-300" style={{ backgroundColor: preferredTime === time ? c.accent : isDark ? 'rgba(107,142,111,0.1)' : 'rgba(74,93,69,0.08)', color: preferredTime === time ? c.accentInk : c.inkSoft }}>
-                      {t(`time_${time}`, time)}
+                    <button key={time} type="button" aria-pressed={preferredTime === time} onClick={() => setPreferredTime(time)} className="px-3 py-2 rounded-[14px] text-[12px] font-semibold transition-all duration-300" style={{ backgroundColor: preferredTime === time ? c.accent : isDark ? 'rgba(107,142,111,0.1)' : 'rgba(74,93,69,0.08)', color: preferredTime === time ? c.accentInk : c.inkSoft }}>
+                      {t(time, time)}
                     </button>
                   ))}
                 </div>
@@ -247,7 +251,7 @@ export default function MountainSchedule() {
                 <label className="text-[12px] font-medium block mb-1.5" style={{ color: c.inkFaint }}>{t('rest_days', 'Rest Days')}</label>
                 <div className="flex flex-wrap gap-2">
                   {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                    <button key={day} type="button" onClick={() => toggleRestDay(day)} className="px-3 py-1.5 rounded-[12px] text-[11px] font-semibold transition-all duration-300" style={{ backgroundColor: restDays.includes(day) ? c.accentWarm : isDark ? 'rgba(107,142,111,0.1)' : 'rgba(74,93,69,0.08)', color: restDays.includes(day) ? c.accentInk : c.inkFaint }}>
+                    <button key={day} type="button" aria-pressed={restDays.includes(day)} onClick={() => toggleRestDay(day)} className="px-3 py-1.5 rounded-[12px] text-[11px] font-semibold transition-all duration-300" style={{ backgroundColor: restDays.includes(day) ? c.accentWarm : isDark ? 'rgba(107,142,111,0.1)' : 'rgba(74,93,69,0.08)', color: restDays.includes(day) ? c.accentInk : c.inkFaint }}>
                       {t(DAY_I18N_KEYS[day])}
                     </button>
                   ))}

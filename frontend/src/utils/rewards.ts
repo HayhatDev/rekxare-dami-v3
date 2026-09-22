@@ -35,14 +35,14 @@ export function calculateXPLevel(xp: number): number {
   return n + 1;
 }
 
-/** 0-100 percent toward the next level. */
+/** 0-100 percent toward the next level, rounded to a whole percentage point. */
 export function calculateXPProgress(xp: number): number {
   const level = calculateXPLevel(xp);
   const start = xpForLevelStart(level);
   const next = xpForNextLevel(level);
   const span = Math.max(1, next - start);
   const pct = ((Math.max(0, xp) - start) / span) * 100;
-  return Math.max(0, Math.min(100, pct));
+  return Math.round(Math.max(0, Math.min(100, pct)));
 }
 
 export interface RewardInput {

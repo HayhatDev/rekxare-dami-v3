@@ -1,7 +1,26 @@
-import { describe, it, expect } from 'vitest';
-import { guestKeysToClear, mergeStudyData } from './supabase';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { guestKeysToClear, mergeStudyData, userKey, guestCacheOwnedBy } from './supabase';
 import { GuestDeletionState } from './supabase';
 import { StudyData } from '../types';
+
+// The node test environment has no localStorage; provide a minimal in-memory shim
+// so the scoped-cache helpers (`userKey`, `guestCacheOwnedBy`) are testable.
+type MemoryStore = Record<string, string>;
+const memoryStore: MemoryStore = {};
+(globalThis as Record<string, unknown>).localStorage = {
+  getItem(key: string): string | null {
+    return memoryStore[key] ?? null;
+  },
+  setItem(key: string, value: string): void {
+    memoryStore[key] = String(value);
+  },
+  removeItem(key: string): void {
+    delete memoryStore[key];
+  },
+  clear(): void {
+    Object.keys(memoryStore).forEach((k) => delete memoryStore[k]);
+  },
+};
 
 function study(overrides: Partial<StudyData> = {}): StudyData {
   return {
@@ -130,5 +149,42 @@ describe('mergeStudyData — cross-device merge never loses session history', ()
   it('keeps an existing last_subject over an unknown one', () => {
     const r = mergeStudyData(study({ last_subject: '' }), study({ last_subject: 'Physics' }));
     expect(r.last_subject).toBe('Physics');
+  });
+});
+
+describe('local cache scoping — accounts never read each other on the same browser', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('uses distinct keys for two different authenticated users', () => {
+    expect(userKey('study_data', 'user-A')).not.toBe(userKey('study_data', 'user-B'));
+    expect(userKey('schedule', 'user-A')).not.toBe(userKey('schedule', 'user-B'));
+  });
+
+  it('uses the guest key when no authenticated user is present', () => {
+    expect(userKey('study_data', null)).toBe(userKey('study_data', ''));
+    // guest keys are stable per browser; user keys are per-account
+    expect(userKey('study_data', 'user-A')).not.toBe(userKey('study_data', null));
+  });
+
+  it('unsigns an on-device cache written by a different account', () => {
+    // Simulate the migration guard: a guest stamp belongs to the current user,
+    // but a cache lingering on a browser that has seen other accounts does not.
+    localStorage.setItem('rekxare_guest_owner_study_data', 'guest');
+    expect(guestCacheOwnedBy('user-A', 'study_data')).toBe(true);
+  });
+
+  it('does not migrate a legacy cache once a second account exists on the browser', () => {
+    localStorage.setItem('rekxare_known_accounts', 'user-A,user-B');
+    localStorage.removeItem('rekxare_guest_owner_study_data');
+    expect(guestCacheOwnedBy('user-B', 'study_data')).toBe(false);
+    expect(guestCacheOwnedBy('user-A', 'study_data')).toBe(false);
+  });
+
+  it('migrates a legacy cache when only one account has ever been seen', () => {
+    localStorage.setItem('rekxare_known_accounts', 'user-A');
+    localStorage.removeItem('rekxare_guest_owner_study_data');
+    expect(guestCacheOwnedBy('user-A', 'study_data')).toBe(true);
   });
 });

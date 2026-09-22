@@ -20,11 +20,42 @@ export interface SuggestedTask {
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
+const WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+// Lowercase English alias set so a rest day coming in as "sun"/"Sunday " etc.
+// still matches before the offline local schedule is built.
+const WEEKDAY_ALIASES: Record<string, string> = {
+  monday: 'Monday', mon: 'Monday',
+  tuesday: 'Tuesday', tue: 'Tuesday',
+  wednesday: 'Wednesday', wed: 'Wednesday',
+  thursday: 'Thursday', thu: 'Thursday',
+  friday: 'Friday', fri: 'Friday',
+  saturday: 'Saturday', sat: 'Saturday',
+  sunday: 'Sunday', sun: 'Sunday',
+};
+
+function canonicalDayKey(input: unknown): string | null {
+  if (typeof input !== 'string') return null;
+  return WEEKDAY_ALIASES[input.trim().toLowerCase()] || null;
+}
+
+// The server normalizes keys, but be defensive locally: align any object that
+// looks like a weekly schedule onto the canonical English days.
+function normalizeScheduleKeys(schedule: Record<string, SuggestedTask[]>): Record<string, SuggestedTask[]> {
+  const out: Record<string, SuggestedTask[]> = {};
+  WEEK.forEach((day) => { out[day] = []; });
+  Object.entries(schedule || {}).forEach(([key, tasks]) => {
+    const day = canonicalDayKey(key);
+    if (day && Array.isArray(tasks)) out[day] = tasks;
+  });
+  return out;
+}
+
 function buildLocalSchedule(input: GenerateScheduleInput): { schedule: Record<string, SuggestedTask[]>; explanation: string } {
-  const WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const subjects = input.subjects.length > 0 ? input.subjects : [i18next.t('ai_offline_subject')];
   const hoursPerDay = Math.max(1, Math.min(12, input.hoursPerDay || 4));
-  const studyDays = WEEK.filter(d => !(input.rest_days || []).includes(d));
+  const restDays = (input.rest_days || []).map(canonicalDayKey).filter((d): d is string => d !== null);
+  const studyDays = WEEK.filter(d => !restDays.includes(d));
   const blocksPerDay = Math.max(1, Math.round(hoursPerDay));
   const startOfDay = 9 * 60;
 
@@ -84,7 +115,12 @@ export function useGenerateScheduleSuggestion() {
 
       try {
         const result = await generateAISchedule(prefs);
-        return { schedule: result.schedule, explanation: result.explanation, usedAI: true, authError: false };
+        return {
+          schedule: normalizeScheduleKeys(result.schedule),
+          explanation: result.explanation,
+          usedAI: true,
+          authError: false,
+        };
       } catch (e: any) {
         if (import.meta.env.DEV) console.error('[AI] Schedule generation failed:', e?.message || e);
         if (e?.message === 'AUTH_REQUIRED') {

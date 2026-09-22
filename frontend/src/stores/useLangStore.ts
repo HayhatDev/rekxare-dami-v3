@@ -22,6 +22,7 @@ export const useLangStore = create<LangState>((set) => ({
     try { localStorage.setItem('rekxare_lang', safe); } catch {}
     i18n.changeLanguage(safe);
     document.documentElement.dir = safe === 'ar' || safe === 'badini' || safe === 'sorani' ? 'rtl' : 'ltr';
+    document.documentElement.lang = safe;
     set({ lang: safe });
   }
 }));

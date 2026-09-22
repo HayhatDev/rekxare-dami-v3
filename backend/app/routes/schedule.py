@@ -1,11 +1,12 @@
 import logging
 import httpx
 from fastapi import APIRouter, HTTPException, Request, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List
 from app.utils.supabase import supabase_request, sanitize_key
 from app.utils.auth import require_auth
 from app.utils.rate_limit import limiter
+from app.utils.day_keys import normalize_day_keys
 
 logger = logging.getLogger("rekxare.schedule")
 router = APIRouter()
@@ -27,6 +28,14 @@ class DaySchedule(BaseModel):
     Friday: List[Task] = []
     Saturday: List[Task] = []
     Sunday: List[Task] = []
+
+    @model_validator(mode="before")
+    @classmethod
+    def _clean_localized_day_keys(cls, data):
+        """Coerce localized/stale JSON day keys to canonical English before validation."""
+        if isinstance(data, dict):
+            return normalize_day_keys(data)
+        return data
 
 
 @router.get("/me")

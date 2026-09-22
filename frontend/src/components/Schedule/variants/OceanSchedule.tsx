@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../../stores/useThemeStore';
 import { useCycleLang } from '../../../hooks/useCycleLang';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useLangStore } from '../../../stores/useLangStore';
 import { DAYS_OF_WEEK, DAY_I18N_KEYS, STATUS_COLORS } from '../../../utils/constants';
 import { Plus, Trash2, CheckCircle, Circle, Copy, Wand2, Loader2, Calendar, Sun, Moon } from 'lucide-react';
@@ -33,6 +34,9 @@ export default function OceanSchedule() {
   } = useScheduleActions();
 
   const { cycleLang } = useCycleLang();
+
+  const closeAiModal = useCallback(() => setIsAiModalOpen(false), []);
+  const modalRef = useFocusTrap(isAiModalOpen, closeAiModal);
 
   const tok = useMemo(() => getOceanTokens(isDark), [isDark]);
   const c = {
@@ -135,7 +139,7 @@ export default function OceanSchedule() {
             return (
               <button key={day} onClick={() => setSelectedDay(day)} aria-pressed={isSelected} className="shrink-0 px-5 py-3 rounded-full text-[13px] font-medium transition-all duration-300 hover:scale-105" style={{ backgroundColor: isSelected ? c.accent : c.card, color: isSelected ? c.accentInk : c.inkSoft, border: `1px solid ${isSelected ? c.accent : c.cardBorder}` }}>
                 <span className="flex items-center gap-1.5">
-                  {day.slice(0, 3)}
+                  {t(DAY_I18N_KEYS[day])}
                   {isToday && (
                     <span
                       aria-label={t('today', 'Today')}
@@ -156,7 +160,7 @@ export default function OceanSchedule() {
           <div className="lg:col-span-2">
             <div className="rounded-[48px] p-6 backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}` }}>
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-semibold">{t('tasks_for_day', { day: selectedDay })}</h3>
+                <h3 className="text-lg font-semibold">{t('tasks_for_day', { day: t(`day_${selectedDay.toLowerCase()}`) })}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[12px]" style={{ color: c.inkFaint }}>{Math.round(progress)}%</span>
                   <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: c.cardBorder }}>
@@ -168,7 +172,7 @@ export default function OceanSchedule() {
               {currentTasks.length === 0 ? (
                 <div className="text-center py-12 rounded-[32px]" style={{ border: `1px dashed ${c.cardBorder}` }}>
                   <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                  <p className="text-[14px]">{t('no_tasks', { day: selectedDay })}</p>
+                  <p className="text-[14px]">{t('no_tasks', { day: t(`day_${selectedDay.toLowerCase()}`) })}</p>
                   <p className="text-[12px] mt-1" style={{ color: c.inkFaint }}>{t('add_or_use_ai', 'Add one or use AI.')}</p>
                 </div>
               ) : (
@@ -208,8 +212,8 @@ export default function OceanSchedule() {
                 <div>
                   <label className="text-[12px] font-medium block mb-1.5" style={{ color: c.inkFaint }}>{t('time', 'Time')}</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="time" value={start} onChange={e => setStart(e.target.value)} required className="w-full px-3 py-2.5 rounded-[20px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}50`, borderColor: c.cardBorder, color: c.ink }} />
-                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} required className="w-full px-3 py-2.5 rounded-[20px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}50`, borderColor: c.cardBorder, color: c.ink }} />
+                    <input type="time" value={start} onChange={e => setStart(e.target.value)} aria-label={t('start_time')} required className="w-full px-3 py-2.5 rounded-[20px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}50`, borderColor: c.cardBorder, color: c.ink }} />
+                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} aria-label={t('end_time')} required className="w-full px-3 py-2.5 rounded-[20px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}50`, borderColor: c.cardBorder, color: c.ink }} />
                   </div>
                 </div>
                 <div>
@@ -228,7 +232,7 @@ export default function OceanSchedule() {
       {/* AI Modal */}
       {isAiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: `${c.bg}cc`, backdropFilter: 'blur(8px)', animation: 'rd-fade-in 180ms ease-out both' }}>
-          <div className="rounded-[48px] p-6 w-full max-w-md backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')}>
+          <div className="rounded-[48px] p-6 w-full max-w-md backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')} ref={modalRef}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-semibold flex items-center gap-2"><Wand2 className="w-4 h-4" style={{ color: c.accent }} /> {t('ai_generator', 'AI Generator')}</h3>
               <button onClick={() => setIsAiModalOpen(false)} className="text-[12px] font-medium transition-opacity hover:opacity-100" style={{ color: c.inkFaint }}>{t('cancel', 'Cancel')}</button>
@@ -245,8 +249,8 @@ export default function OceanSchedule() {
                 <label className="text-[12px] font-medium block mb-1.5" style={{ color: c.inkFaint }}>{t('preferred_time', 'Preferred Time')}</label>
                 <div className="flex gap-2">
                   {(['any', 'morning', 'afternoon', 'evening'] as const).map(opt => (
-                    <button key={opt} type="button" onClick={() => setPreferredTime(opt)} className="flex-1 py-2 rounded-full text-[11px] font-medium transition-all duration-300" style={{ backgroundColor: preferredTime === opt ? c.accent : `${c.bg}50`, color: preferredTime === opt ? c.accentInk : c.inkSoft, border: `1px solid ${preferredTime === opt ? c.accent : c.cardBorder}` }}>
-                      {t(`time_${opt}`, opt.charAt(0).toUpperCase() + opt.slice(1))}
+                    <button key={opt} type="button" aria-pressed={preferredTime === opt} onClick={() => setPreferredTime(opt)} className="flex-1 py-2 rounded-full text-[11px] font-medium transition-all duration-300" style={{ backgroundColor: preferredTime === opt ? c.accent : `${c.bg}50`, color: preferredTime === opt ? c.accentInk : c.inkSoft, border: `1px solid ${preferredTime === opt ? c.accent : c.cardBorder}` }}>
+                      {t(opt, opt.charAt(0).toUpperCase() + opt.slice(1))}
                     </button>
                   ))}
                 </div>
@@ -259,7 +263,7 @@ export default function OceanSchedule() {
                   {DAYS_OF_WEEK.map(day => {
                     const active = restDays.includes(day);
                     return (
-                      <button key={day} type="button" onClick={() => toggleRestDay(day)} className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-300" style={{ backgroundColor: active ? tok.accent.teal : `${c.bg}50`, color: active ? c.accentInk : c.inkSoft, border: `1px solid ${active ? tok.accent.teal : c.cardBorder}` }}>
+                      <button key={day} type="button" aria-pressed={active} onClick={() => toggleRestDay(day)} className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-300" style={{ backgroundColor: active ? tok.accent.teal : `${c.bg}50`, color: active ? c.accentInk : c.inkSoft, border: `1px solid ${active ? tok.accent.teal : c.cardBorder}` }}>
                         {t(DAY_I18N_KEYS[day])}
                       </button>
                     );

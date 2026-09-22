@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../../stores/useThemeStore';
 import { useCycleLang } from '../../../hooks/useCycleLang';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useLangStore } from '../../../stores/useLangStore';
 import { DAYS_OF_WEEK, DAY_I18N_KEYS, STATUS_COLORS } from '../../../utils/constants';
 import { Plus, Trash2, CheckCircle, Circle, Copy, Wand2, Loader2, Calendar, Sun, Moon } from 'lucide-react';
@@ -33,6 +34,9 @@ export default function ForestSchedule() {
   } = useScheduleActions();
 
   const { cycleLang } = useCycleLang();
+
+  const closeAiModal = useCallback(() => setIsAiModalOpen(false), []);
+  const modalRef = useFocusTrap(isAiModalOpen, closeAiModal);
 
   const c = useMemo(() => {
     const tok = getForestTokens(isDark);
@@ -138,7 +142,7 @@ export default function ForestSchedule() {
             return (
               <button key={day} onClick={() => setSelectedDay(day)} aria-pressed={isSelected} className="shrink-0 px-5 py-3 text-[13px] font-medium transition-all duration-300 hover:scale-105" style={{ backgroundColor: isSelected ? c.accent : c.card, color: isSelected ? c.accentInk : c.inkSoft, borderRadius: '32px 8px 32px 8px', border: `1px solid ${isSelected ? c.accent : c.cardBorder}` }}>
                 <span className="flex items-center gap-1.5">
-                  {day.slice(0, 3)}
+                  {t(DAY_I18N_KEYS[day])}
                   {isToday && (
                     <span
                       aria-label={t('today', 'Today')}
@@ -159,7 +163,7 @@ export default function ForestSchedule() {
           <div className="lg:col-span-2">
             <div className="p-6 backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, borderRadius: '32px 8px 32px 8px' }}>
               <div className="flex items-center justify-between mb-5">
-                <h3 className="fo-serif text-lg font-semibold">{t('tasks_for_day', { day: selectedDay })}</h3>
+                <h3 className="fo-serif text-lg font-semibold">{t('tasks_for_day', { day: t(`day_${selectedDay.toLowerCase()}`) })}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[12px]" style={{ color: c.inkFaint }}>{Math.round(progress)}%</span>
                   <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: c.cardBorder }}>
@@ -171,7 +175,7 @@ export default function ForestSchedule() {
               {currentTasks.length === 0 ? (
                 <div className="text-center py-12" style={{ border: `1px dashed ${c.cardBorder}`, borderRadius: '24px' }}>
                   <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                  <p className="text-[14px]">{t('no_tasks', { day: selectedDay })}</p>
+                  <p className="text-[14px]">{t('no_tasks', { day: t(`day_${selectedDay.toLowerCase()}`) })}</p>
                   <p className="text-[12px] mt-1" style={{ color: c.inkFaint }}>{t('add_or_use_ai', 'Add one or use AI.')}</p>
                 </div>
               ) : (
@@ -211,8 +215,8 @@ export default function ForestSchedule() {
                 <div>
                   <label className="text-[12px] font-medium block mb-1.5" style={{ color: c.inkFaint }}>{t('time', 'Time')}</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="time" value={start} onChange={e => setStart(e.target.value)} required className="w-full px-3 py-2.5 rounded-[16px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}40`, borderColor: c.cardBorder, color: c.ink }} />
-                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} required className="w-full px-3 py-2.5 rounded-[16px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}40`, borderColor: c.cardBorder, color: c.ink }} />
+                    <input type="time" value={start} onChange={e => setStart(e.target.value)} aria-label={t('start_time')} required className="w-full px-3 py-2.5 rounded-[16px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}40`, borderColor: c.cardBorder, color: c.ink }} />
+                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} aria-label={t('end_time')} required className="w-full px-3 py-2.5 rounded-[16px] text-[13px] border outline-none transition-all duration-300" style={{ backgroundColor: `${c.bg}40`, borderColor: c.cardBorder, color: c.ink }} />
                   </div>
                 </div>
                 <div>
@@ -231,7 +235,7 @@ export default function ForestSchedule() {
       {/* AI Modal */}
       {isAiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: `${c.bg}cc`, backdropFilter: 'blur(8px)', animation: 'rd-fade-in 180ms ease-out both' }}>
-          <div className="p-6 w-full max-w-lg backdrop-blur-sm max-h-[85vh] overflow-y-auto" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, borderRadius: '32px 8px 32px 8px', animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')}>
+          <div className="p-6 w-full max-w-lg backdrop-blur-sm max-h-[85vh] overflow-y-auto" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, borderRadius: '32px 8px 32px 8px', animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')} ref={modalRef}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="fo-serif text-lg font-semibold flex items-center gap-2"><Wand2 className="w-4 h-4" style={{ color: c.accent }} /> {t('ai_generator', 'AI Generator')}</h3>
               <button onClick={() => setIsAiModalOpen(false)} className="text-[12px] font-medium transition-opacity hover:opacity-100" style={{ color: c.inkFaint }}>{t('cancel', 'Cancel')}</button>
@@ -250,8 +254,8 @@ export default function ForestSchedule() {
                   {(['any', 'morning', 'afternoon', 'evening'] as const).map(time => {
                     const active = preferredTime === time;
                     return (
-                      <button key={time} type="button" onClick={() => setPreferredTime(time)} className="flex-1 px-3 py-2 text-[12px] font-medium rounded-[16px] transition-all duration-300" style={{ backgroundColor: active ? c.accent : `${c.bg}40`, color: active ? c.accentInk : c.inkSoft, border: `1px solid ${active ? c.accent : c.cardBorder}` }}>
-                        {t(`time_${time}`, time.charAt(0).toUpperCase() + time.slice(1))}
+                      <button key={time} type="button" aria-pressed={active} onClick={() => setPreferredTime(time)} className="flex-1 px-3 py-2 text-[12px] font-medium rounded-[16px] transition-all duration-300" style={{ backgroundColor: active ? c.accent : `${c.bg}40`, color: active ? c.accentInk : c.inkSoft, border: `1px solid ${active ? c.accent : c.cardBorder}` }}>
+                        {t(time, time.charAt(0).toUpperCase() + time.slice(1))}
                       </button>
                     );
                   })}
@@ -265,7 +269,7 @@ export default function ForestSchedule() {
                   {(DAYS_OF_WEEK).map(day => {
                     const active = restDays.includes(day);
                     return (
-                      <button key={day} type="button" onClick={() => toggleRestDay(day)} className="px-3 py-2 text-[11px] font-medium rounded-[14px] transition-all duration-300" style={{ backgroundColor: active ? c.accentWarm : `${c.bg}40`, color: active ? '#fff' : c.inkSoft, border: `1px solid ${active ? c.accentWarm : c.cardBorder}` }}>
+                      <button key={day} type="button" aria-pressed={active} onClick={() => toggleRestDay(day)} className="px-3 py-2 text-[11px] font-medium rounded-[14px] transition-all duration-300" style={{ backgroundColor: active ? c.accentWarm : `${c.bg}40`, color: active ? '#fff' : c.inkSoft, border: `1px solid ${active ? c.accentWarm : c.cardBorder}` }}>
                         {t(DAY_I18N_KEYS[day])}
                       </button>
                     );

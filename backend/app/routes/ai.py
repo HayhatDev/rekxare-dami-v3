@@ -10,6 +10,7 @@ from datetime import datetime
 from app.utils.supabase import supabase_request, sanitize_key
 from app.utils.auth import require_auth
 from app.utils.rate_limit import limiter
+from app.utils.day_keys import normalize_day_keys
 
 logger = logging.getLogger("rekxare.ai")
 router = APIRouter()
@@ -287,7 +288,10 @@ SCHEDULE RULES:
 13. If the user's stated commitments leave very little time, honestly reduce study blocks rather than cramming.
 14. The schedule should feel achievable, not exhausting. A real person should look at it and think "I can do this."
 
-Return ONLY a valid JSON object:
+Return ONLY a valid JSON object with EXACTLY these property keys:
+- The JSON property keys (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday) must ALWAYS be the exact English strings above.
+- NEVER translate the day keys — only the task names and the explanation may be in the student's language.
+
 {{
   "Monday": [{{"start": "HH:MM", "end": "HH:MM", "task": "Task name", "type": "study|commitment|break"}}],
   "Tuesday": [...],
@@ -571,7 +575,7 @@ async def generate_schedule(request: Request, body: GenerateScheduleRequest, use
     try:
         parsed = json.loads(_strip_json_fences(content))
         explanation = str(parsed.pop("explanation", ""))[:1000]
-        return {"schedule": parsed, "explanation": explanation}
+        return {"schedule": normalize_day_keys(parsed), "explanation": explanation}
     except Exception:
         try:
             start = content.find("{")
@@ -579,7 +583,7 @@ async def generate_schedule(request: Request, body: GenerateScheduleRequest, use
             if start != -1 and end > start:
                 parsed = json.loads(content[start : end + 1])
                 explanation = str(parsed.pop("explanation", ""))[:1000]
-                return {"schedule": parsed, "explanation": explanation}
+                return {"schedule": normalize_day_keys(parsed), "explanation": explanation}
         except Exception:
             pass
         logger.exception("Failed to parse AI response")

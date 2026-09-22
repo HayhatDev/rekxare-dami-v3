@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../../stores/useThemeStore';
 import { useCycleLang } from '../../../hooks/useCycleLang';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useLangStore } from '../../../stores/useLangStore';
 import { DAYS_OF_WEEK, DAY_I18N_KEYS, STATUS_COLORS } from '../../../utils/constants';
 import { Plus, Trash2, CheckCircle, Circle, Copy, Wand2, Loader2, Calendar } from 'lucide-react';
@@ -33,6 +34,9 @@ export default function ClaritySchedule() {
   } = useScheduleActions();
 
   const { cycleLang } = useCycleLang();
+
+  const closeAiModal = useCallback(() => setIsAiModalOpen(false), []);
+  const modalRef = useFocusTrap(isAiModalOpen, closeAiModal);
 
   const c = useMemo(() => {
     const tok = getClarityTokens(isDark);
@@ -142,7 +146,7 @@ export default function ClaritySchedule() {
             return (
               <button key={day} onClick={() => setSelectedDay(day)} aria-pressed={isSelected} className="shrink-0 px-5 py-3 cl-mono text-[11px] tracking-[0.1em] uppercase transition-all duration-200" style={{ backgroundColor: isSelected ? c.accent : 'transparent', color: isSelected ? c.accentInk : c.inkSoft, border: `1px solid ${isSelected ? c.accent : c.line}` }}>
                 <span className="flex items-center gap-1.5">
-                  {day.slice(0, 3)}
+                  {t(DAY_I18N_KEYS[day])}
                   {isToday && (
                     <span
                       aria-label={t('today', 'Today')}
@@ -163,7 +167,7 @@ export default function ClaritySchedule() {
           <div className="lg:col-span-2">
             <div className="border p-6" style={{ borderColor: c.line, backgroundColor: c.panel }}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="cl-mono text-[11px] tracking-[0.28em] uppercase" style={{ color: c.inkFaint }}>{t('tasks_for_day', { day: selectedDay })}</h3>
+                <h3 className="cl-mono text-[11px] tracking-[0.28em] uppercase" style={{ color: c.inkFaint }}>{t('tasks_for_day', { day: t(`day_${selectedDay.toLowerCase()}`) })}</h3>
                 <div className="flex items-center gap-3">
                   <span className="cl-mono text-[11px]" style={{ color: c.inkSoft }}>{Math.round(progress)}%</span>
                   <div className="w-20 h-1 rounded-full overflow-hidden" style={{ backgroundColor: c.track }}>
@@ -175,7 +179,7 @@ export default function ClaritySchedule() {
               {currentTasks.length === 0 ? (
                 <div className="text-center py-12 border border-dashed" style={{ borderColor: c.line, color: c.inkFaint }}>
                   <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                  <p className="text-[13px]">{t('no_tasks', { day: selectedDay })}</p>
+                  <p className="text-[13px]">{t('no_tasks', { day: t(`day_${selectedDay.toLowerCase()}`) })}</p>
                   <p className="cl-mono text-[11px] mt-1" style={{ color: c.inkFaint }}>{t('add_or_use_ai', 'Add one or use AI.')}</p>
                 </div>
               ) : (
@@ -215,8 +219,8 @@ export default function ClaritySchedule() {
                 <div>
                   <label className="cl-mono text-[11px] tracking-[0.14em] uppercase block mb-2" style={{ color: c.inkFaint }}>{t('time', 'Time')}</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="time" value={start} onChange={e => setStart(e.target.value)} required className="w-full px-3 py-2 cl-mono text-[12px] border outline-none transition-all duration-200" style={{ backgroundColor: 'transparent', borderColor: c.line, color: c.ink }} />
-                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} required className="w-full px-3 py-2 cl-mono text-[12px] border outline-none transition-all duration-200" style={{ backgroundColor: 'transparent', borderColor: c.line, color: c.ink }} />
+                    <input type="time" value={start} onChange={e => setStart(e.target.value)} aria-label={t('start_time')} required className="w-full px-3 py-2 cl-mono text-[12px] border outline-none transition-all duration-200" style={{ backgroundColor: 'transparent', borderColor: c.line, color: c.ink }} />
+                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} aria-label={t('end_time')} required className="w-full px-3 py-2 cl-mono text-[12px] border outline-none transition-all duration-200" style={{ backgroundColor: 'transparent', borderColor: c.line, color: c.ink }} />
                   </div>
                 </div>
                 <div>
@@ -235,7 +239,7 @@ export default function ClaritySchedule() {
       {/* AI Modal */}
       {isAiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: `${c.bg}cc`, backdropFilter: 'blur(8px)', animation: 'rd-fade-in 180ms ease-out both' }}>
-          <div className="border p-6 w-full max-w-lg max-h-[90dvh] overflow-y-auto" style={{ borderColor: c.line, backgroundColor: c.panel, scrollbarWidth: 'none', animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')}>
+          <div className="border p-6 w-full max-w-lg max-h-[90dvh] overflow-y-auto" style={{ borderColor: c.line, backgroundColor: c.panel, scrollbarWidth: 'none', animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')} ref={modalRef}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="cl-mono text-[12px] tracking-[0.14em] uppercase flex items-center gap-2">
                 <Wand2 className="w-4 h-4" style={{ color: c.accent }} /> {t('ai_generator', 'AI Generator')}
@@ -259,7 +263,7 @@ export default function ClaritySchedule() {
                     { value: 'afternoon', label: t('afternoon', 'Afternoon') },
                     { value: 'evening', label: t('evening', 'Evening') },
                   ].map(opt => (
-                    <button key={opt.value} type="button" onClick={() => setPreferredTime(opt.value)} className="flex-1 cl-mono text-[11px] tracking-[0.1em] uppercase py-2.5 px-1 transition-all duration-200 border" style={{ backgroundColor: preferredTime === opt.value ? c.accent : 'transparent', color: preferredTime === opt.value ? c.accentInk : c.inkSoft, borderColor: preferredTime === opt.value ? c.accent : c.line }}>
+                    <button key={opt.value} type="button" aria-pressed={preferredTime === opt.value} onClick={() => setPreferredTime(opt.value)} className="flex-1 cl-mono text-[11px] tracking-[0.1em] uppercase py-2.5 px-1 transition-all duration-200 border" style={{ backgroundColor: preferredTime === opt.value ? c.accent : 'transparent', color: preferredTime === opt.value ? c.accentInk : c.inkSoft, borderColor: preferredTime === opt.value ? c.accent : c.line }}>
                       {opt.label}
                     </button>
                   ))}
@@ -273,7 +277,7 @@ export default function ClaritySchedule() {
                   {DAYS_OF_WEEK.map(day => {
                     const active = restDays.includes(day);
                     return (
-                      <button key={day} type="button" onClick={() => toggleRestDay(day)} className="flex-1 cl-mono text-[11px] tracking-[0.06em] uppercase py-2 transition-all duration-200 border" style={{ backgroundColor: active ? c.accent : 'transparent', color: active ? c.accentInk : c.inkFaint, borderColor: active ? c.accent : c.line }}>
+                      <button key={day} type="button" aria-pressed={active} onClick={() => toggleRestDay(day)} className="flex-1 cl-mono text-[11px] tracking-[0.06em] uppercase py-2 transition-all duration-200 border" style={{ backgroundColor: active ? c.accent : 'transparent', color: active ? c.accentInk : c.inkFaint, borderColor: active ? c.accent : c.line }}>
                         {t(DAY_I18N_KEYS[day])}
                       </button>
                     );

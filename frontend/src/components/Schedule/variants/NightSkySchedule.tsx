@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../../stores/useThemeStore';
 import { useCycleLang } from '../../../hooks/useCycleLang';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useLangStore } from '../../../stores/useLangStore';
 import { DAYS_OF_WEEK, DAY_I18N_KEYS, STATUS_COLORS } from '../../../utils/constants';
 import { Plus, Trash2, CheckCircle, Circle, Copy, Wand2, Loader2, Calendar, Sun, Moon } from 'lucide-react';
@@ -44,6 +45,9 @@ export default function NightSkySchedule() {
   } = useScheduleActions();
 
   const { cycleLang } = useCycleLang();
+
+  const closeAiModal = useCallback(() => setIsAiModalOpen(false), []);
+  const modalRef = useFocusTrap(isAiModalOpen, closeAiModal);
 
   const c = useMemo(() => {
     const tok = getNightSkyTokens(isDark);
@@ -154,7 +158,7 @@ export default function NightSkySchedule() {
             return (
               <button key={day} onClick={() => setSelectedDay(day)} aria-pressed={isSelected} className="shrink-0 px-5 py-3 ns-mono text-[11px] tracking-[0.1em] uppercase transition-all duration-300 hover:scale-105" style={{ backgroundColor: isSelected ? c.accent : 'transparent', color: isSelected ? c.accentInk : c.inkFaint, border: `1px solid ${isSelected ? c.accent : c.cardBorder}`, borderRadius: '4px' }}>
                 <span className="flex items-center gap-1.5">
-                  {day.slice(0, 3)}
+                  {t(DAY_I18N_KEYS[day])}
                   {isToday && (
                     <span
                       aria-label={t('today', 'Today')}
@@ -175,7 +179,7 @@ export default function NightSkySchedule() {
           <div className="lg:col-span-2">
             <div className="p-6 backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, borderRadius: '4px' }}>
               <div className="flex items-center justify-between mb-5">
-                <h3 className="ns-mono text-[11px] tracking-[0.14em] uppercase" style={{ color: c.inkFaint }}>{t('tasks_for_day', { day: selectedDay })}</h3>
+                <h3 className="ns-mono text-[11px] tracking-[0.14em] uppercase" style={{ color: c.inkFaint }}>{t('tasks_for_day', { day: t(`day_${selectedDay.toLowerCase()}`) })}</h3>
                 <div className="flex items-center gap-2">
                   <span className="ns-mono text-[11px]" style={{ color: c.inkFaint }}>{Math.round(progress)}%</span>
                   <div className="w-16 h-1 rounded-full overflow-hidden" style={{ backgroundColor: c.cardBorder }}>
@@ -187,7 +191,7 @@ export default function NightSkySchedule() {
               {currentTasks.length === 0 ? (
                 <div className="text-center py-12" style={{ border: `1px dashed ${c.cardBorder}`, borderRadius: '4px' }}>
                   <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                  <p className="text-[14px]">{t('no_tasks', { day: selectedDay })}</p>
+                  <p className="text-[14px]">{t('no_tasks', { day: t(`day_${selectedDay.toLowerCase()}`) })}</p>
                   <p className="ns-mono text-[11px] mt-1" style={{ color: c.inkFaint }}>{t('add_or_use_ai', 'Add one or use AI.')}</p>
                 </div>
               ) : (
@@ -227,8 +231,8 @@ export default function NightSkySchedule() {
                 <div>
                   <label className="ns-mono text-[11px] tracking-[0.12em] uppercase block mb-1.5" style={{ color: c.inkFaint }}>{t('time', 'Time')}</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="time" value={start} onChange={e => setStart(e.target.value)} required className="w-full px-3 py-2.5 ns-mono text-[12px] border outline-none transition-all duration-300" style={{ backgroundColor: 'transparent', borderColor: c.cardBorder, color: c.ink, borderRadius: '4px' }} />
-                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} required className="w-full px-3 py-2.5 ns-mono text-[12px] border outline-none transition-all duration-300" style={{ backgroundColor: 'transparent', borderColor: c.cardBorder, color: c.ink, borderRadius: '4px' }} />
+                    <input type="time" value={start} onChange={e => setStart(e.target.value)} aria-label={t('start_time')} required className="w-full px-3 py-2.5 ns-mono text-[12px] border outline-none transition-all duration-300" style={{ backgroundColor: 'transparent', borderColor: c.cardBorder, color: c.ink, borderRadius: '4px' }} />
+                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} aria-label={t('end_time')} required className="w-full px-3 py-2.5 ns-mono text-[12px] border outline-none transition-all duration-300" style={{ backgroundColor: 'transparent', borderColor: c.cardBorder, color: c.ink, borderRadius: '4px' }} />
                   </div>
                 </div>
                 <div>
@@ -247,7 +251,7 @@ export default function NightSkySchedule() {
       {/* AI Modal */}
       {isAiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: `${c.bg}cc`, backdropFilter: 'blur(8px)', animation: 'rd-fade-in 180ms ease-out both' }}>
-          <div className="p-6 w-full max-w-lg backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, borderRadius: '4px', animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')}>
+          <div className="p-6 w-full max-w-lg backdrop-blur-sm" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}`, borderRadius: '4px', animation: 'rd-modal-pop 280ms cubic-bezier(0.32, 0.72, 0.24, 1) both' }} role="dialog" aria-modal="true" aria-label={t('ai_generator', 'AI Generator')} ref={modalRef}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="ns-mono text-[11px] tracking-[0.14em] uppercase flex items-center gap-2">
                 <Wand2 className="w-4 h-4" style={{ color: c.accentGold }} /> {t('ai_generator', 'AI Generator')}
@@ -277,6 +281,7 @@ export default function NightSkySchedule() {
                     <button
                       key={time}
                       type="button"
+                      aria-pressed={preferredTime === time}
                       onClick={() => setPreferredTime(time)}
                       className="flex-1 py-2 ns-mono text-[11px] tracking-[0.1em] uppercase border transition-all duration-300"
                       style={{
@@ -286,7 +291,7 @@ export default function NightSkySchedule() {
                         borderRadius: '4px',
                       }}
                     >
-                      {t(`time_${time}`, time)}
+                      {t(time, time)}
                     </button>
                   ))}
                 </div>
@@ -302,6 +307,7 @@ export default function NightSkySchedule() {
                       <button
                         key={day}
                         type="button"
+                        aria-pressed={active}
                         onClick={() => toggleRestDay(day)}
                         className="flex-1 py-2 ns-mono text-[11px] tracking-[0.08em] uppercase border transition-all duration-300"
                         style={{

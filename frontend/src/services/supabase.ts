@@ -66,6 +66,65 @@ function guestKey(suffix: string): string {
   return `rekxare_guest_${getUserKey()}_${suffix}`;
 }
 
+// Local cache is keyed by the authenticated user when signed in so that a second
+// account on the same device never sees the first account's offline cache (and
+// vice versa). Only the not-signed-in / guest path uses the browser-wide guest key.
+export function userKey(suffix: string, authUser: string | null): string {
+  return authUser ? `rekxare_user_${authUser}_${suffix}` : guestKey(suffix);
+}
+
+// Guest-scoped cache carries an ownership stamp so migration never imports data
+// that a *previous authenticated account* left behind (a second account signing
+// in on the same browser must never inherit the first one's cache).
+function guestOwnerKey(suffix: string): string {
+  return `rekxare_guest_owner_${suffix}`;
+}
+
+function readGuestOwner(suffix: string): string | null {
+  try { return localStorage.getItem(guestOwnerKey(suffix)); } catch { return null; }
+}
+
+function stampGuestOwner(suffix: string, owner: string | null): void {
+  try {
+    if (owner) localStorage.setItem(guestOwnerKey(suffix), owner);
+    else localStorage.removeItem(guestOwnerKey(suffix));
+  } catch {}
+}
+
+// Track every account ever signed in on this browser. When exactly one account
+// is known, legacy (unstamped) guest data can only belong to that account, so it
+// is safe to migrate. With two or more accounts, unstamped data is ambiguous and
+// is deliberately left alone to avoid a second account inheriting the first's cache.
+function rememberKnownAccount(authUser: string): void {
+  try {
+    const raw = localStorage.getItem('rekxare_known_accounts') || '';
+    const accounts = raw ? raw.split(',').filter(Boolean) : [];
+    if (!accounts.includes(authUser)) {
+      accounts.push(authUser);
+      localStorage.setItem('rekxare_known_accounts', accounts.join(','));
+    }
+  } catch {}
+}
+
+function onlyKnownAccount(): boolean {
+  try {
+    const raw = localStorage.getItem('rekxare_known_accounts');
+    return raw ? raw.split(',').filter(Boolean).length === 1 : true;
+  } catch {
+    return true;
+  }
+}
+
+// True when a guest cache is safe to migrate into the given account: either it
+// was freshly stamped as guest-owned, or it is legacy unstamped data and this
+// browser has only ever seen one account.
+export function guestCacheOwnedBy(authUser: string, suffix: string): boolean {
+  const owner = readGuestOwner(suffix);
+  if (owner === 'guest') return true;
+  if (owner === null) return onlyKnownAccount();
+  return false;
+}
+
 // Previous releases persisted guest data under unprefixed localStorage keys
 // (e.g. "rekxare_study_data"). The new namespaced keys mean a returning guest
 // would otherwise see all their progress "reset". One-time, idempotent
@@ -80,42 +139,50 @@ function migrateLegacyData(newKey: string, legacyKey: string): void {
 }
 
 const localFallback = {
-  getStudyData: async (): Promise<StudyData> => {
+  getStudyData: async (authUser: string | null = null): Promise<StudyData> => {
     try {
-      const key = guestKey('study_data');
-      migrateLegacyData(key, 'rekxare_study_data');
+      const key = userKey('study_data', authUser);
+      if (!authUser) migrateLegacyData(key, 'rekxare_study_data');
       const data = localStorage.getItem(key);
       return data ? { ...DEFAULT_STUDY_DATA, ...JSON.parse(data) } : DEFAULT_STUDY_DATA;
     } catch {
       return DEFAULT_STUDY_DATA;
     }
   },
-  setStudyData: async (data: StudyData): Promise<void> => {
-    try { localStorage.setItem(guestKey('study_data'), JSON.stringify(data)); } catch {}
-  },
-  getSchedule: async (): Promise<ScheduleData> => {
+  setStudyData: async (data: StudyData, authUser: string | null = null): Promise<void> => {
     try {
-      const key = guestKey('schedule');
-      migrateLegacyData(key, 'rekxare_schedule');
+      localStorage.setItem(userKey('study_data', authUser), JSON.stringify(data));
+      if (!authUser) stampGuestOwner('study_data', 'guest');
+    } catch {}
+  },
+  getSchedule: async (authUser: string | null = null): Promise<ScheduleData> => {
+    try {
+      const key = userKey('schedule', authUser);
+      if (!authUser) migrateLegacyData(key, 'rekxare_schedule');
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : DEFAULT_SCHEDULE;
     } catch {
       return DEFAULT_SCHEDULE;
     }
   },
-  setSchedule: async (data: ScheduleData): Promise<void> => {
-    try { localStorage.setItem(guestKey('schedule'), JSON.stringify(data)); } catch {}
-  },
-  getUserPrefs: async (): Promise<UserPrefs> => {
+  setSchedule: async (data: ScheduleData, authUser: string | null = null): Promise<void> => {
     try {
-      const data = localStorage.getItem('rekxare_user_prefs');
+      localStorage.setItem(userKey('schedule', authUser), JSON.stringify(data));
+      if (!authUser) stampGuestOwner('schedule', 'guest');
+    } catch {}
+  },
+  getUserPrefs: async (authUser: string | null = null): Promise<UserPrefs> => {
+    try {
+      const key = userKey('prefs', authUser);
+      if (!authUser) migrateLegacyData(key, 'rekxare_user_prefs');
+      const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : { lang: 'badini', dark_mode: false };
     } catch {
       return { lang: 'badini', dark_mode: false };
     }
   },
-  setUserPrefs: async (prefs: UserPrefs): Promise<void> => {
-    try { localStorage.setItem('rekxare_user_prefs', JSON.stringify(prefs)); } catch {}
+  setUserPrefs: async (prefs: UserPrefs, authUser: string | null = null): Promise<void> => {
+    try { localStorage.setItem(userKey('prefs', authUser), JSON.stringify(prefs)); } catch {}
   }
 };
 
@@ -184,16 +251,16 @@ export function mergeStudyData(a: StudyData, b: StudyData): StudyData {
 export const api = {
   async getStudyData(): Promise<StudyData> {
     const authUser = await getAuthenticatedUserKey();
-    if (!supabase || !authUser) return localFallback.getStudyData();
+    if (!supabase || !authUser) return localFallback.getStudyData(authUser);
     const { data, error } = await supabase.from('study_data').select('data').eq('user_key', authUser).maybeSingle();
-    if (error) return localFallback.getStudyData();
+    if (error) return localFallback.getStudyData(authUser);
     const server = data ? { ...DEFAULT_STUDY_DATA, ...data.data } : DEFAULT_STUDY_DATA;
-    const local = await localFallback.getStudyData();
+    const local = await localFallback.getStudyData(authUser);
     return mergeStudyData(server, local);
   },
   async updateStudyData(studyData: StudyData): Promise<void> {
-    await localFallback.setStudyData(studyData);
     const authUser = await getAuthenticatedUserKey();
+    await localFallback.setStudyData(studyData, authUser);
     if (!supabase || !authUser) return;
     const { error } = await supabase.from('study_data').upsert({ user_key: authUser, data: studyData, updated_at: new Date().toISOString() });
     if (error) {
@@ -203,7 +270,7 @@ export const api = {
   },
   async getSchedule(): Promise<ScheduleData> {
     const authUser = await getAuthenticatedUserKey();
-    if (!supabase || !authUser) return localFallback.getSchedule();
+    if (!supabase || !authUser) return localFallback.getSchedule(authUser);
     try {
       const res = await fetch(`${API_URL}/api/schedule/me`, { headers: await getAuthHeaders() });
       if (res.ok) {
@@ -223,11 +290,11 @@ export const api = {
     } catch (e) {
       if (import.meta.env.DEV) console.warn('[Supabase] Failed to load schedule from backend:', e);
     }
-    return localFallback.getSchedule();
+    return localFallback.getSchedule(authUser);
   },
   async updateSchedule(schedule: ScheduleData): Promise<void> {
-    await localFallback.setSchedule(schedule);
     const authUser = await getAuthenticatedUserKey();
+    await localFallback.setSchedule(schedule, authUser);
     if (!supabase || !authUser) return;
     try {
       const res = await fetch(`${API_URL}/api/schedule/me`, {
@@ -244,14 +311,14 @@ export const api = {
   },
   async getUserPrefs(): Promise<UserPrefs> {
     const authUser = await getAuthenticatedUserKey();
-    if (!supabase || !authUser) return localFallback.getUserPrefs();
+    if (!supabase || !authUser) return localFallback.getUserPrefs(authUser);
     const { data, error } = await supabase.from('user_prefs').select('lang, dark_mode').eq('user_key', authUser).maybeSingle();
-    if (error || !data) return localFallback.getUserPrefs();
+    if (error || !data) return localFallback.getUserPrefs(authUser);
     return { lang: data.lang, dark_mode: data.dark_mode };
   },
   async updateUserPrefs(prefs: UserPrefs): Promise<void> {
-    await localFallback.setUserPrefs(prefs);
     const authUser = await getAuthenticatedUserKey();
+    await localFallback.setUserPrefs(prefs, authUser);
     if (!supabase || !authUser) return;
     const { error } = await supabase.from('user_prefs').upsert({ user_key: authUser, lang: prefs.lang, dark_mode: prefs.dark_mode, updated_at: new Date().toISOString() });
     if (error) {
@@ -264,12 +331,14 @@ export const api = {
     if (!supabase) return;
     const authUser = await getAuthenticatedUserKey();
     if (!authUser) return;
+    rememberKnownAccount(authUser);
     try {
       const guestStudyData = await localFallback.getStudyData();
       const hasStudyData = guestStudyData.total_seconds > 0 || guestStudyData.sessions > 0;
+      const studyOwned = guestCacheOwnedBy(authUser, 'study_data');
       let studyServerHasData = false;
       let studyUpsertOk = false;
-      if (hasStudyData) {
+      if (hasStudyData && studyOwned) {
         const { data: existing } = await supabase.from('study_data').select('data').eq('user_key', authUser).maybeSingle();
         const serverData = existing?.data as StudyData | undefined;
         if (serverData && serverData.total_seconds > 0) {
@@ -282,9 +351,10 @@ export const api = {
 
       const guestSchedule = await localFallback.getSchedule();
       const hasSchedule = Object.values(guestSchedule).some((tasks) => tasks.length > 0);
+      const scheduleOwned = guestCacheOwnedBy(authUser, 'schedule');
       let scheduleServerHasData = false;
       let schedulePostOk = false;
-      if (hasSchedule) {
+      if (hasSchedule && scheduleOwned) {
         try {
           const existingRes = await fetch(`${API_URL}/api/schedule/me`, { headers: await getAuthHeaders() });
           const existingSchedule = existingRes.ok ? await existingRes.json() : null;
@@ -313,8 +383,8 @@ export const api = {
         schedulePostOk,
       });
       const keysToRemove: string[] = [];
-      if (study) keysToRemove.push(guestKey('study_data'));
-      if (schedule) keysToRemove.push(guestKey('schedule'));
+      if (study) keysToRemove.push(guestKey('study_data'), guestOwnerKey('study_data'));
+      if (schedule) keysToRemove.push(guestKey('schedule'), guestOwnerKey('schedule'));
       try {
         keysToRemove.forEach((k) => localStorage.removeItem(k));
       } catch {}

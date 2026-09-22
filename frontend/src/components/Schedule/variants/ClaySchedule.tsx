@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useThemeStore } from '../../../stores/useThemeStore';
 import { useCycleLang } from '../../../hooks/useCycleLang';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useLangStore } from '../../../stores/useLangStore';
 import { getClayTokens } from '../../../lib/clayTokens';
 import { brandGradient } from '../../../themes/palette';
@@ -35,6 +36,9 @@ export default function ClaySchedule() {
   } = useScheduleActions();
 
   const { cycleLang } = useCycleLang();
+
+  const closeAiModal = useCallback(() => setIsAiModalOpen(false), []);
+  const modalRef = useFocusTrap(isAiModalOpen, closeAiModal);
 
   const tok = useMemo(() => getClayTokens(isDark), [isDark]);
   const c = tok.palette;
@@ -132,7 +136,7 @@ export default function ClaySchedule() {
             return (
               <button key={day} onClick={() => setSelectedDay(day)} aria-pressed={isSelected} className="shrink-0 px-5 py-3 text-[13px] font-bold clay-btn" style={{ backgroundColor: isSelected ? c.accent : c.card, color: isSelected ? '#fff' : c.inkSoft, boxShadow: isSelected ? tok.elevation.active : tok.elevation.raised }}>
                 <span className="flex items-center gap-1.5">
-                  {day.slice(0, 3)}
+                  {t(DAY_I18N_KEYS[day])}
                   {isToday && (
                     <span
                       aria-label={t('today', 'Today')}
@@ -153,7 +157,7 @@ export default function ClaySchedule() {
           <div className="lg:col-span-2">
             <div className="clay-card p-6">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="font-extrabold text-lg">{t('tasks_for_day', { day: selectedDay })}</h3>
+                <h3 className="font-extrabold text-lg">{t('tasks_for_day', { day: t(`day_${selectedDay.toLowerCase()}`) })}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[12px] font-bold" style={{ color: c.inkFaint }}>{Math.round(progress)}%</span>
                   <div className="w-16 h-2 rounded-full overflow-hidden clay-inset" style={{ backgroundColor: isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.2)' }}>
@@ -165,7 +169,7 @@ export default function ClaySchedule() {
               {currentTasks.length === 0 ? (
                 <div className="text-center py-12 clay-inset" style={{ backgroundColor: isDark ? 'rgba(124,108,176,0.05)' : 'rgba(180,170,210,0.1)' }}>
                   <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                  <p className="text-[14px] font-bold">{t('no_tasks', { day: selectedDay })}</p>
+                  <p className="text-[14px] font-bold">{t('no_tasks', { day: t(`day_${selectedDay.toLowerCase()}`) })}</p>
                   <p className="text-[12px] mt-1 font-semibold" style={{ color: c.inkFaint }}>{t('add_or_use_ai', 'Add one or use AI.')}</p>
                 </div>
               ) : (
@@ -232,8 +236,8 @@ export default function ClaySchedule() {
                 <div>
                   <label className="text-[12px] font-bold block mb-1.5" style={{ color: c.inkFaint }}>{t('time', 'Time')}</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="time" value={start} onChange={e => setStart(e.target.value)} required className="w-full px-3 py-2.5 rounded-[14px] text-[13px] font-semibold border-none outline-none transition-all duration-300 clay-inset" style={{ backgroundColor: isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.15)', color: c.ink }} />
-                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} required className="w-full px-3 py-2.5 rounded-[14px] text-[13px] font-semibold border-none outline-none transition-all duration-300 clay-inset" style={{ backgroundColor: isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.15)', color: c.ink }} />
+                    <input type="time" value={start} onChange={e => setStart(e.target.value)} aria-label={t('start_time')} required className="w-full px-3 py-2.5 rounded-[14px] text-[13px] font-semibold border-none outline-none transition-all duration-300 clay-inset" style={{ backgroundColor: isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.15)', color: c.ink }} />
+                    <input type="time" value={end} onChange={e => setEnd(e.target.value)} aria-label={t('end_time')} required className="w-full px-3 py-2.5 rounded-[14px] text-[13px] font-semibold border-none outline-none transition-all duration-300 clay-inset" style={{ backgroundColor: isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.15)', color: c.ink }} />
                   </div>
                 </div>
                 <div>
@@ -272,6 +276,7 @@ export default function ClaySchedule() {
               aria-modal="true"
               aria-label={t('ai_generator', 'AI Generator')}
               onClick={(e) => e.stopPropagation()}
+              ref={modalRef}
             >
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-extrabold text-lg flex items-center gap-2">
@@ -292,8 +297,8 @@ export default function ClaySchedule() {
                 <label className="text-[12px] font-bold block mb-1.5" style={{ color: c.inkFaint }}>{t('preferred_time', 'Preferred Time')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['any', 'morning', 'afternoon', 'evening'].map(time => (
-                    <button key={time} type="button" onClick={() => setPreferredTime(time)} className="px-3 py-2 rounded-[12px] text-[12px] font-bold transition-all" style={{ backgroundColor: preferredTime === time ? c.accent : isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.15)', color: preferredTime === time ? '#fff' : c.inkSoft }}>
-                      {t(`time_${time}`, time)}
+                    <button key={time} type="button" aria-pressed={preferredTime === time} onClick={() => setPreferredTime(time)} className="px-3 py-2 rounded-[12px] text-[12px] font-bold transition-all" style={{ backgroundColor: preferredTime === time ? c.accent : isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.15)', color: preferredTime === time ? '#fff' : c.inkSoft }}>
+                      {t(time, time)}
                     </button>
                   ))}
                 </div>
@@ -303,7 +308,7 @@ export default function ClaySchedule() {
                 <label className="text-[12px] font-bold block mb-1.5" style={{ color: c.inkFaint }}>{t('rest_days', 'Rest Days')}</label>
                 <div className="flex flex-wrap gap-2">
                   {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                    <button key={day} type="button" onClick={() => toggleRestDay(day)} className="px-3 py-1.5 rounded-[10px] text-[11px] font-bold transition-all" style={{ backgroundColor: restDays.includes(day) ? c.pink : isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.15)', color: restDays.includes(day) ? '#fff' : c.inkFaint }}>
+                    <button key={day} type="button" aria-pressed={restDays.includes(day)} onClick={() => toggleRestDay(day)} className="px-3 py-1.5 rounded-[10px] text-[11px] font-bold transition-all" style={{ backgroundColor: restDays.includes(day) ? c.pink : isDark ? 'rgba(124,108,176,0.1)' : 'rgba(180,170,210,0.15)', color: restDays.includes(day) ? '#fff' : c.inkFaint }}>
                       {t(DAY_I18N_KEYS[day])}
                     </button>
                   ))}

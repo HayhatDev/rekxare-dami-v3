@@ -57,6 +57,8 @@ function AnimatedRoutes() {
         exit="exit"
         transition={pageTransition}
         className="min-h-screen"
+        id="main-content"
+        tabIndex={-1}
       >
         <ErrorBoundary>
           <Switch location={location}>

@@ -52,6 +52,13 @@ describe('calculateXPProgress', () => {
     expect(calculateXPProgress(50)).toBe(0); // exactly at next level boundary
   });
 
+  it('returns a whole number (no floating point like 26.6666)', () => {
+    // Level 2 (xp 50-200): 90xp is 40/150 * 100 = 26.666... -> must be integer.
+    const p = calculateXPProgress(90);
+    expect(Number.isInteger(p)).toBe(true);
+    expect(p).toBe(27);
+  });
+
   it('is monotonic within a level', () => {
     const a = calculateXPProgress(10);
     const b = calculateXPProgress(40);
