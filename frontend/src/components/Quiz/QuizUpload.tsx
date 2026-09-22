@@ -135,7 +135,7 @@ export default function QuizUpload({
           </span>
           {remaining < 3 && (
             <span className="text-[11px] font-bold" style={{ color: colors.pink }}>
-              {t('quiz_daily_remaining', '{count} quiz generations left today').replace('{count}', String(remaining))}
+              {t('quiz_daily_remaining', { count: remaining, defaultValue: '{{count}} quiz generations left today' })}
             </span>
           )}
         </div>

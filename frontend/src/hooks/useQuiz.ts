@@ -13,7 +13,7 @@ export type QuizErrorCode =
   | 'GENERIC';
 
 export const QUIZ_DAILY_LIMIT = 5;
-const USAGE_KEY = 'rekxare_quiz_usage';
+export const USAGE_KEY = 'rekxare_quiz_usage';
 
 function usageDayKey(): string {
   return new Date().toISOString().slice(0, 10);
@@ -32,7 +32,8 @@ export function quizDailyRemaining(): number {
   }
 }
 
-function consumeQuizSlot(): boolean {
+/** Consume one daily quiz slot (shared across tabs). Return false when the limit is reached. */
+export function consumeQuizSlot(): boolean {
   try {
     const raw = localStorage.getItem(USAGE_KEY);
     let count = 0;
@@ -74,7 +75,9 @@ export function useQuiz() {
 
   const start = useCallback(
     async (opts: QuizStartOpts): Promise<boolean> => {
-      if (!consumeQuizSlot()) {
+      // Early gate for UX: bail out before showing the generating spinner when
+      // the daily limit is already reached.
+      if (quizDailyRemaining() === 0) {
         setError('DAILY_LIMIT');
         return false;
       }
@@ -88,6 +91,9 @@ export function useQuiz() {
           questionCount: opts.questionCount,
           lang: opts.lang,
         });
+        // Consume the daily slot only after a successful generation, so failed
+        // requests (network/AI errors) never burn a free quiz.
+        consumeQuizSlot();
         setQuestions(res.questions);
         setNote(res.note ?? '');
         setAnswers(new Array(res.questions.length).fill(-1));

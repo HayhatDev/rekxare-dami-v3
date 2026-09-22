@@ -3,25 +3,6 @@ import { guestKeysToClear, mergeStudyData, userKey, guestCacheOwnedBy } from './
 import { GuestDeletionState } from './supabase';
 import { StudyData } from '../types';
 
-// The node test environment has no localStorage; provide a minimal in-memory shim
-// so the scoped-cache helpers (`userKey`, `guestCacheOwnedBy`) are testable.
-type MemoryStore = Record<string, string>;
-const memoryStore: MemoryStore = {};
-(globalThis as Record<string, unknown>).localStorage = {
-  getItem(key: string): string | null {
-    return memoryStore[key] ?? null;
-  },
-  setItem(key: string, value: string): void {
-    memoryStore[key] = String(value);
-  },
-  removeItem(key: string): void {
-    delete memoryStore[key];
-  },
-  clear(): void {
-    Object.keys(memoryStore).forEach((k) => delete memoryStore[k]);
-  },
-};
-
 function study(overrides: Partial<StudyData> = {}): StudyData {
   return {
     total_seconds: 0,

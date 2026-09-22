@@ -54,6 +54,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react(), tailwindcss(), cspInjectionPlugin(env)],
+    test: {
+      setupFiles: ['./src/setupTests.ts'],
+    },
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, 'src'),
