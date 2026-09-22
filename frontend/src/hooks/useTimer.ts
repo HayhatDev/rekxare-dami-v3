@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useStudyData } from './useStudyData';
 import { playCelebrationSound } from '../utils/helpers';
-import { computeSessionRewards, RewardOutcome } from '../utils/rewards';
-import { appendSessionRecord, buildSessionRecord, dayKey, MIN_ABANDON_SECONDS } from '../utils/sessionLog';
+import { RewardOutcome } from '../utils/rewards';
+import { MIN_ABANDON_SECONDS } from '../utils/sessionLog';
+import { applySessionCompletion, applySessionAbandoned } from '../utils/applySession';
+import type { StudyData } from '../types';
 
 export const useTimer = (initialMinutes: number, currentSubject: string) => {
   const [secondsLeft, setSecondsLeft] = useState(initialMinutes * 60);
@@ -10,6 +13,13 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
   const [duration, setDuration] = useState(initialMinutes * 60);
   const [lastRewards, setLastRewards] = useState<RewardOutcome | null>(null);
   const { data: studyData, updateData } = useStudyData();
+  const queryClient = useQueryClient();
+
+  // Serializes completion/abandon writes so each one recomputes its increments
+  // from the freshest merged value instead of a stale snapshot. Without this two
+  // rapid completions could both compute `sessions + 1` off the same base and
+  // lose one increment on the full-object upsert.
+  const writeChainRef = useRef<Promise<void>>(Promise.resolve());
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -31,20 +41,41 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
   setLastRewardsRef.current = setLastRewards;
   secondsLeftRef.current = secondsLeft;
 
+  const getFreshestStudyData = (): StudyData | undefined =>
+    queryClient.getQueryData<StudyData>(['studyData']) ?? studyDataRef.current;
+
   logSessionRef.current = (focusSeconds, completed) => {
-    const sd = studyDataRef.current;
-    if (!sd || focusSeconds <= 0) return;
-    const started = startedAtRef.current || new Date().toISOString();
-    const record = buildSessionRecord({
-      startedAt: started,
-      day: dayKey(new Date(started)),
-      subject: currentSubjectRef.current,
-      plannedMinutes: Math.max(1, Math.round(durationRef.current / 60)),
-      focusSeconds,
-      completed,
-    });
-    const nextLog = appendSessionRecord(sd.session_log, record);
-    updateDataRef.current({ session_log: nextLog }).catch(() => {});
+    if (focusSeconds <= 0) return;
+    writeChainRef.current = writeChainRef.current
+      .then(async () => {
+        const sd = getFreshestStudyData();
+        if (!sd) return;
+        const started = startedAtRef.current || new Date().toISOString();
+        const subject = currentSubjectRef.current;
+        const plannedMinutes = Math.max(1, Math.round(durationRef.current / 60));
+        if (completed) {
+          const { patch, rewards } = applySessionCompletion(sd, {
+            startedAt: started,
+            endAt: new Date(),
+            subject,
+            focusSeconds,
+            plannedMinutes,
+          });
+          setLastRewardsRef.current(rewards);
+          justCompletedRef.current = true;
+          await updateDataRef.current(patch).catch(() => {});
+        } else {
+          const session_log = applySessionAbandoned(sd, {
+            startedAt: started,
+            endAt: new Date(),
+            subject,
+            focusSeconds,
+            plannedMinutes,
+          });
+          await updateDataRef.current({ session_log }).catch(() => {});
+        }
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -82,51 +113,17 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
       };
     } else if (secondsLeft === 0 && isActive) {
       setIsActive(false);
-      const latestStudyData = studyDataRef.current;
       const latestDuration = durationRef.current;
-      const latestSubject = currentSubjectRef.current;
 
       playCelebrationSound();
 
-      if (latestStudyData) {
-        const minutesStudied = Math.floor(latestDuration / 60);
-        const rewards = computeSessionRewards(latestStudyData, {
-          minutes: minutesStudied,
-          completed: true,
-          subject: latestSubject,
-          last_subject: latestStudyData.last_subject,
-        });
+      // Dedupe: StrictMode re-runs effects, and isDone+reset can otherwise
+      // re-enter this branch. Awarding a session twice would double XP/log.
+      if (justCompletedRef.current) return;
+      justCompletedRef.current = true;
 
-        setLastRewardsRef.current(rewards);
-        justCompletedRef.current = true;
-
-        const nextLog = appendSessionRecord(
-          latestStudyData.session_log,
-          buildSessionRecord({
-            startedAt: startedAtRef.current || new Date().toISOString(),
-            day: dayKey(new Date()),
-            subject: latestSubject,
-            plannedMinutes: minutesStudied,
-            focusSeconds: latestDuration,
-            completed: true,
-          })
-        );
-
-        // Best-effort cloud write. The mutation's onError already handles logging,
-        // and localFallback.setStudyData runs first (see api.updateStudyData), so a
-        // failed Supabase upsert still leaves data saved locally. Swallow the
-        // rejection to avoid an unhandled promise rejection on session completion.
-        updateDataRef.current({
-          total_seconds: rewards.total_seconds,
-          sessions: rewards.sessions,
-          last_subject: latestSubject,
-          daily_seconds: rewards.daily_seconds,
-          xp_points: rewards.xp_points,
-          xp_level: rewards.xp_level,
-          streak: rewards.streak,
-          last_study_date: rewards.last_study_date,
-          session_log: nextLog
-        }).catch(() => {});
+      if (latestDuration > 0) {
+        logSessionRef.current(latestDuration, true);
       }
     } else {
       return () => {

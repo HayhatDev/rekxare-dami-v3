@@ -12,6 +12,7 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import LocalInsightsCards from '../components/Insights/LocalInsightsCards';
 import { getThemeColors, getThemeFont, brandGradient, brandGradientSoft } from '../themes/palette';
 import { STATUS_COLORS } from '../utils/constants';
+import { normalizeWeeklyTrend, weeklyTrendLabelKey } from '../utils/trend';
 import { TrendingUp, TrendingDown, Minus, Trophy, Target, Lightbulb, AlertTriangle, RefreshCw, BarChart3, Brain, Sparkles, Sun, Moon } from 'lucide-react';
 
 export default function Insights() {
@@ -31,6 +32,8 @@ export default function Insights() {
 
   const trendIcons = { improving: TrendingUp, stable: Minus, declining: TrendingDown };
   const trendColors = { improving: STATUS_COLORS.success, stable: c.accentSoft, declining: STATUS_COLORS.danger };
+  const trend = normalizeWeeklyTrend(data?.weekly_trend);
+  const trendLabelKey = weeklyTrendLabelKey(data?.weekly_trend);
   const score = data?.score || 0;
   const scoreColor = score >= 70 ? STATUS_COLORS.success : score >= 40 ? STATUS_COLORS.warning : STATUS_COLORS.danger;
   const circumference = 2 * Math.PI * 54;
@@ -164,7 +167,7 @@ export default function Insights() {
               {t('ai_retry', 'Retry')}
             </button>
           </div>
-        ) : !data || (!data.summary && data.strengths.length === 0) ? (
+        ) : !data || (!data.summary && (data.strengths ?? []).length === 0) ? (
           /* Rich empty state */
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-20 h-20 rounded-[22px] flex items-center justify-center mb-6"
@@ -241,7 +244,7 @@ export default function Insights() {
                   <p className="text-sm font-bold" style={{ color: c.ink }}>{t('strengths', 'Strengths')}</p>
                 </div>
                 <div className="space-y-3">
-                  {data.strengths.map((s, i) => (
+                  {(data.strengths ?? []).map((s, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <span className="mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                         style={{ backgroundColor: `${STATUS_COLORS.success}20`, color: STATUS_COLORS.success }}>{i + 1}</span>
@@ -256,7 +259,7 @@ export default function Insights() {
                   <p className="text-sm font-bold" style={{ color: c.ink }}>{t('weaknesses', 'Areas to Improve')}</p>
                 </div>
                 <div className="space-y-3">
-                  {data.weaknesses.map((w, i) => (
+                  {(data.weaknesses ?? []).map((w, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <span className="mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                         style={{ backgroundColor: `${STATUS_COLORS.warning}20`, color: STATUS_COLORS.warning }}>{i + 1}</span>
@@ -274,17 +277,17 @@ export default function Insights() {
                   <Target className="w-5 h-5" style={{ color: c.accent }} />
                   <p className="text-sm font-bold" style={{ color: c.ink }}>{t('weekly_trend', 'Weekly Trend')}</p>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${trendColors[data.weekly_trend]}15` }}>
-                  {(() => { const Icon = trendIcons[data.weekly_trend]; return <Icon className="w-4 h-4" style={{ color: trendColors[data.weekly_trend] }} />; })()}
-                  <span className="text-sm font-semibold" style={{ color: trendColors[data.weekly_trend] }}>
-                    {t(`trend_${data.weekly_trend}`, data.weekly_trend)}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${trendColors[trend]}15` }}>
+                  {(() => { const Icon = trendIcons[trend]; return <Icon className="w-4 h-4" style={{ color: trendColors[trend] }} />; })()}
+                  <span className="text-sm font-semibold" style={{ color: trendColors[trend] }}>
+                    {t(trendLabelKey, 'Stable')}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Subject Breakdown */}
-            {data.subject_breakdown.length > 0 && (
+            {(data.subject_breakdown ?? []).length > 0 && (
               <div className="rounded-2xl p-5" style={{ animation: 'insRise 600ms cubic-bezier(0.32, 0.72, 0.24, 1) 270ms both', backgroundColor: c.card, border: `1px solid ${c.cardBorder}` }}>
                 <p className="text-sm font-bold mb-4" style={{ color: c.ink }}>{t('subject_breakdown', 'Subject Breakdown')}</p>
                 <div className="space-y-3">
@@ -325,7 +328,7 @@ export default function Insights() {
                 <p className="text-sm font-bold" style={{ color: c.ink }}>{t('recommendations', 'Recommendations')}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {data.recommendations.map((r, i) => (
+                {(data.recommendations ?? []).map((r, i) => (
                   <div key={i} className="flex items-start gap-3 rounded-xl p-3" style={{ backgroundColor: `${c.accent}08`, border: `1px solid ${c.accent}15` }}>
                     <span className="mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                       style={{ backgroundColor: `${c.accent}20`, color: c.accent }}>{i + 1}</span>
