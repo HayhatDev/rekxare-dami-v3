@@ -12,6 +12,7 @@ import AuthGate from './components/Auth/AuthGate';
 import GuestLocked from './components/Auth/GuestLocked';
 import ErrorBoundary from './components/Auth/ErrorBoundary';
 import StudyReminder from './components/StudyReminder';
+import InstallApp from './components/InstallApp';
 
 import Home from './pages/Home';
 import Schedule from './pages/Schedule';
@@ -133,6 +134,7 @@ function App() {
             <Router />
           </WouterRouter>
         </AuthGate>
+        <InstallApp />
       </AuthProvider>
       <Toaster richColors position="top-center" />
     </QueryClientProvider>

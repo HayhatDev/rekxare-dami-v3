@@ -36,7 +36,7 @@ export interface ForestTokens {
 export function getForestTokens(isDark: boolean): ForestTokens {
   const p = getThemeColors('forest', isDark);
   const leafGreen = isDark ? '#4CAF50' : '#2E6B2F';
-  const leafSoft = isDark ? '#6BC96E' : '#4CAF50';
+  const leafSoft = isDark ? '#6BC96E' : '#2A7D2D';
   const bark = isDark ? '#8B6040' : '#7C5230';
   const bgDeep = isDark ? '#060E05' : '#D4E8D0';
   const panel = isDark ? 'rgba(42,90,40,0.06)' : 'rgba(0,0,0,0.03)';

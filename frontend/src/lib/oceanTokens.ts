@@ -33,7 +33,7 @@ export interface OceanTokens {
 
 export function getOceanTokens(isDark: boolean): OceanTokens {
   const p = getThemeColors('ocean', isDark);
-  const teal = '#00C8B8';
+  const teal = isDark ? '#00C8B8' : '#0B7D74';
   const deepblue = isDark ? '#1A90C8' : '#1478A8';
   const panel = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
   const well = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
@@ -48,7 +48,7 @@ export function getOceanTokens(isDark: boolean): OceanTokens {
     surface: { panel, well },
     text: {
       ink: isDark ? '#C8E4F5' : '#06101E',
-      inkMuted: isDark ? 'rgba(200,228,245,0.65)' : 'rgba(6,16,30,0.62)',
+      inkMuted: isDark ? 'rgba(200,228,245,0.65)' : 'rgba(6,16,30,0.75)',
       inkFaint: isDark ? 'rgba(200,228,245,0.40)' : 'rgba(6,16,30,0.42)',
     },
     space: { xs: 8, sm: 12, md: 16, lg: 24, xl: 32 },

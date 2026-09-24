@@ -30,15 +30,17 @@ function TideTimer({ progress, secondsLeft, selectedSubject, isDark }: {
   const waterY = 280 - p * 240;
   const skyH = waterY;
 
-  const skyTop = isDark ? '#020810' : '#7EC8E3';
-  const skyBot = isDark ? '#0A1E38' : '#B8E0F0';
-  const waterDeep = isDark ? '#041828' : '#1478A8';
-  const waterMid = isDark ? '#082840' : '#1A90C8';
-  const waterLight = isDark ? '#104060' : '#38B8D8';
-  const sandColor = isDark ? '#3A3020' : '#E8D8A0';
-  const sandDark = isDark ? '#2A2218' : '#D0C080';
-  const seaweedColor = isDark ? '#2A6830' : '#3A8840';
-  const sunColor = isDark ? '#E8C54A' : '#F5D860';
+  // The scene always renders in the deep-ocean palette (dark sky + water) so the
+  // timer readout stays white-on-dark and never disappears against a light page.
+  const skyTop = '#020810';
+  const skyBot = '#0A1E38';
+  const waterDeep = '#041828';
+  const waterMid = '#082840';
+  const waterLight = '#104060';
+  const sandColor = '#3A3020';
+  const sandDark = '#2A2218';
+  const seaweedColor = '#2A6830';
+  const sunColor = isDark ? '#E8C54A' : '#F2D37A';
 
   const rise = { transition: 'transform 0.8s ease-out' } as const;
 
@@ -307,9 +309,9 @@ export default function OceanHome() {
           {/* Center Column: Tide Timer */}
           <div className="lg:col-span-6 flex flex-col items-center justify-center gap-7 py-2 oc-fade-in-delay">
             <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.2em]">
-              <span style={{ color: isDark ? 'rgba(200,228,245,0.55)' : 'rgba(26,90,130,0.6)' }}>{t('tide_level', 'Tide Level')}</span>
+              <span style={{ color: isDark ? 'rgba(200,228,245,0.55)' : 'rgba(26,90,130,0.78)' }}>{t('tide_level', 'Tide Level')}</span>
               <span className="font-bold" style={{ color: teal }}>{Math.round(progress)}%</span>
-              <span className="text-[11px] tracking-wider" style={{ color: isDark ? 'rgba(200,228,245,0.35)' : 'rgba(26,90,130,0.45)' }}>
+              <span className="text-[11px] tracking-wider" style={{ color: isDark ? 'rgba(200,228,245,0.35)' : 'rgba(26,90,130,0.85)' }}>
                 {isActive ? `${selectedMinutes} ${t('minutes', 'mins')}` : t('calm_waters', 'Ready')}
               </span>
             </div>

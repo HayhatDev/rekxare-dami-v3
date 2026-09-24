@@ -45,13 +45,13 @@ export function getMountainTokens(isDark: boolean): MountainTokens {
   const p = getThemeColors('mountain', isDark);
   const trail = isDark ? '#6B8E6F' : '#4A5D45';
   const path = isDark ? '#B8794F' : '#8B6F47';
-  const gold = isDark ? '#F5D899' : '#B68A3E';
+  const gold = isDark ? '#F5D899' : '#8F6518';
   const panel = isDark ? 'rgba(34,46,32,0.55)' : 'rgba(255,255,255,0.45)';
   const panelStrong = isDark ? '#222E20' : 'rgba(255,255,255,0.7)';
   const chip = isDark ? 'rgba(61,74,56,0.9)' : 'rgba(255,255,255,0.6)';
   const chipHover = isDark ? 'rgba(74,93,69,0.9)' : 'rgba(255,255,255,0.85)';
   const well = isDark ? '#2E3B2C' : '#D8E2D4';
-  const label = isDark ? '#9FB399' : '#6B8E6F';
+  const label = isDark ? '#9FB399' : '#55734F';
   const outline = isDark ? '#5D6F58' : '#A8C4A0';
   const outlineSoft = isDark ? '#485A44' : '#C2D6BC';
 

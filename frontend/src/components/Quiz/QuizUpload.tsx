@@ -61,8 +61,8 @@ function TabButton({
       onClick={onClick}
       className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors flex items-center justify-center gap-2"
       style={{
-        backgroundColor: active ? `${colors.accent}15` : 'transparent',
-        color: active ? colors.accent : colors.inkSoft,
+        backgroundColor: active ? colors.accent : 'transparent',
+        color: active ? '#fff' : colors.inkSoft,
       }}
       aria-pressed={active}
     >
