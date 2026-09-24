@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 
 interface CelebrationOverlayProps {
   /** Whether the session is complete. */
@@ -12,6 +13,8 @@ interface CelebrationOverlayProps {
   minutes?: number;
   /** Called when the user taps "Take a Quiz". */
   onQuiz?: () => void;
+  /** Called when the user dismisses the overlay via the × button. */
+  onDismiss?: () => void;
   /** True when this completion is a streak milestone — only then is confetti shown. */
   celebrate?: boolean;
 }
@@ -62,9 +65,18 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
   colorB,
   minutes,
   onQuiz,
+  onDismiss,
   celebrate = false,
 }) => {
   const { t } = useTranslation();
+
+  // Lets a user refuse the quiz card with the × button. Resets automatically
+  // once the timer leaves the completed state, so the next finished session
+  // shows the overlay again.
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    if (!isDone) setDismissed(false);
+  }, [isDone]);
 
   const pieces = useMemo<Piece[]>(() => {
     if (!isDone || !celebrate) return [];
@@ -86,7 +98,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
     });
   }, [isDone, colorA, colorB]);
 
-  if (!isDone) return null;
+  if (!isDone || dismissed) return null;
 
   return (
     <div
@@ -140,6 +152,18 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center px-8 py-6 rounded-3xl backdrop-blur-md border border-white/20 bg-black/35 shadow-2xl"
         style={{ animation: 'rd-card-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both' }}
       >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDismissed(true);
+            onDismiss?.();
+          }}
+          aria-label={t('celebration_dismiss', 'Dismiss')}
+          className="pointer-events-auto absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
         <p
           className="text-3xl font-extrabold tracking-tight text-white"
           style={{ textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}
