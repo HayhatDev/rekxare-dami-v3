@@ -44,11 +44,26 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
   const getFreshestStudyData = (): StudyData | undefined =>
     queryClient.getQueryData<StudyData>(['studyData']) ?? studyDataRef.current;
 
+  // Resolve study data for a session write. Study data may not be hydrated yet
+  // (guest first load / slow network); if so, await the registered ['studyData']
+  // query so a completed session is never silently dropped for lack of a
+  // baseline. Returns undefined only if the query ultimately fails.
+  const getStudyDataForWrite = async (): Promise<StudyData | undefined> => {
+    let sd = getFreshestStudyData();
+    if (sd) return sd;
+    try {
+      await queryClient.ensureQueryData({ queryKey: ['studyData'] });
+    } catch {
+      return undefined;
+    }
+    return getFreshestStudyData();
+  };
+
   logSessionRef.current = (focusSeconds, completed) => {
     if (focusSeconds <= 0) return;
     writeChainRef.current = writeChainRef.current
       .then(async () => {
-        const sd = getFreshestStudyData();
+        const sd = await getStudyDataForWrite();
         if (!sd) return;
         const started = startedAtRef.current || new Date().toISOString();
         const subject = currentSubjectRef.current;

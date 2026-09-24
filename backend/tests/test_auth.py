@@ -249,3 +249,12 @@ async def test_malformed_token_rejected():
     with pytest.raises(HTTPException) as exc:
         await auth.decode_token("not.a-jwt")
     assert exc.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_non_object_header_rejected():
+    # Header segment decodes to a JSON array instead of an object.
+    token = _b64u(b"[1, 2]") + "." + _b64u(b"{}") + "." + _b64u(b"{}")
+    with pytest.raises(HTTPException) as exc:
+        await auth.decode_token(token)
+    assert exc.value.status_code == 401

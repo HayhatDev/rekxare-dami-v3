@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { generateQuiz, type QuizQuestion } from '../services/aiAdvisor';
 import { useStudyData } from './useStudyData';
+import { dayKey } from '../utils/sessionLog';
 
 export type QuizPhase = 'idle' | 'generating' | 'playing' | 'results';
 
@@ -16,7 +17,7 @@ export const QUIZ_DAILY_LIMIT = 5;
 export const USAGE_KEY = 'rekxare_quiz_usage';
 
 function usageDayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return dayKey(new Date());
 }
 
 /** How many quiz generations remain today (shared across tabs). */

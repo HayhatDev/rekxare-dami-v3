@@ -86,8 +86,10 @@ def _reject(message: str) -> None:
 
 async def decode_token(token: str) -> dict:
     header = _get_token_header(token)
-    alg = header.get("alg") if header else None
-    kid = header.get("kid") if header else None
+    if not isinstance(header, dict):
+        _reject("malformed header")
+    alg = header.get("alg")
+    kid = header.get("kid")
 
     issuers = _expected_issuers()
     if not issuers:
