@@ -1,4 +1,7 @@
 import base64
+import hashlib
+import hmac
+import json
 import time
 import uuid
 
@@ -90,7 +93,22 @@ def _rs256_token(private_key, *, kid: str | None = KID, **claims) -> str:
 
 
 def _hs256_token(secret=STRONG_SECRET, **claims) -> str:
-    return jwt.encode(_claims(**claims), secret, algorithm="HS256")
+    # Hand-build the token instead of letting PyJWT encode it: since PyJWT 2.11
+    # jwt.encode refuses an empty signing key (HMAC key must not be empty), so the
+    # forged-empty-secret tests below would break on fresh installs. Building the
+    # JWT with stdlib hmac keeps this version-independent. Must match PyJWT's
+    # compact JSON + no-padding base64url so decode() verifies identically.
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = json.dumps(_claims(**claims), separators=(",", ":")).encode("utf-8")
+    signing_input = (
+        _b64u(json.dumps(header, separators=(",", ":")).encode("utf-8"))
+        + "."
+        + _b64u(payload)
+    )
+    signature = _b64u(
+        hmac.new(secret.encode("utf-8"), signing_input.encode("ascii"), hashlib.sha256).digest()
+    )
+    return f"{signing_input}.{signature}"
 
 
 @pytest.mark.asyncio

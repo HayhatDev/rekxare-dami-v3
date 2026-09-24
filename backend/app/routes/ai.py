@@ -162,6 +162,10 @@ async def _cached_or_produce(key: str, ttl: float, producer):
 
     producer may raise HTTPException — nothing is cached on failure, so a
     transient provider error never poisons the cache.
+
+    Callers must treat the returned value as immutable: the SAME object is
+    returned to every cache hit (FastAPI only serializes it today, but a future
+    handler that mutates its response would poison the cache for later hits).
     """
     cached = ai_response_cache.get(key)
     if cached is not None:
@@ -590,10 +594,9 @@ async def generate_quiz(request: Request, body: QuizRequest, user: dict = Depend
             logger.error("Failed to parse quiz response for user %s", user["sub"])
             raise HTTPException(status_code=502, detail="AI returned an invalid response")
         questions = _normalize_questions(parsed, body.question_count)
-        if not questions:
-            note = str(parsed.get("note", "")).strip()[:500]
-            raise HTTPException(status_code=422, detail=note or "AI could not extract usable questions")
         note = str(parsed.get("note", "")).strip()[:500]
+        if not questions:
+            raise HTTPException(status_code=422, detail=note or "AI could not extract usable questions")
         return {"questions": questions, "note": note}
 
     return await _cached_or_produce(key, CACHE_TTL_QUIZ, produce)

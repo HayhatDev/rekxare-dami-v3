@@ -28,17 +28,17 @@ def test_make_key_unicode_stable():
 
 
 def test_ttl_cache_set_get_expire():
-    cache = TTLCache(default_ttl=0.05)
+    cache = TTLCache(default_ttl=0.1)
     cache.set("a", {"x": 1})
     assert cache.get("a") == {"x": 1}
-    time.sleep(0.07)
+    time.sleep(0.3)
     assert cache.get("a") is None
 
 
 def test_ttl_cache_custom_ttl():
     cache = TTLCache(default_ttl=60)
-    cache.set("short", "v", ttl=0.05)
-    time.sleep(0.07)
+    cache.set("short", "v", ttl=0.1)
+    time.sleep(0.3)
     assert cache.get("short") is None
     cache.set("long", "v")
     assert cache.get("long") == "v"
