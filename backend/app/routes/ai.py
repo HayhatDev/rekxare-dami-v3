@@ -73,7 +73,14 @@ async def _call_gemini(prompt: str, temperature: float, max_tokens: int) -> str:
     if not candidates:
         raise RuntimeError("Gemini returned no candidates")
     parts = candidates[0].get("content", {}).get("parts", [])
-    return "".join(p.get("text", "") for p in parts)
+    text = "".join(p.get("text", "") for p in parts).strip()
+    if not text:
+        # Thinking-model edge case: reasoning tokens can consume the whole
+        # output budget, leaving `content` empty. Treat it as a failure so
+        # call_ai() falls back to Groq instead of handing an empty string to
+        # the JSON parser and returning a 502.
+        raise RuntimeError("Gemini returned empty content")
+    return text
 
 
 async def _call_groq(prompt: str, temperature: float, max_tokens: int) -> str:
@@ -343,7 +350,7 @@ async def analyze_study_data(request: Request, body: AnalyzeRequest, user: dict 
     prompt = build_analyze_prompt(study_data, body.lang or "en")
 
     try:
-        content = await call_ai(prompt, temperature=0.4, max_tokens=500, lang=body.lang or "en")
+        content = await call_ai(prompt, temperature=0.4, max_tokens=2000, lang=body.lang or "en")
     except Exception:
         logger.exception("All AI providers failed for /analyze")
         raise HTTPException(status_code=502, detail="AI service temporarily unavailable")

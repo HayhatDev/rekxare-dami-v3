@@ -1,0 +1,113 @@
+import pytest
+from app.routes import ai
+
+
+class _Resp:
+    def __init__(self, status_code, body):
+        self.status_code = status_code
+        self._body = body
+
+    def json(self):
+        return self._body
+
+    @property
+    def text(self):
+        return str(self._body)
+
+
+class _CtxClient:
+    def __init__(self, resp):
+        self._resp = resp
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *a):
+        return False
+
+    async def post(self, *a, **k):
+        return self._resp
+
+
+@pytest.mark.asyncio
+async def test_gemini_empty_content_raises(monkeypatch):
+    """Thinking-model empty reply must raise so call_ai can fall back to Groq."""
+    body = {"candidates": [{"content": {}, "finishReason": "MAX_TOKENS"}]}
+    monkeypatch.setattr(ai.httpx, "AsyncClient", lambda *a, **k: _CtxClient(_Resp(200, body)))
+    with pytest.raises(RuntimeError, match="empty content"):
+        await ai._call_gemini("hi", 0.4, 20)
+
+
+@pytest.mark.asyncio
+async def test_gemini_non200_raises(monkeypatch):
+    monkeypatch.setattr(ai.httpx, "AsyncClient", lambda *a, **k: _CtxClient(_Resp(503, {})))
+    with pytest.raises(RuntimeError, match="503"):
+        await ai._call_gemini("hi", 0.4, 20)
+
+
+@pytest.mark.asyncio
+async def test_gemini_happy_path_returns_text(monkeypatch):
+    body = {"candidates": [{"content": {"parts": [{"text": "ئەوەیە نموونە"}]}}]}
+    monkeypatch.setattr(ai.httpx, "AsyncClient", lambda *a, **k: _CtxClient(_Resp(200, body)))
+    out = await ai._call_gemini("hi", 0.4, 20)
+    assert "نموونە" in out
+
+
+@pytest.mark.asyncio
+async def test_kurdish_routes_to_gemini_first_falls_back_to_groq(monkeypatch):
+    """badini/sorani use Gemini as primary; failed Gemini falls back to Groq."""
+    calls = []
+
+    async def gemini_fail(prompt, t, m):
+        calls.append("gemini")
+        raise RuntimeError("Gemini returned empty content")
+
+    async def gemini_ok(prompt, t, m):
+        calls.append("gemini")
+        return "ئەوەیە وەڵام"
+
+    async def groq_ok(prompt, t, m):
+        calls.append("groq")
+        return '{"questions": []}'
+
+    monkeypatch.setattr(ai, "_call_gemini", gemini_fail)
+    monkeypatch.setattr(ai, "_call_groq", groq_ok)
+    monkeypatch.setattr(ai, "GEMINI_API_KEY", "set")
+    monkeypatch.setattr(ai, "GROQ_API_KEY", "set")
+    out = await ai.call_ai("hi", lang="badini")
+    assert out == '{"questions": []}'
+    assert calls == ["gemini", "groq"]
+
+    calls.clear()
+    monkeypatch.setattr(ai, "_call_gemini", gemini_ok)
+    out = await ai.call_ai("hi", lang="sorani")
+    assert "وەڵام" in out
+    assert calls == ["gemini"]
+
+
+@pytest.mark.asyncio
+async def test_english_routes_to_groq_first(monkeypatch):
+    calls = []
+
+    async def groq_ok(prompt, t, m):
+        calls.append("groq")
+        return "ok"
+
+    async def gemini_ok(prompt, t, m):
+        calls.append("gemini")
+        return "should-not-be-first"
+
+    monkeypatch.setattr(ai, "_call_gemini", gemini_ok)
+    monkeypatch.setattr(ai, "_call_groq", groq_ok)
+    monkeypatch.setattr(ai, "GEMINI_API_KEY", "set")
+    monkeypatch.setattr(ai, "GROQ_API_KEY", "set")
+    out = await ai.call_ai("hi", lang="en")
+    assert out == "ok"
+    assert calls == ["groq"]
+
+
+def test_lang_instructions_distinguish_kurdish_dialects():
+    assert "بادینی" in ai.LANG_INSTRUCTIONS["badini"]
+    assert "سۆرانی" in ai.LANG_INSTRUCTIONS["sorani"]
+    for lang in ("en", "badini", "ar", "sorani"):
+        assert lang in ai.LANG_INSTRUCTIONS
