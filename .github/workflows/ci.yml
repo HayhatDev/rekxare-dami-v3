@@ -56,3 +56,13 @@ jobs:
         run: pnpm test
       - name: Build
         run: pnpm build
+      - name: Deploy to Cloudflare Pages
+        if: github.ref == 'refs/heads/main' && secrets.CLOUDFLARE_API_TOKEN != ''
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: rekxare-dami
+          directory: frontend/dist
+          branch: main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
