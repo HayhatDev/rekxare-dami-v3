@@ -149,7 +149,7 @@ export default function NightSkySchedule() {
         </div>
 
         {/* Day selector */}
-        <div className="flex overflow-x-auto pb-3 gap-2 mb-8" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex flex-wrap justify-center md:justify-start gap-2 md:gap-3 mb-8">
           {DAYS_OF_WEEK.map(day => {
             const isSelected = selectedDay === day;
             const isToday = day === new Date().toLocaleDateString('en-US', { weekday: 'long' });
