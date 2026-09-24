@@ -111,3 +111,45 @@ def test_lang_instructions_distinguish_kurdish_dialects():
     assert "سۆرانی" in ai.LANG_INSTRUCTIONS["sorani"]
     for lang in ("en", "badini", "ar", "sorani"):
         assert lang in ai.LANG_INSTRUCTIONS
+
+
+def test_parse_json_clean_object():
+    assert ai._parse_json('{"a": 1}') == {"a": 1}
+
+
+def test_parse_json_strips_code_fences():
+    out = ai._parse_json("```json\n{\"a\": 1}\n```")
+    assert out == {"a": 1}
+
+
+def test_parse_json_recovers_embedded_object():
+    out = ai._parse_json('Here you go {\"a\": 1}. Let me know if helpful.')
+    assert out == {"a": 1}
+
+
+def test_parse_json_returns_none_on_garbage():
+    assert ai._parse_json("no json here") is None
+    assert ai._parse_json('{"broken":') is None
+
+
+@pytest.mark.asyncio
+async def test_ai_content_or_502_returns_content(monkeypatch):
+    async def ok(prompt, temperature, max_tokens, lang):
+        return '{"a": 1}'
+
+    monkeypatch.setattr(ai, "call_ai", ok)
+    out = await ai._ai_content_or_502("prompt", "en", 100, 0.4)
+    assert out == '{"a": 1}'
+
+
+@pytest.mark.asyncio
+async def test_ai_content_or_502_raises_on_provider_failure(monkeypatch):
+    from fastapi import HTTPException
+
+    async def fail(prompt, temperature, max_tokens, lang):
+        raise RuntimeError("all providers down")
+
+    monkeypatch.setattr(ai, "call_ai", fail)
+    with pytest.raises(HTTPException) as exc:
+        await ai._ai_content_or_502("prompt", "en", 100, 0.4)
+    assert exc.value.status_code == 502

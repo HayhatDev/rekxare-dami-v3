@@ -2,7 +2,7 @@ import os
 import re
 import json
 import logging
-from typing import List, Literal
+from typing import List, Literal, Optional
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, Field
 import httpx
@@ -11,6 +11,7 @@ from app.utils.supabase import supabase_request, sanitize_key
 from app.utils.auth import require_auth
 from app.utils.rate_limit import limiter
 from app.utils.day_keys import normalize_day_keys
+from app.utils.ai_cache import TTLCache, make_key
 
 logger = logging.getLogger("rekxare.ai")
 router = APIRouter()
@@ -18,6 +19,12 @@ router = APIRouter()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-3.6-flash"
+
+# Caching keeps identical AI requests off the provider quota (the scaling
+# constraint at 100+ users). Safe here because we run a single worker.
+ai_response_cache = TTLCache(max_entries=512, default_ttl=3600)
+CACHE_TTL_QUIZ = 3600 * 1       # same material re-quizzed shortly after is common
+CACHE_TTL_SCHEDULE = 3600 * 6   # same goal + same weekday -> same schedule
 
 MAX_GOAL_LENGTH = 500
 MAX_EXISTING_TASKS_LENGTH = 1000
@@ -119,6 +126,50 @@ async def call_ai(prompt: str, temperature: float = 0.4, max_tokens: int = 500, 
     if fallback_key:
         return await fallback(prompt, temperature, max_tokens)
     raise RuntimeError("No AI provider configured")
+
+
+async def _ai_content_or_502(prompt: str, lang: str, max_tokens: int, temperature: float) -> str:
+    """Call call_ai(), converting total provider failure into a 502."""
+    try:
+        return await call_ai(prompt, temperature=temperature, max_tokens=max_tokens, lang=lang)
+    except Exception:
+        logger.exception("All AI providers failed")
+        raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
+
+
+def _parse_json(content: str) -> Optional[dict]:
+    """Parse model JSON output, tolerating stray text/code fences around it."""
+    try:
+        parsed = json.loads(_strip_json_fences(content))
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    try:
+        start = content.find("{")
+        end = content.rfind("}")
+        if start != -1 and end > start:
+            parsed = json.loads(content[start : end + 1])
+            if isinstance(parsed, dict):
+                return parsed
+    except Exception:
+        pass
+    return None
+
+
+async def _cached_or_produce(key: str, ttl: float, producer):
+    """Return a fresh cached response, else run producer and store its output.
+
+    producer may raise HTTPException — nothing is cached on failure, so a
+    transient provider error never poisons the cache.
+    """
+    cached = ai_response_cache.get(key)
+    if cached is not None:
+        logger.info("AI cache hit for key %s", key[:12])
+        return cached
+    value = await producer()
+    ai_response_cache.set(key, value, ttl=ttl)
+    return value
 
 
 @router.get("/status")
@@ -529,36 +580,23 @@ async def generate_quiz(request: Request, body: QuizRequest, user: dict = Depend
 
     subject = _sanitize_prompt_input(body.subject, MAX_SUBJECT_LENGTH)
     lang = body.lang or "en"
-    prompt = build_quiz_prompt(text, subject, body.question_count, lang)
+    key = make_key("quiz", lang, text, subject, body.question_count)
 
-    try:
-        content = await call_ai(prompt, temperature=0.4, max_tokens=4000, lang=lang)
-    except Exception:
-        logger.exception("All AI providers failed for /quiz")
-        raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
-
-    parsed = None
-    try:
-        parsed = json.loads(_strip_json_fences(content))
-    except Exception:
-        try:
-            start = content.find("{")
-            end = content.rfind("}")
-            if start != -1 and end > start:
-                parsed = json.loads(content[start : end + 1])
-        except Exception:
-            parsed = None
-
-    if not isinstance(parsed, dict):
-        logger.error("Failed to parse quiz response for user %s", user["sub"])
-        raise HTTPException(status_code=502, detail="AI returned an invalid response")
-
-    questions = _normalize_questions(parsed, body.question_count)
-    if not questions:
+    async def produce():
+        prompt = build_quiz_prompt(text, subject, body.question_count, lang)
+        content = await _ai_content_or_502(prompt, lang, max_tokens=4000, temperature=0.4)
+        parsed = _parse_json(content)
+        if parsed is None:
+            logger.error("Failed to parse quiz response for user %s", user["sub"])
+            raise HTTPException(status_code=502, detail="AI returned an invalid response")
+        questions = _normalize_questions(parsed, body.question_count)
+        if not questions:
+            note = str(parsed.get("note", "")).strip()[:500]
+            raise HTTPException(status_code=422, detail=note or "AI could not extract usable questions")
         note = str(parsed.get("note", "")).strip()[:500]
-        raise HTTPException(status_code=422, detail=note or "AI could not extract usable questions")
-    note = str(parsed.get("note", "")).strip()[:500]
-    return {"questions": questions, "note": note}
+        return {"questions": questions, "note": note}
+
+    return await _cached_or_produce(key, CACHE_TTL_QUIZ, produce)
 
 
 @router.post("/generate")
@@ -567,34 +605,28 @@ async def generate_schedule(request: Request, body: GenerateScheduleRequest, use
     if not GROQ_API_KEY and not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="AI service not configured")
 
+    # Sanitize up front so the cache key exactly matches the prompt inputs
+    # (identical prompt -> identical key -> cache hit).
     goal = _sanitize_prompt_input(body.goal, MAX_GOAL_LENGTH)
     existing = _sanitize_prompt_input(body.existing_tasks, MAX_EXISTING_TASKS_LENGTH)
+    rest_days = [_sanitize_prompt_input(d, 20) for d in body.rest_days[:7]]
+    subjects = [_sanitize_prompt_input(s, MAX_SUBJECT_LENGTH) for s in body.subject_preferences[:20]]
     today = datetime.now().strftime("%A")
-    prompt = build_generate_prompt(goal, body.preferred_time, body.rest_days,
-                                   body.subject_preferences, existing, today, body.lang or "en")
+    lang = body.lang or "en"
+    key = make_key("generate", lang, today, goal, body.preferred_time, rest_days, subjects, existing)
 
-    try:
-        content = await call_ai(prompt, temperature=0.3, max_tokens=4000, lang=body.lang or "en")
-    except Exception:
-        logger.exception("All AI providers failed for /generate")
-        raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
-
-    try:
-        parsed = json.loads(_strip_json_fences(content))
+    async def produce():
+        prompt = build_generate_prompt(goal, body.preferred_time, rest_days,
+                                       subjects, existing, today, lang)
+        content = await _ai_content_or_502(prompt, lang, max_tokens=4000, temperature=0.3)
+        parsed = _parse_json(content)
+        if parsed is None:
+            logger.exception("Failed to parse AI response")
+            raise HTTPException(status_code=502, detail="AI returned an invalid response")
         explanation = str(parsed.pop("explanation", ""))[:1000]
         return {"schedule": normalize_day_keys(parsed), "explanation": explanation}
-    except Exception:
-        try:
-            start = content.find("{")
-            end = content.rfind("}")
-            if start != -1 and end > start:
-                parsed = json.loads(content[start : end + 1])
-                explanation = str(parsed.pop("explanation", ""))[:1000]
-                return {"schedule": normalize_day_keys(parsed), "explanation": explanation}
-        except Exception:
-            pass
-        logger.exception("Failed to parse AI response")
-        raise HTTPException(status_code=502, detail="AI returned an invalid response")
+
+    return await _cached_or_produce(key, CACHE_TTL_SCHEDULE, produce)
 
 
 @router.post("/dashboard")
