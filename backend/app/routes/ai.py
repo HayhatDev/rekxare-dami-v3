@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import asyncio
 import logging
 from typing import List, Literal, Optional
 from fastapi import APIRouter, HTTPException, Request, Depends
@@ -30,6 +31,12 @@ MAX_GOAL_LENGTH = 500
 MAX_EXISTING_TASKS_LENGTH = 1000
 MAX_SUBJECT_LENGTH = 100
 MAX_QUIZ_TEXT = 40000
+
+# One retry on the primary AI provider softens quota spikes / transient
+# network failures before we burn the fallback provider (which is what we need
+# as a safety net for both providers being down at the same time).
+_PRIMARY_RETRIES = 1
+_RETRY_DELAY_SECONDS = 0.7
 
 LANG_INSTRUCTIONS = {
     "en": "Respond in English.",
@@ -112,20 +119,45 @@ async def _call_groq(prompt: str, temperature: float, max_tokens: int) -> str:
 
 
 async def call_ai(prompt: str, temperature: float = 0.4, max_tokens: int = 500, lang: str = "en") -> str:
-    """Route by language: Badini/Sorani → Gemini first, EN/AR → Groq first. Fallback to the other provider."""
+    """Route by language: Badini/Sorani → Gemini first, EN/AR → Groq first. Fallback to the other provider.
+
+    The primary provider gets up to _PRIMARY_RETRIES + 1 attempts with a short
+    delay between them, so a transient quota/network blip resolves in place
+    instead of burning the fallback provider's quota too.
+    """
     kurdish = lang in ("badini", "sorani")
     primary, fallback = (_call_gemini, _call_groq) if kurdish else (_call_groq, _call_gemini)
+    primary_name = "gemini" if kurdish else "groq"
+    fallback_name = "groq" if kurdish else "gemini"
     primary_key = GEMINI_API_KEY if kurdish else GROQ_API_KEY
     fallback_key = GROQ_API_KEY if kurdish else GEMINI_API_KEY
 
     if primary_key:
-        try:
-            return await primary(prompt, temperature, max_tokens)
-        except Exception as e:
-            logger.warning("Primary AI failed (%s), falling back: %s", "gemini" if kurdish else "groq", e)
+        last_error = None
+        for attempt in range(_PRIMARY_RETRIES + 1):
+            try:
+                return await primary(prompt, temperature, max_tokens)
+            except Exception as e:
+                last_error = e
+                logger.warning(
+                    "Primary AI failed (%s, attempt %d/%d): %s",
+                    primary_name,
+                    attempt + 1,
+                    _PRIMARY_RETRIES + 1,
+                    e,
+                )
+                if attempt < _PRIMARY_RETRIES:
+                    await asyncio.sleep(_RETRY_DELAY_SECONDS)
+    else:
+        last_error = RuntimeError(f"No primary provider configured ({primary_name})")
+
     if fallback_key:
-        return await fallback(prompt, temperature, max_tokens)
-    raise RuntimeError("No AI provider configured")
+        try:
+            return await fallback(prompt, temperature, max_tokens)
+        except Exception as e:
+            logger.warning("Fallback AI (%s) also failed: %s", fallback_name, e)
+            raise RuntimeError("All AI providers failed") from e
+    raise RuntimeError("No AI provider configured") from last_error
 
 
 async def _ai_content_or_502(prompt: str, lang: str, max_tokens: int, temperature: float) -> str:

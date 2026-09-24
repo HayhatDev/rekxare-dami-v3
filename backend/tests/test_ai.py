@@ -70,6 +70,7 @@ async def test_kurdish_routes_to_gemini_first_falls_back_to_groq(monkeypatch):
         calls.append("groq")
         return '{"questions": []}'
 
+    monkeypatch.setattr(ai, "_PRIMARY_RETRIES", 0)
     monkeypatch.setattr(ai, "_call_gemini", gemini_fail)
     monkeypatch.setattr(ai, "_call_groq", groq_ok)
     monkeypatch.setattr(ai, "GEMINI_API_KEY", "set")
@@ -104,6 +105,54 @@ async def test_english_routes_to_groq_first(monkeypatch):
     out = await ai.call_ai("hi", lang="en")
     assert out == "ok"
     assert calls == ["groq"]
+
+
+@pytest.mark.asyncio
+async def test_call_ai_retries_transient_primary_failure_then_succeeds(monkeypatch):
+    """A blip on the primary provider is retried in place, not sent to the fallback."""
+    calls = []
+
+    async def gemini_flaky(prompt, t, m):
+        calls.append("gemini")
+        if len(calls) == 1:
+            raise RuntimeError("Gemini returned 503")
+        return '{"questions": []}'
+
+    async def groq_unreachable(prompt, t, m):
+        calls.append("groq")
+        return "should-not-be-reached"
+
+    monkeypatch.setattr(ai, "_RETRY_DELAY_SECONDS", 0.0)
+    monkeypatch.setattr(ai, "_call_gemini", gemini_flaky)
+    monkeypatch.setattr(ai, "_call_groq", groq_unreachable)
+    monkeypatch.setattr(ai, "GEMINI_API_KEY", "set")
+    monkeypatch.setattr(ai, "GROQ_API_KEY", "set")
+    out = await ai.call_ai("hi", lang="badini")
+    assert out == '{"questions": []}'
+    assert calls == ["gemini", "gemini"]
+
+
+@pytest.mark.asyncio
+async def test_call_ai_retries_primary_then_falls_back_when_persistent(monkeypatch):
+    """Persistent primary failure: default 1 retry (2 attempts), then fallback."""
+    calls = []
+
+    async def gemini_down(prompt, t, m):
+        calls.append("gemini")
+        raise RuntimeError("Gemini returned empty content")
+
+    async def groq_ok(prompt, t, m):
+        calls.append("groq")
+        return '{"questions": []}'
+
+    monkeypatch.setattr(ai, "_RETRY_DELAY_SECONDS", 0.0)
+    monkeypatch.setattr(ai, "_call_gemini", gemini_down)
+    monkeypatch.setattr(ai, "_call_groq", groq_ok)
+    monkeypatch.setattr(ai, "GEMINI_API_KEY", "set")
+    monkeypatch.setattr(ai, "GROQ_API_KEY", "set")
+    out = await ai.call_ai("hi", lang="badini")
+    assert out == '{"questions": []}'
+    assert calls == ["gemini", "gemini", "groq"]
 
 
 def test_lang_instructions_distinguish_kurdish_dialects():

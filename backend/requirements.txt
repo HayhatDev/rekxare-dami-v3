@@ -7,3 +7,4 @@ python-multipart>=0.0.20
 slowapi>=0.1.9
 PyJWT>=2.13.0
 cryptography>=44.0.0
+sentry-sdk>=2.0.0
