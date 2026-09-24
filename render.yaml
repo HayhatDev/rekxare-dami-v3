@@ -26,3 +26,18 @@ services:
         value: "true"
       - key: ENVIRONMENT
         value: production
+
+  # Free-tier web services sleep after 15 minutes without traffic, which gives
+  # real users a 5-30s cold start. This cron pings /health every 10 minutes so
+  # the API stays warm. Update KEEPALIVE_URL here if the backend's public URL
+  # ever changes.
+  - type: cron
+    name: rekxare-dami-keep-alive
+    runtime: python
+    schedule: "*/10 * * * *"
+    plan: free
+    rootDir: keepalive
+    startCommand: python main.py
+    envVars:
+      - key: KEEPALIVE_URL
+        value: https://rekxare-dami-api.fastapicloud.dev/health
