@@ -2,6 +2,7 @@ import path from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 const CSP_PLACEHOLDER = '__CONNECT_SRC__';
 
@@ -53,7 +54,42 @@ function cspInjectionPlugin(env: Record<string, string>): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
-    plugins: [react(), tailwindcss(), cspInjectionPlugin(env)],
+    plugins: [
+      react(),
+      tailwindcss(),
+      cspInjectionPlugin(env),
+      VitePWA({
+        registerType: 'autoUpdate',
+        injectRegister: false,
+        includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'],
+        manifest: {
+          name: 'Rekxare Dami',
+          short_name: 'Rekxare',
+          description:
+            'A calm study timer and weekly schedule planner with streak tracking and multi-language support.',
+          lang: 'en',
+          start_url: '/',
+          scope: '/',
+          display: 'standalone',
+          theme_color: '#7C6CB0',
+          background_color: '#7C6CB0',
+          icons: [
+            { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+            { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+            { src: 'pwa-512x512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          ],
+        },
+        workbox: {
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api\//],
+          globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,woff2}'],
+          globIgnores: ['**/tessdata/**', '**/*.wasm*'],
+        },
+      }),
+    ],
     test: {
       setupFiles: ['./src/setupTests.ts'],
     },
