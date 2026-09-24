@@ -35,8 +35,6 @@ jobs:
     name: Frontend typecheck / tests / build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      CF_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
     defaults:
       run:
         working-directory: frontend
@@ -58,13 +56,3 @@ jobs:
         run: pnpm test
       - name: Build
         run: pnpm build
-      - name: Deploy to Cloudflare Pages
-        if: github.ref == 'refs/heads/main' && env.CF_TOKEN_SET == 'true'
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: rekxare-dami
-          directory: frontend/dist
-          branch: main
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
