@@ -47,8 +47,19 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@11.27.1 --activate
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies (with diagnostics)
+        run: |
+          set +e
+          pnpm install --frozen-lockfile > /tmp/pnpm_err.txt 2>&1
+          ec=$?
+          echo "::error title=pnpm-install-exit-code::$ec"
+          if [ $ec -ne 0 ]; then
+            tail -n 50 /tmp/pnpm_err.txt | while IFS= read -r line; do
+              esc=$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')
+              echo "::error file=ci.yml,line=1::${esc}"
+            done
+          fi
+          exit $ec
       - name: Typecheck
         run: pnpm typecheck
       - name: Unit tests
