@@ -9,10 +9,16 @@ import { Loader2 } from 'lucide-react';
 
 const RTL_LANGS = ['ar', 'badini', 'sorani'];
 
-// Entrance animation should play once per page load. AuthGate can remount
-// this screen (e.g. a stale Supabase session resolving then signing out)
-// which would otherwise restart the CSS animation — a visible "loads twice"
-// glitch. Module scope resets on a real (re)load, so fresh launches animate.
+const ENTRANCE_KEY = 'rekxare_login_entrance';
+
+// The full entrance animation should play exactly once per launch session.
+// Installed PWAs can force a full page reload mid-session (e.g. when the
+// service worker activates and reclaims control), and AuthGate can remount
+// this screen (stale Supabase session resolving then signing out). Without a
+// guard, each of those replays the animation — a visible "loads twice / weird
+// flashes" glitch on mobile. The module flag covers remounts; sessionStorage
+// survives in-session reloads but resets on a genuinely new launch, so fresh
+// launches still animate.
 let entrancePlayed = false;
 
 export default function LoginPage() {
@@ -24,8 +30,13 @@ export default function LoginPage() {
   const { cycleLang } = useCycleLang();
 
   const [animate] = useState(() => {
-    if (entrancePlayed) return false;
+    if (entrancePlayed || sessionStorage.getItem(ENTRANCE_KEY)) return false;
     entrancePlayed = true;
+    try {
+      sessionStorage.setItem(ENTRANCE_KEY, '1');
+    } catch {
+      // storage may be unavailable in private-mode launches; fall back to module flag only
+    }
     return true;
   });
 
@@ -54,7 +65,7 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-sm">
         {/* Language toggle */}
-        <div className={`flex justify-end mb-5${animate ? ' animate-in fade-in-0 duration-300' : ''}`}>
+        <div className="flex justify-end mb-5 animate-in fade-in-0 duration-300">
           <button
             onClick={cycleLang}
             aria-label={t('change_language', 'Change language')}
@@ -67,7 +78,7 @@ export default function LoginPage() {
 
         {/* Card */}
         <div
-          className={`rounded-3xl p-8${animate ? ' animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4 duration-500' : ''}`}
+          className={`rounded-3xl p-8${animate ? ' animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4 duration-500' : ' animate-in fade-in-0 duration-300'}`}
           style={{
             backgroundColor: c.card,
             border: `1px solid ${c.cardBorder}`,
@@ -77,7 +88,7 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <div
-              className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl mb-4${animate ? ' animate-in fade-in-0 zoom-in-90 duration-500' : ''}`}
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl mb-4${animate ? ' animate-in fade-in-0 zoom-in-90 duration-500' : ' animate-in fade-in-0 duration-300'}`}
               style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -12px ${withAlpha(c.accent, 0.65)}` }}
             >
               R
