@@ -43,7 +43,7 @@ export function getNightSkyTokens(isDark: boolean): NightSkyTokens {
   const starBlueStrong = p.accentSoft;
   const gold = isDark ? '#E8C54A' : '#8F6D00';
   const bgDeep = isDark ? '#0E1428' : '#FFFFFF';
-  const panel = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.6)';
+  const panel = isDark ? '#1C2235' : '#F8FAFD';
   const hairline = isDark ? 'rgba(107,143,212,0.2)' : 'rgba(107,143,212,0.3)';
 
   return {

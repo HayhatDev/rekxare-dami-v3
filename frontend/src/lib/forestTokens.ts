@@ -20,8 +20,8 @@ export interface ForestTokens {
     bgDeep: string;
   };
   surface: {
-    panel: string;
-    chip: string;
+    panel: string;    // solid panel (blend of the old 3–6% tint over bgDeep)
+    chip: string;     // solid pill chip
   };
   text: {
     ink: string;
@@ -39,8 +39,8 @@ export function getForestTokens(isDark: boolean): ForestTokens {
   const leafSoft = isDark ? '#6BC96E' : '#2A7D2D';
   const bark = isDark ? '#8B6040' : '#7C5230';
   const bgDeep = isDark ? '#060E05' : '#D4E8D0';
-  const panel = isDark ? 'rgba(42,90,40,0.06)' : 'rgba(0,0,0,0.03)';
-  const chip = isDark ? 'rgba(42,90,40,0.10)' : 'rgba(0,0,0,0.04)';
+  const panel = isDark ? '#081307' : '#CEE1CA';
+  const chip = isDark ? '#0A1609' : '#CCDFC8';
 
   return {
     palette: p,

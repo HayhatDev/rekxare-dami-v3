@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { useLangStore } from '../../stores/useLangStore';
-import { getThemeColors } from '../../themes/palette';
+import { getThemeColors, mixBlack } from '../../themes/palette';
 import type { Language } from '../../types';
 
 const LANG_KEY = 'rekxare_lang_set';
@@ -38,7 +38,7 @@ export default function LanguageOnboarding({ onComplete }: { onComplete: () => v
           <div className="flex flex-col items-center mb-8">
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl mb-4"
-              style={{ background: `linear-gradient(150deg, ${c.accent}, color-mix(in srgb, ${c.accent} 82%, black 18%))` }}
+              style={{ background: `linear-gradient(150deg, ${c.accent}, ${mixBlack(c.accent, 0.18)})` }}
             >
               R
             </div>

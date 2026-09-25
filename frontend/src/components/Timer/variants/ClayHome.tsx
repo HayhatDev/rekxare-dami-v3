@@ -5,7 +5,7 @@ import { useTimerSession } from '../../../hooks/useTimerSession';
 import { formatTime } from '../../../utils/helpers';
 import { SUBJECT_COLORS } from '../../../utils/constants';
 import { getClayTokens } from '../../../lib/clayTokens';
-import { brandGradient } from '../../../themes/palette';
+import { brandGradient, mixBlack } from '../../../themes/palette';
 import ProfileDrawer from '../../Auth/ProfileDrawer';
 import StreakCalendar from '../../StreakCalendar';
 import MobileBottomNav from '../../MobileBottomNav';
@@ -182,7 +182,7 @@ export default function ClayHome() {
                 <defs>
                   <linearGradient id="clayGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor={c.accent} />
-                    <stop offset="100%" stopColor={`color-mix(in srgb, ${c.accent} 78%, black 22%)`} />
+                    <stop offset="100%" stopColor={mixBlack(c.accent, 0.22)} />
                   </linearGradient>
                 </defs>
               </svg>

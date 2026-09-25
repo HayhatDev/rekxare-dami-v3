@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { useCycleLang } from '../../hooks/useCycleLang';
 import { useLangStore } from '../../stores/useLangStore';
-import { getThemeColors, getThemeFont, brandGradient } from '../../themes/palette';
+import { getThemeColors, getThemeFont, brandGradient, withAlpha } from '../../themes/palette';
 import { Loader2 } from 'lucide-react';
 
 const RTL_LANGS = ['ar', 'badini', 'sorani'];
@@ -41,11 +41,11 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-sm">
         {/* Language toggle */}
-        <div className="flex justify-end mb-5">
+        <div className="flex justify-end mb-5 animate-in fade-in-0 duration-300">
           <button
             onClick={cycleLang}
             aria-label={t('change_language', 'Change language')}
-            className="px-3 py-1.5 rounded-full text-[12px] font-bold transition-all hover:opacity-80"
+            className="px-3 py-1.5 rounded-full text-[12px] font-bold transition-all hover:scale-[1.04] active:scale-95 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{ backgroundColor: c.card, color: c.inkFaint, border: `1px solid ${c.cardBorder}` }}
           >
             {lang === 'ar' ? 'AR' : lang === 'sorani' ? 'SO' : lang === 'badini' ? 'BA' : 'EN'}
@@ -54,22 +54,25 @@ export default function LoginPage() {
 
         {/* Card */}
         <div
-          className="rounded-3xl p-8"
+          className="rounded-3xl p-8 animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4 duration-500"
           style={{
             backgroundColor: c.card,
             border: `1px solid ${c.cardBorder}`,
-            boxShadow: `0 28px 70px -32px color-mix(in srgb, ${c.ink} 32%, transparent)`,
+            boxShadow: `0 28px 70px -32px ${withAlpha(c.ink, 0.32)}`,
           }}
         >
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl mb-4"
-              style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -12px color-mix(in srgb, ${c.accent} 65%, transparent)` }}
+              className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl mb-4 animate-in fade-in-0 zoom-in-90 duration-500"
+              style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -12px ${withAlpha(c.accent, 0.65)}` }}
             >
               R
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight">Rekxare Dami</h1>
+            <p className="text-[13px] mt-2 text-center leading-relaxed" style={{ color: c.inkSoft, maxWidth: 248 }}>
+              {t('login_tagline', 'Deep focus, one session at a time.')}
+            </p>
           </div>
 
           {loading ? (
@@ -81,8 +84,8 @@ export default function LoginPage() {
               {/* Google sign in — Google's own white button treatment */}
               <button
                 onClick={signInWithGoogle}
-                className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.01] hover:shadow-md active:scale-[0.99]"
-                style={{ backgroundColor: '#ffffff', color: '#1f1f1f', border: `1px solid ${softLine}` }}
+                className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.01] hover:shadow-md active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{ backgroundColor: '#ffffff', color: '#1f1f1f', border: `1px solid ${softLine}`, outlineColor: `${c.accent}66` }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -103,8 +106,8 @@ export default function LoginPage() {
               {/* Guest mode */}
               <button
                 onClick={signInAsGuest}
-                className="w-full py-3.5 rounded-xl font-semibold text-sm text-white transition-all hover:scale-[1.01] hover:brightness-105 active:scale-[0.99]"
-                style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -14px color-mix(in srgb, ${c.accent} 70%, transparent)` }}
+                className="w-full py-3.5 rounded-xl font-semibold text-sm text-white transition-all hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -14px ${withAlpha(c.accent, 0.70)}`, outlineColor: `${c.accent}66` }}
               >
                 {t('continue_as_guest', 'Continue as Guest')}
               </button>

@@ -35,18 +35,18 @@ export const THEME_COLORS: Record<string, { light: ThemePalette; dark: ThemePale
     font: "'DM Sans', 'Fraunces', system-ui, sans-serif"
   },
   forest: {
-    light: { bg: '#D4E8D0', card: 'rgba(12,22,11,0.06)', cardBorder: 'rgba(12,22,11,0.12)', ink: '#1A2E18', inkSoft: 'rgba(26,46,24,0.75)', inkFaint: 'rgba(26,46,24,0.40)', accent: '#2E6B2F', accentSoft: '#2A7D2D', pink: '#7C5230', pinkSoft: 'rgba(124,82,48,0.12)', clayShadow: 'none', clayInner: 'none' },
-    dark: { bg: '#0C160B', card: 'rgba(212,232,208,0.06)', cardBorder: 'rgba(212,232,208,0.10)', ink: '#D4E8D0', inkSoft: 'rgba(212,232,208,0.60)', inkFaint: 'rgba(212,232,208,0.38)', accent: '#4CAF50', accentSoft: '#6BC96E', pink: '#8B6040', pinkSoft: 'rgba(139,96,64,0.15)', clayShadow: 'none', clayInner: 'none' },
+    light: { bg: '#D4E8D0', card: '#C8DBC4', cardBorder: 'rgba(12,22,11,0.12)', ink: '#1A2E18', inkSoft: 'rgba(26,46,24,0.75)', inkFaint: 'rgba(26,46,24,0.40)', accent: '#2E6B2F', accentSoft: '#2A7D2D', pink: '#7C5230', pinkSoft: 'rgba(124,82,48,0.12)', clayShadow: 'none', clayInner: 'none' },
+    dark: { bg: '#0C160B', card: '#182317', cardBorder: 'rgba(212,232,208,0.10)', ink: '#D4E8D0', inkSoft: 'rgba(212,232,208,0.60)', inkFaint: 'rgba(212,232,208,0.38)', accent: '#4CAF50', accentSoft: '#6BC96E', pink: '#8B6040', pinkSoft: 'rgba(139,96,64,0.15)', clayShadow: 'none', clayInner: 'none' },
     font: "'DM Sans', 'Lora', system-ui, sans-serif"
   },
   ocean: {
-    light: { bg: '#EBF4FB', card: 'rgba(6,16,30,0.05)', cardBorder: 'rgba(6,16,30,0.10)', ink: '#0A1929', inkSoft: 'rgba(10,25,41,0.75)', inkFaint: 'rgba(10,25,41,0.38)', accent: '#1478A8', accentSoft: '#0B7D74', pink: '#0B7D74', pinkSoft: 'rgba(0,180,168,0.12)', clayShadow: 'none', clayInner: 'none' },
-    dark: { bg: '#06101E', card: 'rgba(204,228,245,0.06)', cardBorder: 'rgba(204,228,245,0.10)', ink: '#CCE4F5', inkSoft: 'rgba(204,228,245,0.60)', inkFaint: 'rgba(204,228,245,0.38)', accent: '#00C8B8', accentSoft: '#1A90C8', pink: '#1A90C8', pinkSoft: 'rgba(26,144,200,0.15)', clayShadow: 'none', clayInner: 'none' },
+    light: { bg: '#EBF4FB', card: '#E0E9F0', cardBorder: 'rgba(6,16,30,0.10)', ink: '#0A1929', inkSoft: 'rgba(10,25,41,0.75)', inkFaint: 'rgba(10,25,41,0.38)', accent: '#1478A8', accentSoft: '#0B7D74', pink: '#0B7D74', pinkSoft: 'rgba(0,180,168,0.12)', clayShadow: 'none', clayInner: 'none' },
+    dark: { bg: '#06101E', card: '#121D2B', cardBorder: 'rgba(204,228,245,0.10)', ink: '#CCE4F5', inkSoft: 'rgba(204,228,245,0.60)', inkFaint: 'rgba(204,228,245,0.38)', accent: '#00C8B8', accentSoft: '#1A90C8', pink: '#1A90C8', pinkSoft: 'rgba(26,144,200,0.15)', clayShadow: 'none', clayInner: 'none' },
     font: "'Plus Jakarta Sans', system-ui, sans-serif"
   },
   'night-sky': {
-    light: { bg: '#EEF2FA', card: 'rgba(6,9,26,0.05)', cardBorder: 'rgba(6,9,26,0.10)', ink: '#1A1F36', inkSoft: 'rgba(26,31,54,0.75)', inkFaint: 'rgba(26,31,54,0.38)', accent: '#3F5B94', accentSoft: '#5472A8', pink: '#8F6D00', pinkSoft: 'rgba(201,160,32,0.12)', clayShadow: 'none', clayInner: 'none' },
-    dark: { bg: '#06091A', card: 'rgba(216,228,240,0.06)', cardBorder: 'rgba(216,228,240,0.10)', ink: '#D8E4F0', inkSoft: 'rgba(216,228,240,0.60)', inkFaint: 'rgba(216,228,240,0.38)', accent: '#6B8FD4', accentSoft: '#8AA8E0', pink: '#E8C54A', pinkSoft: 'rgba(232,197,74,0.15)', clayShadow: 'none', clayInner: 'none' },
+    light: { bg: '#EEF2FA', card: '#E2E6EF', cardBorder: 'rgba(6,9,26,0.10)', ink: '#1A1F36', inkSoft: 'rgba(26,31,54,0.75)', inkFaint: 'rgba(26,31,54,0.38)', accent: '#3F5B94', accentSoft: '#5472A8', pink: '#8F6D00', pinkSoft: 'rgba(201,160,32,0.12)', clayShadow: 'none', clayInner: 'none' },
+    dark: { bg: '#06091A', card: '#131627', cardBorder: 'rgba(216,228,240,0.10)', ink: '#D8E4F0', inkSoft: 'rgba(216,228,240,0.60)', inkFaint: 'rgba(216,228,240,0.38)', accent: '#6B8FD4', accentSoft: '#8AA8E0', pink: '#E8C54A', pinkSoft: 'rgba(232,197,74,0.15)', clayShadow: 'none', clayInner: 'none' },
     font: "'Space Grotesk', system-ui, sans-serif"
   },
 };
@@ -60,13 +60,34 @@ export function getThemeFont(themeId: string): string {
   return (THEME_COLORS[themeId] || THEME_COLORS.clay).font;
 }
 
+function parseHex(hex: string): { r: number; g: number; b: number } {
+  let h = hex.trim().replace('#', '');
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const n = parseInt(h, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+/** Darken a hex color by `percent` (0–1) toward black, e.g. mixBlack('#6E5EAE', 0.18). */
+export function mixBlack(hex: string, percent: number): string {
+  const { r, g, b } = parseHex(hex);
+  const m = (v: number) => Math.round(v * (1 - percent)).toString(16).padStart(2, '0');
+  return `#${m(r)}${m(g)}${m(b)}`;
+}
+
+/** Hex → rgba() string with a given alpha. */
+export function withAlpha(hex: string, alpha: number): string {
+  const { r, g, b } = parseHex(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 /**
  * Tonal accent gradient used for hero cards, CTA chips, nav marks.
  * Stays inside one hue family (accent → slightly deeper) instead of jumping
  * to a second hue, which reads as a generic AI-generated violet→pink blend.
+ * Computed in JS (no color-mix) so it renders on older mobile browsers too.
  */
 export function brandGradient(accent: string, _pink?: string): string {
-  return `linear-gradient(150deg, ${accent} 0%, color-mix(in srgb, ${accent} 82%, black 18%) 100%)`;
+  return `linear-gradient(150deg, ${accent} 0%, ${mixBlack(accent, 0.18)} 100%)`;
 }
 
 /** Faded tonal accent gradient for empty-state / placeholder tiles. */

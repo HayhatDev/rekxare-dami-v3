@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { useLangStore } from '../../stores/useLangStore';
-import { getThemeColors, getThemeFont, brandGradient } from '../../themes/palette';
+import { getThemeColors, getThemeFont, brandGradient, withAlpha } from '../../themes/palette';
 import { Lock, ArrowLeft } from 'lucide-react';
 
 const RTL_LANGS = ['ar', 'badini', 'sorani'];
@@ -55,7 +55,7 @@ export default function GuestLocked() {
           <button
             onClick={signInWithGoogle}
             className="w-full max-w-xs py-3.5 rounded-xl font-semibold text-sm text-white transition-all hover:scale-[1.02] hover:brightness-105 active:scale-[0.98]"
-            style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -14px color-mix(in srgb, ${c.accent} 70%, transparent)` }}
+            style={{ background: brandGradient(c.accent), boxShadow: `0 14px 30px -14px ${withAlpha(c.accent, 0.70)}` }}
           >
             {t('sign_in_google', 'Sign in with Google')}
           </button>

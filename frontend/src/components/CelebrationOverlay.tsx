@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
+import { mixBlack } from '../themes/palette';
 
 interface CelebrationOverlayProps {
   /** Whether the session is complete. */
@@ -180,7 +181,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
             type="button"
             onClick={(e) => { e.stopPropagation(); onQuiz(); }}
             className="pointer-events-auto mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-[13px] font-extrabold transition-transform active:scale-[0.95]"
-            style={{ background: `linear-gradient(150deg, ${colorA}, color-mix(in srgb, ${colorA} 82%, black 18%))`, color: '#fff' }}
+            style={{ background: `linear-gradient(150deg, ${colorA}, ${mixBlack(colorA, 0.18)})`, color: '#fff' }}
           >
             {t('celebration_take_quiz', 'Take a Quiz')}
           </button>

@@ -6,6 +6,10 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { Download, X } from 'lucide-react';
 
 const DISMISS_KEY = 'rekxare_install_dismissed';
+const VISIT_KEY = 'rekxare_visit_count';
+
+// Wait until the user has had a moment to start using the app before nudging.
+const SHOW_DELAY_MS = 6000;
 
 export default function InstallApp() {
   const { t } = useTranslation();
@@ -13,12 +17,30 @@ export default function InstallApp() {
   const c = useMemo(() => getThemeColors(themeId, isDark), [themeId, isDark]);
   const { canInstall, promptInstall, isiOS, isStandalone } = useInstallPrompt();
   const [dismissed, setDismissed] = useState(false);
+  const [readyToShow, setReadyToShow] = useState(false);
   const [showSteps, setShowSteps] = useState(false);
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      if (localStorage.getItem(DISMISS_KEY) === '1') setDismissed(true);
+      if (localStorage.getItem(DISMISS_KEY) === '1') {
+        setDismissed(true);
+        return;
+      }
+      // First-ever visit (or before language onboarding) — don't interrupt
+      // the very first experience with an install nudge.
+      if (!localStorage.getItem('rekxare_lang_set')) return;
+      const visits = Number(localStorage.getItem(VISIT_KEY) || 0);
+      if (visits === 0) {
+        localStorage.setItem(VISIT_KEY, '1');
+        return;
+      }
+      localStorage.setItem(VISIT_KEY, String(visits + 1));
+      timer = setTimeout(() => setReadyToShow(true), SHOW_DELAY_MS);
     } catch {}
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const dismiss = () => {
@@ -26,7 +48,7 @@ export default function InstallApp() {
     setDismissed(true);
   };
 
-  if (isStandalone || dismissed || (!canInstall && !isiOS)) return null;
+  if (isStandalone || dismissed || !readyToShow || (!canInstall && !isiOS)) return null;
 
   const onInstall = async () => {
     if (isiOS) {
@@ -38,9 +60,9 @@ export default function InstallApp() {
 
   return (
     <div
-      className="fixed left-1/2 -translate-x-1/2 z-[10002] w-[min(92vw,380px)] bottom-24 md:bottom-6 md:right-6 md:left-auto md:translate-x-0"
+      className="fixed left-1/2 -translate-x-1/2 z-[10002] w-[min(92vw,380px)] bottom-24 md:bottom-6 md:right-6 md:left-auto md:translate-x-0 animate-in fade-in-0 slide-in-from-bottom-6 duration-500"
       role="complementary"
-      aria-label={t('install_app', 'Install app')}
+      aria-label={t('install_app', 'Install Rekxare Dami')}
     >
       <div className="p-4 rounded-2xl shadow-2xl" style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}` }}>
         <div className="flex items-start gap-3">
@@ -48,20 +70,20 @@ export default function InstallApp() {
             <Download className="w-5 h-5" style={{ color: c.accent }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold" style={{ color: c.ink }}>{t('install_app', 'Install app')}</p>
+            <p className="text-sm font-bold" style={{ color: c.ink }}>{t('install_app', 'Install Rekxare Dami')}</p>
             <p className="text-xs mt-0.5 leading-relaxed" style={{ color: c.inkSoft }}>
-              {showSteps ? t('install_ios_steps', 'Tap Share, then choose \u201cAdd to Home Screen\u201d') : t('install_app_desc', 'Add Rekxare Dami to your home screen for quick access')}
+              {showSteps ? t('install_ios_steps', 'Tap Share, then choose \u201cAdd to Home Screen\u201d') : t('install_app_desc', 'Open it in one tap from your home screen \u2014 works offline too.')}
             </p>
             <button
               onClick={onInstall}
               className="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-[1.03] active:scale-[0.97] mt-3"
               style={{ backgroundColor: c.accent, color: '#fff' }}
             >
-              {t('install_app', 'Install app')}
+              {t('install_cta', 'Install')}
             </button>
             {!showSteps && (
               <button onClick={dismiss} className="ml-3 text-xs font-semibold transition-all hover:scale-[1.03]" style={{ color: c.inkFaint }}>
-                {t('install_later', 'Later')}
+                {t('install_later', 'Maybe later')}
               </button>
             )}
           </div>

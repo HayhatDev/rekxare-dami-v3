@@ -18,7 +18,7 @@ export interface OceanTokens {
     sky: string;      // light-mode path A
   };
   surface: {
-    panel: string;    // translucent panel
+    panel: string;    // solid panel (blend of the old 3% tint over the page bg)
     well: string;     // inset / empty track
   };
   text: {
@@ -35,8 +35,8 @@ export function getOceanTokens(isDark: boolean): OceanTokens {
   const p = getThemeColors('ocean', isDark);
   const teal = isDark ? '#00C8B8' : '#0B7D74';
   const deepblue = isDark ? '#1A90C8' : '#1478A8';
-  const panel = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
-  const well = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const panel = isDark ? '#0D1725' : '#E4EDF3';
+  const well = isDark ? '#151E2C' : '#DDE5EC';
 
   return {
     palette: p,

@@ -14,6 +14,7 @@ import GoalCard from '../GoalCard';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { sessionLogStats } from '../../../utils/sessionLog';
 import { getOceanTokens } from '../../../lib/oceanTokens';
+import { mixBlack } from '../../../themes/palette';
 import { Moon, Sun } from 'lucide-react';
 
 function TideTimer({ progress, secondsLeft, selectedSubject, isDark }: {
@@ -213,7 +214,7 @@ export default function OceanHome() {
 
       <header className="relative z-[70] px-6 py-5 flex items-center justify-between border-b" style={{ borderColor: border }}>
         <div className="font-semibold tracking-wider flex items-center gap-3">
-          <div className="w-5 h-5 rounded-full" style={{ background: `linear-gradient(150deg, ${tok.accent.deepblue}, color-mix(in srgb, ${tok.accent.deepblue} 78%, black 22%))` }}></div>
+          <div className="w-5 h-5 rounded-full" style={{ background: `linear-gradient(150deg, ${tok.accent.deepblue}, ${mixBlack(tok.accent.deepblue, 0.22)})` }}></div>
           REKXARE DAMI
         </div>
         <nav className="hidden md:flex items-center gap-10 text-sm font-medium">
