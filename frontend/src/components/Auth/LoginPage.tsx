@@ -11,14 +11,12 @@ const RTL_LANGS = ['ar', 'badini', 'sorani'];
 
 const ENTRANCE_KEY = 'rekxare_login_entrance';
 
-// The full entrance animation should play exactly once per launch session.
-// Installed PWAs can force a full page reload mid-session (e.g. when the
-// service worker activates and reclaims control), and AuthGate can remount
-// this screen (stale Supabase session resolving then signing out). Without a
-// guard, each of those replays the animation — a visible "loads twice / weird
-// flashes" glitch on mobile. The module flag covers remounts; sessionStorage
-// survives in-session reloads but resets on a genuinely new launch, so fresh
-// launches still animate.
+// The full entrance animation should play only on the very first visit to the
+// app on this device. Played on every open, it reads as a "loading flash" on
+// installed mobile PWAs (a second load after the boot spinner). localStorage
+// persists across launches and in-session reloads; the module flag covers
+// React remounts (e.g. AuthGate re-rendering this screen while a stale
+// Supabase session resolves). First-time visitors still get the animation.
 let entrancePlayed = false;
 
 export default function LoginPage() {
@@ -30,10 +28,10 @@ export default function LoginPage() {
   const { cycleLang } = useCycleLang();
 
   const [animate] = useState(() => {
-    if (entrancePlayed || sessionStorage.getItem(ENTRANCE_KEY)) return false;
+    if (entrancePlayed || localStorage.getItem(ENTRANCE_KEY)) return false;
     entrancePlayed = true;
     try {
-      sessionStorage.setItem(ENTRANCE_KEY, '1');
+      localStorage.setItem(ENTRANCE_KEY, '1');
     } catch {
       // storage may be unavailable in private-mode launches; fall back to module flag only
     }

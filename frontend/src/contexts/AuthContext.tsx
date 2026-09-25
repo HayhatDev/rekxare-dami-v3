@@ -26,10 +26,22 @@ export const useAuth = () => useContext(AuthContext);
 
 const GUEST_KEY = 'rekxare_guest_mode';
 
+function hasStoredSession(): boolean {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => hasStoredSession());
   const [isGuest, setIsGuest] = useState(() => {
     try { return localStorage.getItem(GUEST_KEY) === 'true'; }
     catch { return false; }
