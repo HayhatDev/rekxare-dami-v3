@@ -5,3 +5,8 @@ allowBuilds:
   ecc-universal: true
   esbuild: true
   tesseract.js: false
+
+# pnpm 11 defaults minimumReleaseAge to 1440 min (1 day), which fails fresh CI
+# installs whenever a pinned dep was published within the last 24h. This project
+# tracks latest deps, so disable the age gate (other supply-chain checks stay on).
+minimumReleaseAge: 0

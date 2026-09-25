@@ -47,23 +47,8 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@11.27.1 --activate
-      - name: Install dependencies (with diagnostics)
-        run: |
-          set +e
-          pnpm install --frozen-lockfile > /tmp/pnpm_err.txt 2>&1
-          ec=$?
-          echo "::error title=pnpm-install-exit-code::$ec"
-          if [ $ec -ne 0 ]; then
-            echo "::error title=pnpm-lines-total::$(wc -l < /tmp/pnpm_err.txt)"
-            echo "::notice title=pnpm-workspace::$(cat pnpm-workspace.yaml | tr '\n' ';')"
-            grep -inE 'err_pnpm|error|failed|fail|elifecycle|signal|denied|forbidden|untrusted|policy|approve|blocked|ignored' /tmp/pnpm_err.txt | tail -n 30 | while IFS= read -r line; do
-              esc=$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')
-              echo "::error file=pnpm-out,line=1::${esc}"
-            done
-            echo "== TAIL ==" >&2
-            tail -n 6 /tmp/pnpm_err.txt >&2
-          fi
-          exit $ec
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       - name: Typecheck
         run: pnpm typecheck
       - name: Unit tests
