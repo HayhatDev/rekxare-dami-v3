@@ -10,7 +10,10 @@ import { useStudyData } from '../../hooks/useStudyData';
 import { useSchedule } from '../../hooks/useSchedule';
 import { useCycleLang } from '../../hooks/useCycleLang';
 import { formatTime } from '../../utils/helpers';
-import { User, LogOut, Timer, Calendar, BarChart3, Moon, Sun, Globe, X, Download } from 'lucide-react';
+import { User, LogOut, Timer, Calendar, BarChart3, Moon, Sun, Globe, X, Download, Trash2 } from 'lucide-react';
+import { getAuthHeaders } from '../../services/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
 interface ProfileDrawerProps {
   ink: string;
@@ -159,6 +162,55 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
 
   const borderStyle = `1px solid ${cardBorder || 'rgba(128,128,128,0.15)'}`;
 
+  // Account deletion: guarded by a confirmation modal that requires the user to
+  // type DELETE. Only reached for signed-in users (guests have no account).
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteText, setDeleteText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!confirmingDelete) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setConfirmingDelete(false);
+        setDeleteText('');
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [confirmingDelete]);
+
+  const handleDeleteAccount = async () => {
+    if (deleteText.trim() !== 'DELETE' || deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/account`, {
+        method: 'DELETE',
+        headers: await getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // Purge everything the app persisted for this account, then reload so every
+      // in-memory store starts from the clean guest/empty state.
+      try {
+        const keys: string[] = [];
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith('rekxare_') || k.startsWith('sb-'))) keys.push(k);
+        }
+        keys.forEach((k) => localStorage.removeItem(k));
+      } catch {}
+      await signOut().catch(() => {});
+      closeDrawer();
+      setConfirmingDelete(false);
+      toast.success(t('account_deleted', 'Your account and data have been deleted'));
+      setTimeout(() => window.location.replace('/'), 400);
+    } catch (e) {
+      setDeleting(false);
+      if (import.meta.env.DEV) console.error('Account deletion failed', e);
+      toast.error(t('account_delete_failed', 'Failed to delete your account. Please try again.'));
+    }
+  };
+
   return (
     <div className="relative">
       {/* Trigger button */}
@@ -300,6 +352,17 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
                     <span className="flex-1 text-left">{t('export_data', 'Export data')}</span>
                     <span className="text-[11px] font-normal" style={{ color: `${inkFaint}99` }}>{t('export_data_hint', 'Backup as JSON')}</span>
                   </button>
+                  {user && !isGuest && (
+                    <button
+                      onClick={() => setConfirmingDelete(true)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                      style={{ color: '#ef4444' }}
+                    >
+                      <Trash2 className="w-4 h-4 shrink-0" />
+                      <span className="flex-1 text-left">{t('delete_account', 'Delete account')}</span>
+                      <span className="text-[11px] font-normal" style={{ color: `${inkFaint}99` }}>{t('delete_account_hint', 'Permanent')}</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -322,6 +385,65 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
               </button>
             </div>
           </div>
+
+          {/* Delete-account confirmation modal */}
+          {confirmingDelete && (
+            <div className="fixed inset-0 z-[10001] flex items-end sm:items-center justify-center p-4">
+              <div
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                onClick={() => { setConfirmingDelete(false); setDeleteText(''); }}
+                aria-hidden="true"
+              />
+              <div
+                role="alertdialog"
+                aria-modal="true"
+                aria-label={t('delete_account', 'Delete account')}
+                dir={isRTL ? 'rtl' : 'ltr'}
+                className="relative w-full max-w-sm rounded-2xl p-5 space-y-4"
+                style={{ backgroundColor: card, border: borderStyle }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#ef444420' }}>
+                    <Trash2 className="w-5 h-5" style={{ color: '#ef4444' }} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-base" style={{ color: ink }}>{t('delete_account', 'Delete account')}</p>
+                    <p className="text-sm mt-1" style={{ color: inkFaint }}>
+                      {t('delete_account_warning', 'This permanently deletes your account, study history, schedule, and preferences. This cannot be undone.')}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs" style={{ color: inkFaint }}>
+                  {t('delete_account_type', 'Type DELETE to confirm:')}
+                </p>
+                <input
+                  value={deleteText}
+                  onChange={(e) => setDeleteText(e.target.value)}
+                  autoFocus
+                  className="w-full px-3 py-2 rounded-xl border text-sm outline-none"
+                  style={{ borderColor: `${inkFaint}44`, backgroundColor: `${inkFaint}0d`, color: ink }}
+                  placeholder={t('delete_account_placeholder', 'DELETE')}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setConfirmingDelete(false); setDeleteText(''); }}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                    style={{ backgroundColor: `${inkFaint}12`, color: ink }}
+                  >
+                    {t('cancel', 'Cancel')}
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleteText.trim() !== 'DELETE' || deleting}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90 disabled:opacity-40"
+                    style={{ backgroundColor: '#ef4444', color: '#fff' }}
+                  >
+                    {deleting ? t('deleting', 'Deleting…') : t('delete_forever', 'Delete permanently')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>,
         document.body
       )}

@@ -19,6 +19,9 @@ for (const lang of LANGS) {
     reset: d.reset,
     signInGoogle: d.sign_in_google,
     langLabels: [d.change_language, d.switch_language].filter(Boolean),
+    openProfile: d.open_profile,
+    profile: d.profile,
+    closeMenu: d.close_menu,
   };
 }
 
@@ -135,6 +138,20 @@ for (const lang of LANGS) {
   } catch {
     fail('/quiz file input not found');
   }
+
+  // ---- Delete-account guard: guests must never see the button ----
+  console.log(`  profile drawer (guest: no delete-account) …`);
+  await page.goto(`${BASE}/`, { waitUntil: 'load', timeout: LOAD_TIMEOUT });
+  const profileBtn = page.getByRole('button', { name: st.openProfile, exact: true }).first();
+  await profileBtn.waitFor({ timeout: LOAD_TIMEOUT });
+  await profileBtn.click();
+  const dialog = page.getByRole('dialog', { name: st.profile, exact: true });
+  await dialog.waitFor({ timeout: 10000 });
+  body = await page.locator('body').innerText().catch(() => '');
+  if (/Delete account/i.test(body)) fail('guest drawer shows the Delete-account button');
+  const closeBtn = page.getByRole('button', { name: st.closeMenu, exact: true }).first();
+  await closeBtn.waitFor({ timeout: 10000 });
+  await closeBtn.click();
 
   if (pageErrors.length) fail(`page errors (${pageErrors.length}): ${pageErrors.slice(0, 5).join(' | ')}`);
   const benign = /Failed to load resource|net::(?:ERR_|ABORTED)|PR_CONNECT_RESET|404|aborted/i;

@@ -66,7 +66,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
 
@@ -88,12 +88,13 @@ async def health():
     return {"status": "healthy"}
 
 
-from app.routes import study, schedule, ai
+from app.routes import study, schedule, ai, account
 from app.utils.auth import require_auth
 from fastapi import Depends
 app.include_router(study.router, prefix="/api/study", tags=["study"])
 app.include_router(schedule.router, prefix="/api/schedule", tags=["schedule"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
+app.include_router(account.router, prefix="/api", tags=["account"])
 
 
 @app.get("/api/auth/check")
