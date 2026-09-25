@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Timer, Calendar, BarChart3 } from 'lucide-react';
 
 interface MobileNavProps {
@@ -23,24 +24,43 @@ const LABEL_DEFAULTS: Record<string, string> = {
 };
 
 export default function MobileBottomNav({ accent, card, cardBorder, inkFaint, bg }: MobileNavProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [location] = useLocation();
   const activeIndex = Math.max(0, NAV_ITEMS.findIndex((i) => i.href === location));
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [pill, setPill] = useState({ left: 0, width: 64 });
+
+  // Measure the active item's real geometry so the pill tracks it in both LTR
+  // and RTL, regardless of label length (index math breaks when RTL labels
+  // are uneven widths).
+  useLayoutEffect(() => {
+    const measure = () => {
+      const track = trackRef.current;
+      if (!track) return;
+      const activeEl = track.querySelector('a[aria-current="page"]');
+      if (!activeEl) return;
+      const tr = track.getBoundingClientRect();
+      const ar = activeEl.getBoundingClientRect();
+      setPill({ left: ar.left - tr.left, width: ar.width });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [location, activeIndex, i18n.language]);
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl"
       style={{ backgroundColor: `${bg}ee`, borderColor: cardBorder, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="relative flex items-center justify-around px-2 py-1.5">
-        {/* Sliding active indicator */}
+      <div ref={trackRef} className="relative flex items-center justify-around px-2 py-1.5">
+        {/* Sliding active indicator — positioned from the active item's rect */}
         <span
           aria-hidden="true"
           className="absolute top-1.5 bottom-1.5 rounded-xl pointer-events-none"
           style={{
-            left: `${((activeIndex + 0.5) / NAV_ITEMS.length) * 100}%`,
-            width: '64px',
-            transform: 'translateX(-50%)',
+            left: pill.left,
+            width: pill.width,
             backgroundColor: `${accent}15`,
-            transition: 'left 350ms cubic-bezier(0.34, 1.4, 0.64, 1)',
+            transition: 'left 350ms cubic-bezier(0.34, 1.4, 0.64, 1), width 350ms cubic-bezier(0.34, 1.4, 0.64, 1)',
           }}
         />
         {NAV_ITEMS.map((item, i) => {
