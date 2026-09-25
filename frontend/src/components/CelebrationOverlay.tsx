@@ -173,8 +173,8 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
         </p>
         <p className="mt-2 text-sm font-semibold text-white/75">
           {minutes !== undefined
-            ? t('session_complete_minutes', { defaultValue: '{{minutes}} min of deep focus — great work!', minutes })
-            : t('session_complete_sub', 'Great work — take a well-earned break.')}
+            ? t('session_complete_minutes', { defaultValue: '{{minutes}} min of deep focus - great work!', minutes })
+            : t('session_complete_sub', 'Great work - take a well-earned break.')}
         </p>
         {onQuiz && (
           <button

@@ -49,7 +49,7 @@ export default function GuestLocked() {
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight">{t('guest_locked_title', 'Sign in to unlock your schedule & insights')}</h1>
         <p className="text-sm leading-relaxed max-w-md" style={{ color: c.inkSoft }}>
-          {t('guest_locked_hint', "You're exploring as a guest. To keep your schedule and insights safe — and available on every device — please sign in.")}
+          {t('guest_locked_hint', "You're exploring as a guest. To keep your schedule and insights safe - and available on every device - please sign in.")}
         </p>
         <div className="flex flex-col items-center gap-3 pt-2">
           <button

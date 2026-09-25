@@ -67,7 +67,7 @@ export default function QuizResults({
       {generatedFewer && (
         <p className="text-[12px] text-center font-semibold px-3 py-2 rounded-xl"
           style={{ backgroundColor: `${colors.pink}10`, color: colors.pink }}>
-          {t('quiz_created_fewer', 'We created {{count}} questions — the material didn’t have enough for {{requested}}.', { count: total, requested: requestedCount })}
+          {t('quiz_created_fewer', 'We created {{count}} questions - the material didn’t have enough for {{requested}}.', { count: total, requested: requestedCount })}
         </p>
       )}
 
@@ -94,7 +94,7 @@ export default function QuizResults({
         ) : (
           <span className="inline-flex items-center gap-1.5">
             <Timer size={14} />
-            {t('quiz_not_saved_hint', 'Score not attached — no completed session found.')}
+            {t('quiz_not_saved_hint', 'Score not attached - no completed session found.')}
           </span>
         )}
       </div>

@@ -49,11 +49,11 @@ export default function MomentumBanner({
   const nextTarget = streak >= 3 ? undefined : streak + 1;
   const label =
     nextTarget !== undefined
-      ? t('momentum_banner', '{{streak}}-day streak — one more today locks a {{target}}-day streak!', {
+      ? t('momentum_banner', '{{streak}}-day streak - one more today locks a {{target}}-day streak!', {
           streak,
           target: nextTarget,
         })
-      : t('momentum_banner_long', '{{streak}}-day streak — keep it alive today!', { streak });
+      : t('momentum_banner_long', '{{streak}}-day streak - keep it alive today!', { streak });
 
   return (
     <div

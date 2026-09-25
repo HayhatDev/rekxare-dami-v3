@@ -178,7 +178,7 @@ export default function GoalCard({ colors, radius = 16, shadow }: GoalCardProps)
 
       <p className="text-[12px]" style={{ color: reached ? colors.accent : colors.inkFaint }}>
         {reached
-          ? t('goal_reached', 'Goal reached — way to go!')
+          ? t('goal_reached', 'Goal reached - way to go!')
           : t('goal_minutes_left', '{{remaining}} min left to reach your goal', { remaining })}
       </p>
     </div>

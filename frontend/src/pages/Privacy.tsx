@@ -27,11 +27,11 @@ export default function Privacy() {
         <section>
           <h2 className="text-xl font-semibold mb-3">{t('privacy_s2_title')}</h2>
           <ul className="list-disc pl-5 mt-2 space-y-1">
-            <li><strong>{t('auth_data')}</strong> — {t('privacy_s2_b1')}</li>
-            <li><strong>{t('study_data')}</strong> — {t('privacy_s2_b2')}</li>
-            <li><strong>{t('schedule_data')}</strong> — {t('privacy_s2_b3')}</li>
-            <li><strong>{t('pref_data')}</strong> — {t('privacy_s2_b4')}</li>
-            <li><strong>{t('guest_data')}</strong> — {t('privacy_s2_b5')}</li>
+            <li><strong>{t('auth_data')}</strong> - {t('privacy_s2_b1')}</li>
+            <li><strong>{t('study_data')}</strong> - {t('privacy_s2_b2')}</li>
+            <li><strong>{t('schedule_data')}</strong> - {t('privacy_s2_b3')}</li>
+            <li><strong>{t('pref_data')}</strong> - {t('privacy_s2_b4')}</li>
+            <li><strong>{t('guest_data')}</strong> - {t('privacy_s2_b5')}</li>
           </ul>
         </section>
 
@@ -53,10 +53,10 @@ export default function Privacy() {
         <section>
           <h2 className="text-xl font-semibold mb-3">{t('privacy_s5_title')}</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Google OAuth</strong> — {t('privacy_s5_b1')}</li>
-            <li><strong>Supabase</strong> — {t('privacy_s5_b2')}</li>
-            <li><strong>Groq</strong> — {t('privacy_s5_b3')}</li>
-            <li><strong>Gemini</strong> — {t('privacy_s5_b4')}</li>
+            <li><strong>Google OAuth</strong> - {t('privacy_s5_b1')}</li>
+            <li><strong>Supabase</strong> - {t('privacy_s5_b2')}</li>
+            <li><strong>Groq</strong> - {t('privacy_s5_b3')}</li>
+            <li><strong>Gemini</strong> - {t('privacy_s5_b4')}</li>
           </ul>
         </section>
 
@@ -68,10 +68,10 @@ export default function Privacy() {
         <section>
           <h2 className="text-xl font-semibold mb-3">{t('privacy_s7_title')}</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>{t('access_right')}</strong> — {t('privacy_s7_b1')}</li>
-            <li><strong>{t('deletion_right')}</strong> — {t('privacy_s7_b2')}</li>
-            <li><strong>{t('export_right')}</strong> — {t('privacy_s7_b3')}</li>
-            <li><strong>{t('guest_data')}</strong> — {t('privacy_s7_b4')}</li>
+            <li><strong>{t('access_right')}</strong> - {t('privacy_s7_b1')}</li>
+            <li><strong>{t('deletion_right')}</strong> - {t('privacy_s7_b2')}</li>
+            <li><strong>{t('export_right')}</strong> - {t('privacy_s7_b3')}</li>
+            <li><strong>{t('guest_data')}</strong> - {t('privacy_s7_b4')}</li>
           </ul>
         </section>
 

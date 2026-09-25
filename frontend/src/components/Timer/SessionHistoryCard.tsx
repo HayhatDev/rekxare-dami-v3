@@ -57,7 +57,7 @@ export default function SessionHistoryCard({ colors, radius = 16, maxItems = 4, 
 
       {!hasData ? (
         <p className="text-[12px] leading-relaxed" style={{ color: colors.inkFaint }}>
-          {t('session_log_empty', 'No sessions yet — finish your first focus block!')}
+          {t('session_log_empty', 'No sessions yet - finish your first focus block!')}
         </p>
       ) : (
         <>
