@@ -5,13 +5,16 @@ import { useThemeStore } from '../stores/useThemeStore';
 import { getThemeColors } from '../themes/palette';
 
 /**
- * Smooth crossfade whenever the active theme (or dark mode) changes.
+ * Smooth crossfade whenever the active theme changes.
  *
  * Theme colors are applied as JS inline styles per component, so a plain CSS
- * transition cannot animate them. Instead this overlay:
+ * transition cannot animate them (switching themes mounts an entirely new
+ * variant page). Instead this overlay:
  *  1. mounts fully opaque with the NEW theme's background (useLayoutEffect
  *     runs before paint, so the hard swap is never seen),
  *  2. fades out to reveal the re-themed UI.
+ * Dark-mode toggles are intentionally skipped: the theme pages animate their
+ * own colors via transition-colors, and an extra cover would read as a flash.
  * Reduced-motion cuts the fade to a near-instant snap.
  */
 export function ThemeTransitionOverlay() {
@@ -19,15 +22,14 @@ export function ThemeTransitionOverlay() {
   const isDark = useThemeStore((s) => s.isDark);
   const reduce = useReducedMotion();
   const [flash, setFlash] = useState(0);
-  const prevRef = useRef(`${themeId}:${isDark}`);
+  const prevTheme = useRef(themeId);
 
   useLayoutEffect(() => {
-    const next = `${themeId}:${isDark}`;
-    if (prevRef.current !== next) {
-      prevRef.current = next;
+    if (prevTheme.current !== themeId) {
+      prevTheme.current = themeId;
       setFlash((n) => n + 1);
     }
-  }, [themeId, isDark]);
+  }, [themeId]);
 
   if (flash === 0) return null;
 

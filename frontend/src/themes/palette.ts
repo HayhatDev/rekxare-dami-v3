@@ -74,6 +74,49 @@ export function mixBlack(hex: string, percent: number): string {
   return `#${m(r)}${m(g)}${m(b)}`;
 }
 
+function parseRgba(value: string): { r: number; g: number; b: number; a: number } | null {
+  const m = value.match(/^rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?\)$/);
+  if (!m) return null;
+  return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+}
+
+/**
+ * Convert a palette color (hex or rgba) into a space-separated HSL triplet
+ * usable as the app's `--background`-style custom properties, e.g.
+ * `"266 50% 95%"` or `"266 50% 95% / 15%"`. The index.css surface variables
+ * are consumed as `hsl(var(--x))`, so they must hold HSL components, not CSS
+ * colors.
+ */
+export function hexToHslTriplet(color: string): string {
+  let r: number, g: number, b: number, a = 1;
+  if (color.trim().startsWith('#')) {
+    const hex = parseHex(color.trim());
+    r = hex.r; g = hex.g; b = hex.b;
+  } else {
+    const rgba = parseRgba(color.trim());
+    if (!rgba) return '0 0% 0%';
+    r = rgba.r; g = rgba.g; b = rgba.b; a = rgba.a;
+  }
+  const rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  let h = 0;
+  let s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case rn: h = (gn - bn) / d + (gn < bn ? 6 : 0); break;
+      case gn: h = (bn - rn) / d + 2; break;
+      default: h = (rn - gn) / d + 4;
+    }
+    h /= 6;
+  }
+  const triplet = `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  return a < 1 ? `${triplet} / ${Math.round(a * 100)}%` : triplet;
+}
+
 /** Hex → rgba() string with a given alpha. */
 export function withAlpha(hex: string, alpha: number): string {
   const { r, g, b } = parseHex(hex);

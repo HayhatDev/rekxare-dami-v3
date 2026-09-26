@@ -6,6 +6,7 @@ import { useThemeStore } from '../../stores/useThemeStore';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getThemeColors } from '../../themes/palette';
+import { preloadThemeVariants } from '../../lib/themePreload';
 
 const PANEL_CSS = `
 @keyframes rd-theme-card-in {
@@ -45,6 +46,7 @@ export const ThemeSwitcher: React.FC = () => {
       clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
     }
+    preloadThemeVariants();
     setOpen(true);
     requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
   }, []);
