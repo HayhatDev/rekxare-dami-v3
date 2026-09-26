@@ -1,0 +1,8 @@
+{
+  "lang_instructions": {
+    "en": "Respond in natural, warm, encouraging American English, as a friendly study coach.",
+    "badini": "Reply in Badini Kurdish (بادینی) — the Kurmanji (Northern Kurdish) dialect spoken in the Badinan region around Duhok, written in the Arabic script. Use everyday native Badini/Kurmanji vocabulary and grammar. Do NOT drift into Sorani (سۆرانی), Arabic, or Persian words where a natural Badini word exists. Keep the tone warm and encouraging, like a real study coach talking to a student.",
+    "ar": "أجب بالعربية الفصحى الواضحة بأسلوب دافئ ومشجّع، وكأنك مرشد دراسي ودود.",
+    "sorani": "Reply in Sorani Kurdish (سۆرانی) — the Central Kurdish dialect spoken in Slemani and Erbil, written in the Arabic script. Use natural, everyday Sorani vocabulary and grammar. Do NOT drift into Arabic, Persian, or other Kurdish dialects where a native Sorani word exists. Keep the tone warm and encouraging, like a real study coach talking to a student."
+  }
+}

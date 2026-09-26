@@ -3,7 +3,8 @@ import re
 import json
 import asyncio
 import logging
-from typing import List, Literal, Optional
+from pathlib import Path
+from typing import Dict, List, Literal, Optional
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, Field
 import httpx
@@ -38,12 +39,33 @@ MAX_QUIZ_TEXT = 40000
 _PRIMARY_RETRIES = 1
 _RETRY_DELAY_SECONDS = 0.7
 
-LANG_INSTRUCTIONS = {
+# Language instructions are kept in an editable JSON file next to this module
+# (app/ai_prompts.json) so that native speakers of the Kurdish dialects can
+# tune how the models are told to write without touching code. Ship a set of
+# sensible defaults so the API still works even if the file is missing/corrupt.
+_DEFAULT_LANG_INSTRUCTIONS = {
     "en": "Respond in English.",
     "badini": "بە بادینی وەڵام بدەوە (عەرەبی-کوردی).",
     "ar": "أجب بالعربية.",
     "sorani": "بە سۆرانی وەڵام بدەوە (عەرەبی-کوردی).",
 }
+
+
+def _load_lang_instructions() -> Dict[str, str]:
+    path = Path(__file__).resolve().parent.parent / "ai_prompts.json"
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        overrides = data.get("lang_instructions") or {}
+        out = dict(_DEFAULT_LANG_INSTRUCTIONS)
+        out.update({k: str(v) for k, v in overrides.items() if k in out})
+        return out
+    except Exception:
+        logger.exception("Failed to load ai_prompts.json — using default language instructions")
+        return dict(_DEFAULT_LANG_INSTRUCTIONS)
+
+
+LANG_INSTRUCTIONS = _load_lang_instructions()
 
 
 def _strip_json_fences(text: str) -> str:
