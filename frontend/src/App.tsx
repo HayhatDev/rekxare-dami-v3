@@ -22,6 +22,7 @@ const Insights = React.lazy(() => import('./pages/Insights'));
 const Quiz = React.lazy(() => import('./pages/Quiz'));
 import NotFound from './pages/not-found';
 import { ThemeSwitcher } from './components/ThemeSwitcher/ThemeSwitcher';
+import { ThemeTransitionOverlay } from './components/ThemeTransitionOverlay';
 import { useTranslation } from 'react-i18next';
 
 const queryClient = new QueryClient({
@@ -46,7 +47,7 @@ function AnimatedRoutes() {
   const pageTransition = {
     type: 'tween' as const,
     ease: motionTokens.easing.smooth,
-    duration: reduce ? 0.1 : motionTokens.duration.fast,
+    duration: reduce ? 0.1 : motionTokens.duration.normal,
   };
   return (
     <AnimatePresence mode="wait">
@@ -136,6 +137,7 @@ function App() {
         </AuthGate>
         <InstallApp />
       </AuthProvider>
+      <ThemeTransitionOverlay />
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
