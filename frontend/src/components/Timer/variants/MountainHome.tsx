@@ -5,7 +5,8 @@ import { CelebrationOverlay } from '../../CelebrationOverlay';
 import { formatTime } from '../../../utils/helpers';
 import { SUBJECT_COLORS } from '../../../utils/constants';
 import { getMountainTokens } from '../../../lib/mountainTokens';
-import { Mountain, Footprints, Map, BarChart3, Sun, Moon, Globe } from 'lucide-react';
+import { Mountain, Footprints, Map, BarChart3, Sun, Moon, Globe, Brain } from 'lucide-react';
+import ReviewDueBadge from '../../ReviewDueBadge';
 import ProfileDrawer from '../../Auth/ProfileDrawer';
 import StreakCalendar from '../../StreakCalendar';
 import MobileBottomNav from '../../MobileBottomNav';
@@ -92,10 +93,11 @@ export default function MountainHome() {
 
           {/* Navigation as map pins */}
           <div className="hidden md:flex items-center gap-2">
-            {[{ href: '/schedule', icon: Map, label: t('nav_schedule', 'Schedule') }, { href: '/insights', icon: BarChart3, label: t('nav_insights', 'Insights') }].map(({ href, icon: Icon, label }) => (
+            {[{ href: '/quiz', icon: Brain, label: t('nav_quiz', 'Quiz') }, { href: '/schedule', icon: Map, label: t('nav_schedule', 'Schedule') }, { href: '/insights', icon: BarChart3, label: t('nav_insights', 'Insights') }].map(({ href, icon: Icon, label }) => (
               <Link key={href} href={href} className="px-4 py-2 rounded-[20px] flex items-center gap-2 transition-all hover:scale-[1.03] shadow-sm" style={{ backgroundColor: tok.surface.chip, color: txt.inkSoft }}>
                 <Icon size={16} />
                 <span className="text-sm font-medium">{label}</span>
+                {href === '/quiz' && <ReviewDueBadge size="xs" />}
               </Link>
             ))}
           </div>

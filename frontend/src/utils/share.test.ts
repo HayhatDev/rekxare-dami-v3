@@ -17,6 +17,7 @@ function base(overrides: Partial<StudyData> = {}): StudyData {
     xp_level: 1,
     student_name: '',
     session_log: [],
+    review_cards: [],
     ...overrides,
   };
 }

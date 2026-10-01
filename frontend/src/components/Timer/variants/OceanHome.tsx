@@ -16,6 +16,7 @@ import { sessionLogStats } from '../../../utils/sessionLog';
 import { getOceanTokens } from '../../../lib/oceanTokens';
 import { mixBlack } from '../../../themes/palette';
 import { Moon, Sun } from 'lucide-react';
+import ReviewDueBadge from '../../ReviewDueBadge';
 
 function TideTimer({ progress, secondsLeft, selectedSubject, isDark }: {
   progress: number;
@@ -219,6 +220,10 @@ export default function OceanHome() {
         </div>
         <nav className="hidden md:flex items-center gap-10 text-sm font-medium">
           <Link href="/" className={`nav-link ${location === '/' ? 'active' : ''}`}>{t('nav_timer', 'Timer')}</Link>
+          <Link href="/quiz" className={`nav-link ${location === '/quiz' ? 'active' : ''}`}>
+            {t('nav_quiz', 'Quiz')}
+            <span className="inline-flex align-middle ml-1.5"><ReviewDueBadge size="xs" /></span>
+          </Link>
           <Link href="/schedule" className={`nav-link ${location === '/schedule' ? 'active' : ''}`}>{t('nav_schedule', 'Schedule')}</Link>
           <Link href="/insights" className={`nav-link ${location === '/insights' ? 'active' : ''}`}>{t('nav_insights', 'Insights')}</Link>
         </nav>

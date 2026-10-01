@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
+import ReviewDueBadge from '../../ReviewDueBadge';
 import { useTimerSession } from '../../../hooks/useTimerSession';
 import { CelebrationOverlay } from '../../CelebrationOverlay';
 import { formatTime } from '../../../utils/helpers';
@@ -76,8 +77,9 @@ export default function ClarityHome() {
 
   const navItems = [
     { href: '/', label: t('nav_timer', 'Timer'), n: '01' },
-    { href: '/schedule', label: t('nav_schedule', 'Schedule'), n: '02' },
-    { href: '/insights', label: t('nav_insights', 'Insights'), n: '03' },
+    { href: '/quiz', label: t('nav_quiz', 'Quiz'), n: '02' },
+    { href: '/schedule', label: t('nav_schedule', 'Schedule'), n: '03' },
+    { href: '/insights', label: t('nav_insights', 'Insights'), n: '04' },
   ];
 
   return (
@@ -121,6 +123,7 @@ export default function ClarityHome() {
               >
                 <span className="cl-mono text-[11px]" style={{ color: c.accent }}>{item.n}</span>
                 <span className={active ? 'font-semibold' : 'font-normal group-hover:opacity-100'}>{item.label}</span>
+          {item.href === '/quiz' && <ReviewDueBadge size="xs" />}
               </Link>
             );
           })}

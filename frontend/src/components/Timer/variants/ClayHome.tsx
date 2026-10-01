@@ -15,6 +15,7 @@ import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { Timer, CheckCircle2, Flame, Target, Moon, Sun } from 'lucide-react';
+import ReviewDueBadge from '../../ReviewDueBadge';
 
 export default function ClayHome() {
   const [, navigate] = useLocation();
@@ -49,6 +50,7 @@ export default function ClayHome() {
 
   const navItems = [
     { href: '/', label: t('nav_timer', 'Timer') },
+    { href: '/quiz', label: t('nav_quiz', 'Quiz') },
     { href: '/schedule', label: t('nav_schedule', 'Schedule') },
     { href: '/insights', label: t('nav_insights', 'Insights') },
   ];
@@ -86,6 +88,7 @@ export default function ClayHome() {
               return (
                 <Link key={item.href} href={item.href} className="px-4 py-2.5 text-[13px] font-bold clay-btn" style={{ backgroundColor: active ? c.accent : c.card, color: active ? '#fff' : c.inkSoft, boxShadow: active ? tok.elevation.active : tok.elevation.raised }}>
                   {item.label}
+          {item.href === '/quiz' && <ReviewDueBadge size="xs" />}
                 </Link>
               );
             })}

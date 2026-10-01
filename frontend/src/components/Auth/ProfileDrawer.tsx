@@ -10,7 +10,8 @@ import { useStudyData } from '../../hooks/useStudyData';
 import { useSchedule } from '../../hooks/useSchedule';
 import { useCycleLang } from '../../hooks/useCycleLang';
 import { formatTime } from '../../utils/helpers';
-import { User, LogOut, Timer, Calendar, BarChart3, Moon, Sun, Globe, X, Download, Trash2 } from 'lucide-react';
+import ReviewDueBadge from '../ReviewDueBadge';
+import { User, LogOut, Timer, Calendar, BarChart3, Moon, Sun, Globe, X, Download, Trash2, Brain } from 'lucide-react';
 import { getAuthHeaders } from '../../services/supabase';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
@@ -150,6 +151,7 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
 
   const navItems = [
     { href: '/', icon: Timer, label: t('nav_timer', 'Timer') },
+    { href: '/quiz', icon: Brain, label: t('nav_quiz', 'Quiz') },
     { href: '/schedule', icon: Calendar, label: t('nav_schedule', 'Schedule') },
     { href: '/insights', icon: BarChart3, label: t('nav_insights', 'Insights') },
   ];
@@ -316,6 +318,7 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
                       >
                         <item.icon className="w-4 h-4 shrink-0" />
                         {item.label}
+                        {item.href === '/quiz' && <ReviewDueBadge size="xs" />}
                       </Link>
                     );
                   })}

@@ -1,15 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Brain, Loader2 } from 'lucide-react';
+import { ArrowLeft, Brain, Layers, Loader2 } from 'lucide-react';
 import { useThemeStore } from '../stores/useThemeStore';
 import { useLangStore } from '../stores/useLangStore';
 import { getThemeColors, getThemeFont, brandGradient } from '../themes/palette';
 import { useQuiz, quizDailyRemaining, QUIZ_DAILY_LIMIT } from '../hooks/useQuiz';
+import { useReviewCards } from '../hooks/useReviewCards';
 import { useStudyData } from '../hooks/useStudyData';
 import QuizUpload from '../components/Quiz/QuizUpload';
 import QuizPlayer from '../components/Quiz/QuizPlayer';
 import QuizResults from '../components/Quiz/QuizResults';
+import ReviewSession from '../components/Quiz/ReviewSession';
+import type { ReviewCard } from '../utils/srs';
 
 export default function Quiz() {
   const [, navigate] = useLocation();
@@ -18,14 +21,32 @@ export default function Quiz() {
   const { lang } = useLangStore();
   const { data } = useStudyData();
   const [questionCount, setQuestionCount] = useState(5);
+  const [reviewing, setReviewing] = useState(false);
+  const [queue, setQueue] = useState<ReviewCard[]>([]);
 
   const c = useMemo(() => getThemeColors(themeId, isDark), [themeId, isDark]);
   const fontFamily = useMemo(() => getThemeFont(themeId), [themeId]);
   const isRTL = lang === 'ar' || lang === 'badini' || lang === 'sorani';
 
   const quiz = useQuiz();
+  const review = useReviewCards();
   const [usedToday, setUsedToday] = useState(() => QUIZ_DAILY_LIMIT - quizDailyRemaining());
   const remaining = Math.max(0, QUIZ_DAILY_LIMIT - usedToday);
+
+  // A review session is a snapshot of what was due when it started. Recomputing
+  // the queue on every render would drop cards as they get graded and shift the
+  // question under the student mid-session.
+  const beginReview = () => {
+    const due = review.startReview();
+    if (due.length === 0) return;
+    setQueue(due);
+    setReviewing(true);
+  };
+
+  const endReview = () => {
+    setReviewing(false);
+    setQueue([]);
+  };
 
   const log = data?.session_log ?? [];
   const lastCompleted = useMemo(() => {
@@ -36,16 +57,20 @@ export default function Quiz() {
   }, [log]);
 
   const sessionId = log.find((r) => r.id === lastCompleted?.id)?.id;
+  const subject = lastCompleted?.subject || data?.last_subject || '';
 
   async function handleSubmit(text: string) {
-    const ok = await quiz.start({
+    const generated = await quiz.start({
       text,
-      subject: lastCompleted?.subject || data?.last_subject || '',
+      subject,
       questionCount,
       lang,
       sessionId,
     });
-    if (ok) setUsedToday((n) => n + 1);
+    if (generated) {
+      setUsedToday((n) => n + 1);
+      await review.saveDeck(generated, subject);
+    }
   }
 
   const errorText =
@@ -95,8 +120,29 @@ export default function Quiz() {
           </div>
         )}
 
-        {quiz.phase === 'idle' && (
+        {quiz.phase === 'idle' && !reviewing && (
           <div className="space-y-4">
+            {review.summary.due > 0 && (
+              <button
+                type="button"
+                onClick={beginReview}
+                className="w-full rounded-3xl border p-5 flex items-center gap-4 text-left transition-transform active:scale-[0.99]"
+                style={{ backgroundColor: c.card, borderColor: c.cardBorder }}
+              >
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 text-white"
+                  style={{ background: brandGradient(c.accent, c.pink) }}>
+                  <Layers size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-extrabold" style={{ color: c.ink }}>
+                    {t('review_due_title', '{{count}} cards ready to review', { count: review.summary.due })}
+                  </p>
+                  <p className="text-[12px] mt-0.5" style={{ color: c.inkFaint }}>
+                    {t('review_due_hint', 'Memory score {{memory}}%', { memory: review.summary.memory })}
+                  </p>
+                </div>
+              </button>
+            )}
             <div className="text-center px-2 pt-1">
               <p className="text-[16px] font-extrabold">{t('quiz_upload_intro', 'Turn what you studied into a quick quiz!')}</p>
               <p className="mt-1 text-[12px]" style={{ color: c.inkFaint }}>
@@ -119,6 +165,15 @@ export default function Quiz() {
               onSubmit={(text) => void handleSubmit(text)}
             />
           </div>
+        )}
+
+        {reviewing && (
+          <ReviewSession
+            colors={c}
+            cards={queue}
+            onGrade={review.grade}
+            onExit={endReview}
+          />
         )}
 
         {quiz.phase === 'playing' && (

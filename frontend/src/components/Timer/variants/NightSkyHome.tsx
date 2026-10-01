@@ -9,6 +9,7 @@ import ProfileDrawer from '../../Auth/ProfileDrawer';
 import StreakCalendar from '../../StreakCalendar';
 import MobileBottomNav from '../../MobileBottomNav';
 import { Moon, Sun } from 'lucide-react';
+import ReviewDueBadge from '../../ReviewDueBadge';
 import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
@@ -159,6 +160,10 @@ export default function NightSkyHome() {
         </div>
         <nav className="hidden md:flex items-center gap-12 text-sm font-medium uppercase tracking-widest">
           <Link href="/" className={`nav-link ${location === '/' ? 'active' : ''}`}>{t('nav_timer', 'Timer')}</Link>
+          <Link href="/quiz" className={`nav-link ${location === '/quiz' ? 'active' : ''}`}>
+            {t('nav_quiz', 'Quiz')}
+            <span className="inline-flex align-middle ml-1.5"><ReviewDueBadge size="xs" /></span>
+          </Link>
           <Link href="/schedule" className={`nav-link ${location === '/schedule' ? 'active' : ''}`}>{t('nav_schedule', 'Schedule')}</Link>
           <Link href="/insights" className={`nav-link ${location === '/insights' ? 'active' : ''}`}>{t('nav_insights', 'Insights')}</Link>
         </nav>

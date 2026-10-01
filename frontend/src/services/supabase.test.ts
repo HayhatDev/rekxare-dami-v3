@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { guestKeysToClear, mergeStudyData, userKey, guestCacheOwnedBy } from './supabase';
+import { guestKeysToClear, mergeStudyData, mergeReviewCards, userKey, guestCacheOwnedBy } from './supabase';
 import { GuestDeletionState } from './supabase';
-import { StudyData } from '../types';
+import { StudyData, ReviewCard } from '../types';
+import { createCard } from '../utils/srs';
+import type { QuizQuestion } from './aiAdvisor';
 
 function study(overrides: Partial<StudyData> = {}): StudyData {
   return {
@@ -16,8 +18,20 @@ function study(overrides: Partial<StudyData> = {}): StudyData {
     xp_level: 1,
     student_name: '',
     session_log: [],
+    review_cards: [],
     ...overrides,
   };
+}
+
+const quizQuestion: QuizQuestion = {
+  question: 'What is 2 + 2?',
+  options: ['4', '5', '3', '6'],
+  correct: 0,
+  explanation: 'Basic addition.',
+};
+
+function card(overrides: Partial<ReviewCard> = {}): ReviewCard {
+  return { ...createCard(quizQuestion, 'Math', 'Math:2026-09-02'), ...overrides };
 }
 
 const session = (id: string, startedAt: string) => ({
@@ -167,5 +181,78 @@ describe('local cache scoping — accounts never read each other on the same bro
     localStorage.setItem('rekxare_known_accounts', 'user-A');
     localStorage.removeItem('rekxare_guest_owner_study_data');
     expect(guestCacheOwnedBy('user-A', 'study_data')).toBe(true);
+  });
+});
+
+describe('mergeReviewCards — review history is additive, never rolled back', () => {
+  it('unions cards from both devices', () => {
+    const other = createCard({ ...quizQuestion, question: 'Define entropy' }, 'Math', 'Math:2026-09-02');
+    const merged = mergeReviewCards([card()], [other]);
+    expect(merged).toHaveLength(2);
+  });
+
+  it('treats a card as the same card even if its text is re-saved', () => {
+    const merged = mergeReviewCards([card()], [card({ explanation: 'edited' })]);
+    expect(merged).toHaveLength(1);
+  });
+
+  it('keeps the more-advanced copy when one device has reviewed further', () => {
+    const stale = card({ reps: 1, interval_days: 1 });
+    const advanced = card({ reps: 5, interval_days: 20 });
+    const merged = mergeReviewCards([advanced], [stale]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].reps).toBe(5);
+    expect(merged[0].interval_days).toBe(20);
+  });
+
+  it('is order-independent at equal rep counts', () => {
+    const a = card({ reps: 2, due_at: '2026-09-01T00:00:00.000Z' });
+    const b = card({ reps: 2, due_at: '2026-09-20T00:00:00.000Z' });
+    expect(mergeReviewCards([a], [b])[0].due_at).toBe(a.due_at);
+    expect(mergeReviewCards([b], [a])[0].due_at).toBe(a.due_at);
+  });
+
+  it('does not resurrect a card to zero reps from a stale device', () => {
+    const graded = card({ reps: 3, interval_days: 6, lapses: 1 });
+    const stale = card({ reps: 0, interval_days: 0, lapses: 0 });
+    expect(mergeReviewCards([graded], [stale])[0].reps).toBe(3);
+  });
+
+  it('drops malformed entries instead of merging them', () => {
+    const merged = mergeReviewCards([card()], [
+      { id: '' } as ReviewCard,
+      null as unknown as ReviewCard,
+    ]);
+    expect(merged).toHaveLength(1);
+  });
+
+  it('tolerates undefined collections from older payloads', () => {
+    expect(mergeReviewCards(undefined, undefined)).toEqual([]);
+    expect(mergeReviewCards(undefined, [card()])).toHaveLength(1);
+  });
+
+  it('survives repeated merges without growing', () => {
+    let cards = [card()];
+    for (let i = 0; i < 5; i += 1) cards = mergeReviewCards(cards, cards);
+    expect(cards).toHaveLength(1);
+  });
+});
+
+describe('mergeStudyData — review decks survive a cross-device read', () => {
+  it('preserves review_cards through the merge', () => {
+    const merged = mergeStudyData(study({ review_cards: [card()] }), study());
+    expect(merged.review_cards).toHaveLength(1);
+  });
+
+  it('defaults to an empty collection when neither side has cards', () => {
+    expect(mergeStudyData(study(), study()).review_cards).toEqual([]);
+  });
+
+  it('unions decks recorded on two different devices', () => {
+    const merged = mergeStudyData(
+      study({ review_cards: [card({ id: 'a', question: 'Q-A' })] }),
+      study({ review_cards: [card({ id: 'b', question: 'Q-B' })] })
+    );
+    expect(merged.review_cards.map((c) => c.id).sort()).toEqual(['a', 'b']);
   });
 });

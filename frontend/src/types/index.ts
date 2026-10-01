@@ -27,7 +27,12 @@ export interface StudyData {
   xp_level: number;
   student_name: string;
   session_log: SessionRecord[];
+  review_cards: ReviewCard[];
 }
+
+import type { ReviewCard } from '../utils/srs';
+
+export type { ReviewCard };
 
 export interface Task {
   id: string;

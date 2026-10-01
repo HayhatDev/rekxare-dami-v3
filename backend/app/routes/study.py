@@ -23,6 +23,25 @@ XP_PER_MINUTE = 1
 XP_FINISH_BONUS = 5
 XP_VARIETY_BONUS = 10
 
+# Storage caps, kept in step with the frontend (MAX_LOG_ENTRIES in
+# src/utils/sessionLog.ts and MAX_REVIEW_CARDS in src/utils/srs.ts).
+MAX_SESSION_LOG = 200
+MAX_REVIEW_CARDS = 300
+
+
+def _is_review_card(value) -> bool:
+    """Mirrors isReviewCard() in src/utils/srs.ts."""
+    if not isinstance(value, dict):
+        return False
+    card_id = value.get("id")
+    if not isinstance(card_id, str) or not card_id:
+        return False
+    if not isinstance(value.get("question"), str):
+        return False
+    if not isinstance(value.get("correct"), int):
+        return False
+    return isinstance(value.get("options"), list)
+
 
 def xp_level_for(xp: int) -> int:
     return int(math.floor(math.sqrt(max(0, xp) / LEVEL_BASE))) + 1
@@ -39,6 +58,21 @@ class StudyData(BaseModel):
     xp_points: int = Field(default=0, ge=0, le=1000000)
     xp_level: int = Field(default=1, ge=1, le=10000)
     student_name: str = Field(default="", max_length=100)
+    # Owned by the frontend and round-tripped verbatim. Without these the
+    # model_dump() below would silently erase session history and review decks
+    # on every write through this endpoint.
+    session_log: list = Field(default_factory=list)
+    review_cards: list = Field(default_factory=list)
+
+    @field_validator("session_log")
+    @classmethod
+    def cap_session_log(cls, v: list) -> list:
+        return v[:MAX_SESSION_LOG]
+
+    @field_validator("review_cards")
+    @classmethod
+    def cap_review_cards(cls, v: list) -> list:
+        return [c for c in v if _is_review_card(c)][:MAX_REVIEW_CARDS]
 
 
 class StudySession(BaseModel):

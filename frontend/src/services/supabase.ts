@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { StudyData, ScheduleData, UserPrefs, SessionRecord } from '../types';
+import { StudyData, ScheduleData, UserPrefs, SessionRecord, ReviewCard } from '../types';
+import { MAX_REVIEW_CARDS, mergeCards, sanitizeReviewCards } from '../utils/srs';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
@@ -55,7 +56,8 @@ const DEFAULT_STUDY_DATA: StudyData = {
   xp_points: 0,
   xp_level: 1,
   student_name: '',
-  session_log: []
+  session_log: [],
+  review_cards: []
 };
 
 const DEFAULT_SCHEDULE: ScheduleData = {
@@ -245,7 +247,35 @@ export function mergeStudyData(a: StudyData, b: StudyData): StudyData {
     xp_level: Math.max(a.xp_level, b.xp_level),
     student_name: a.student_name || b.student_name,
     session_log,
+    review_cards: mergeReviewCards(a.review_cards, b.review_cards),
   };
+}
+
+/**
+ * Union of two review-card collections. A card's review history is additive, so
+ * the more-advanced copy wins rather than whichever side happened to be read
+ * last — otherwise reviewing on device B could roll a card back to its
+ * pre-review state on device A.
+ */
+export function mergeReviewCards(a: ReviewCard[] = [], b: ReviewCard[] = []): ReviewCard[] {
+  const byId = new Map<string, ReviewCard>();
+  const add = (card: ReviewCard): void => {
+    const prev = byId.get(card.id);
+    if (!prev) {
+      byId.set(card.id, card);
+      return;
+    }
+    if (card.reps !== prev.reps) {
+      byId.set(card.id, card.reps > prev.reps ? card : prev);
+      return;
+    }
+    const cardDue = new Date(card.due_at).getTime();
+    const prevDue = new Date(prev.due_at).getTime();
+    byId.set(card.id, cardDue < prevDue ? card : prev);
+  };
+  sanitizeReviewCards(a).forEach(add);
+  sanitizeReviewCards(b).forEach(add);
+  return mergeCards([...byId.values()], [], MAX_REVIEW_CARDS);
 }
 
 export const api = {

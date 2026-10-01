@@ -74,13 +74,19 @@ export function useQuiz() {
   const [saving, setSaving] = useState(false);
   const [scoreSaved, setScoreSaved] = useState(false);
 
+  /**
+   * Returns the generated questions on success, or null when the quiz could not
+   * start. The caller needs the questions back immediately to build a review
+   * deck; reading them from state in the same tick would yield the previous
+   * (empty) value because React has not re-rendered yet.
+   */
   const start = useCallback(
-    async (opts: QuizStartOpts): Promise<boolean> => {
+    async (opts: QuizStartOpts): Promise<QuizQuestion[] | null> => {
       // Early gate for UX: bail out before showing the generating spinner when
       // the daily limit is already reached.
       if (quizDailyRemaining() === 0) {
         setError('DAILY_LIMIT');
-        return false;
+        return null;
       }
       sessionIdRef.current = opts.sessionId;
       setError(null);
@@ -103,7 +109,7 @@ export function useQuiz() {
         setRequestedCount(opts.questionCount);
         setScoreSaved(false);
         setPhase('playing');
-        return true;
+        return res.questions;
       } catch (e) {
         const msg = e instanceof Error ? e.message : '';
         setError(
@@ -113,7 +119,7 @@ export function useQuiz() {
             : 'GENERIC'
         );
         setPhase('idle');
-        return false;
+        return null;
       }
     },
     []

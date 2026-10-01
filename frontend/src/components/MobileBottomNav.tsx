@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Timer, Calendar, BarChart3 } from 'lucide-react';
+import { Timer, Calendar, BarChart3, Brain } from 'lucide-react';
+import ReviewDueBadge from './ReviewDueBadge';
 
 interface MobileNavProps {
   accent: string;
@@ -13,12 +14,14 @@ interface MobileNavProps {
 
 const NAV_ITEMS = [
   { href: '/', icon: Timer, labelKey: 'nav_timer' },
+  { href: '/quiz', icon: Brain, labelKey: 'nav_quiz' },
   { href: '/schedule', icon: Calendar, labelKey: 'nav_schedule' },
   { href: '/insights', icon: BarChart3, labelKey: 'nav_insights' },
 ];
 
 const LABEL_DEFAULTS: Record<string, string> = {
   nav_timer: 'Timer',
+  nav_quiz: 'Quiz',
   nav_schedule: 'Schedule',
   nav_insights: 'Insights',
 };
@@ -70,10 +73,17 @@ export default function MobileBottomNav({ accent, card, cardBorder, inkFaint, bg
               aria-current={active ? 'page' : undefined}
               className="relative z-[1] flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-transform duration-150 active:scale-90"
               style={{ minWidth: '56px' }}>
-              <item.icon
-                className={`w-5 h-5 transition-all duration-300 ${active ? 'scale-110' : ''}`}
-                style={{ color: active ? accent : inkFaint }}
-              />
+              <span className="relative inline-flex">
+                <item.icon
+                  className={`w-5 h-5 transition-all duration-300 ${active ? 'scale-110' : ''}`}
+                  style={{ color: active ? accent : inkFaint }}
+                />
+                {item.href === '/quiz' && (
+                  <span className="absolute -top-1.5 -right-2.5 leading-none">
+                    <ReviewDueBadge size="xs" />
+                  </span>
+                )}
+              </span>
               <span
                 className={`text-[11px] font-semibold transition-colors duration-200 ${active ? '' : 'opacity-80'}`}
                 style={{ color: active ? accent : inkFaint }}>

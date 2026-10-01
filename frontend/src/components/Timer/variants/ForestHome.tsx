@@ -5,7 +5,8 @@ import { useTimerSession } from '../../../hooks/useTimerSession';
 import { CelebrationOverlay } from '../../CelebrationOverlay';
 import { formatTime } from '../../../utils/helpers';
 import { getForestTokens } from '../../../lib/forestTokens';
-import { Timer, Calendar, BarChart3, Moon, Sun, Globe } from 'lucide-react';
+import { Timer, Calendar, BarChart3, Moon, Sun, Globe, Brain } from 'lucide-react';
+import ReviewDueBadge from '../../ReviewDueBadge';
 import ProfileDrawer from '../../Auth/ProfileDrawer';
 import StreakCalendar from '../../StreakCalendar';
 import MobileBottomNav from '../../MobileBottomNav';
@@ -254,6 +255,10 @@ export default function ForestHome() {
             <div className="hidden md:flex items-center">
             <Link href="/" className={`flex items-center gap-2 px-4 py-2 hover:opacity-70 transition-opacity ${location === '/' ? 'opacity-100' : 'opacity-60'}`}>
               <Timer className="w-4 h-4" /> {t('nav_timer', 'Timer')}
+            </Link>
+            <div className="w-px h-4 bg-current opacity-20"></div>
+            <Link href="/quiz" className={`flex items-center gap-2 px-4 py-2 hover:opacity-70 transition-opacity ${location === '/quiz' ? 'opacity-100' : 'opacity-60'}`}>
+              <Brain className="w-4 h-4" /> {t('nav_quiz', 'Quiz')} <ReviewDueBadge size="xs" />
             </Link>
             <div className="w-px h-4 bg-current opacity-20"></div>
             <Link href="/schedule" className={`flex items-center gap-2 px-4 py-2 hover:opacity-70 transition-opacity ${location === '/schedule' ? 'opacity-100' : 'opacity-60'}`}>
