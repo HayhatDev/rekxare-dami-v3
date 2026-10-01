@@ -107,7 +107,7 @@ export default function ClayHome() {
           <div />
           <div className="hidden md:flex items-center gap-2 text-xs font-bold" style={{ color: c.inkSoft }}>
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isActive ? c.pink : c.accent, boxShadow: `0 0 8px ${isActive ? c.pink : c.accent}` }} />
-            <span>{isActive ? t('session_live', 'Session live') : t('ready_to_go', 'Ready to shape')}</span>
+            <span>{isActive ? t('session_live', 'Session live') : t('ready', 'Ready')}</span>
           </div>
         </div>
 

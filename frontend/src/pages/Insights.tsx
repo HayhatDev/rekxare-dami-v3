@@ -180,15 +180,14 @@ export default function Insights() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg w-full">
               {[
-                { icon: BarChart3, label: t('subject_breakdown', 'Subject Breakdown'), desc: t('no_data_hint', 'Start studying to see your insights here.') },
-                { icon: Trophy, label: t('strengths', 'Strengths'), desc: t('no_data_hint', 'Start studying to see your insights here.') },
-                { icon: Lightbulb, label: t('recommendations', 'Recommendations'), desc: t('no_data_hint', 'Start studying to see your insights here.') },
+                { icon: BarChart3, label: t('subject_breakdown', 'Subject Breakdown') },
+                { icon: Trophy, label: t('strengths', 'Strengths') },
+                { icon: Lightbulb, label: t('recommendations', 'Recommendations') },
               ].map((item, i) => (
                 <div key={i} className="rounded-2xl p-4 text-center transition-all hover:scale-[1.02]"
                   style={{ backgroundColor: c.card, border: `1px solid ${c.cardBorder}` }}>
                   <item.icon className="w-6 h-6 mx-auto mb-2" style={{ color: c.accent }} />
-                  <p className="text-xs font-bold mb-1" style={{ color: c.ink }}>{item.label}</p>
-                  <p className="text-[11px]" style={{ color: c.inkFaint }}>{t('ai_loading', 'Analyzing your study patterns...')}</p>
+                  <p className="text-xs font-bold" style={{ color: c.ink }}>{item.label}</p>
                 </div>
               ))}
             </div>

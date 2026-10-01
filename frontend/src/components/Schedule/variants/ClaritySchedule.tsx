@@ -129,7 +129,6 @@ export default function ClaritySchedule() {
             <h2 className="cl-serif text-3xl sm:text-4xl font-semibold" style={{ letterSpacing: '-0.02em' }}>
               {clean(t('schedule_title', 'Weekly Schedule'))}
             </h2>
-            <p className="cl-mono text-[12px] tracking-[0.12em] mt-2" style={{ color: c.inkSoft }}>{t('plan_your_week', 'Plan your week and stay on track.')}</p>
           </div>
           <button onClick={() => setIsAiModalOpen(true)} className="flex items-center gap-2 cl-mono text-[11px] tracking-[0.14em] uppercase px-5 py-3 transition-all duration-200 hover:brightness-95" style={{ backgroundColor: c.accent, color: c.accentInk }}>
             <Wand2 className="w-4 h-4" /> {t('ai_generator', 'AI Generator')}

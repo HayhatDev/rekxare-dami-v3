@@ -107,7 +107,6 @@ export const ThemeSwitcher: React.FC = () => {
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--ts-panel-border, rgba(0,0,0,0.08))' }}>
               <div>
                 <h2 className="font-semibold text-base" style={{ color: 'var(--ts-panel-fg, #1A1A18)' }}>{t('choose_theme', 'Choose a Theme')}</h2>
-                <p className="text-xs mt-0.5 opacity-50" style={{ color: 'var(--ts-panel-fg, #1A1A18)' }}>{t('theme_personality', 'Each theme has its own personality')}</p>
               </div>
               <button
                 onClick={handleClose}

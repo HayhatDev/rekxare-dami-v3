@@ -179,7 +179,7 @@ export default function NightSkyHome() {
           <div />
           <div className="hidden md:flex items-center gap-2 text-xs font-mono-num tracking-widest uppercase" style={{ color: text, opacity: 0.6 }}>
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isActive ? gold : accent, boxShadow: `0 0 8px ${isActive ? gold : accent}` }} />
-            <span>{isActive ? t('session_live', 'Session live') : t('ready_to_stargaze', 'Ready to stargaze')}</span>
+            <span>{isActive ? t('session_live', 'Session live') : t('ready', 'Ready')}</span>
           </div>
         </div>
 

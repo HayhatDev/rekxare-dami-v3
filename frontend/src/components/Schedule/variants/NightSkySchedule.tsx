@@ -141,7 +141,6 @@ export default function NightSkySchedule() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">{clean(t('schedule_title', 'Weekly Schedule'))}</h2>
-            <p className="ns-mono text-[11px] tracking-[0.12em] mt-2" style={{ color: c.inkFaint }}>{t('plan_your_week', 'Plan your week and stay on track.')}</p>
           </div>
           <button onClick={() => setIsAiModalOpen(true)} className="flex items-center gap-2 px-5 py-3 ns-mono text-[11px] tracking-[0.12em] uppercase border transition-all duration-300 hover:scale-105" style={{ borderColor: c.accent, color: c.accent }}>
             <Wand2 className="w-4 h-4" /> {t('ai_generator', 'AI Generator')}

@@ -92,9 +92,6 @@ export default function LoginPage() {
               R
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight">Rekxare Dami</h1>
-            <p className="text-[13px] mt-2 text-center leading-relaxed" style={{ color: c.inkSoft, maxWidth: 248 }}>
-              {t('login_tagline', 'Deep focus, one session at a time.')}
-            </p>
           </div>
 
           {loading ? (

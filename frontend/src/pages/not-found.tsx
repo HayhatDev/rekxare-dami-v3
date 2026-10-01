@@ -35,9 +35,6 @@ export default function NotFound() {
           <Compass className="h-12 w-12" style={{ color: c.accent }} strokeWidth={1.5} />
         </div>
         <h1 className="text-2xl font-bold">404</h1>
-        <p className="text-sm" style={{ color: c.inkSoft }}>
-          {t('not_found_desc', 'This page drifted off the trail.')}
-        </p>
         <Link
           href="/"
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium transition-transform hover:scale-[1.03] active:scale-[0.97]"

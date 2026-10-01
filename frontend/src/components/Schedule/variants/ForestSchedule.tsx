@@ -125,7 +125,6 @@ export default function ForestSchedule() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <h2 className="fo-serif text-3xl sm:text-4xl font-bold">{clean(t('schedule_title', 'Weekly Schedule'))}</h2>
-            <p className="text-[14px] mt-2" style={{ color: c.inkSoft }}>{t('plan_your_week', 'Plan your week and stay on track.')}</p>
           </div>
           <button onClick={() => setIsAiModalOpen(true)} className="flex items-center gap-2 px-5 py-3 rounded-[32px] text-[13px] font-semibold transition-all duration-300 hover:scale-105" style={{ backgroundColor: c.accent, color: c.accentInk }}>
             <Wand2 className="w-4 h-4" /> {t('ai_generator', 'AI Generator')}
