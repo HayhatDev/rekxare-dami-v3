@@ -8,6 +8,10 @@ import {
   XP_FINISH_BONUS,
   XP_VARIETY_BONUS,
   XP_PER_MINUTE,
+  normalizeFreezes,
+  STREAK_FREEZE_CAP,
+  STREAK_FREEZE_MILESTONE,
+  STREAK_FREEZE_STARTING_GRANT,
 } from './rewards';
 import { RewardInput } from './rewards';
 
@@ -192,14 +196,203 @@ describe('computeSessionRewards — streak', () => {
     expect(r.streak).toBe(3);
   });
 
-  it('resets streak when a day was skipped', () => {
+  it('resets streak when a day was skipped and no freeze is held', () => {
     const twoDaysAgo = new Date(NOW);
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
     const r = computeSessionRewards(
-      base({ streak: 5, last_study_date: twoDaysAgo.toDateString() }),
+      base({ streak: 5, last_study_date: twoDaysAgo.toDateString(), streak_freezes: 0 }),
       { minutes: 25, completed: true, subject: 'Math', now: NOW }
     );
     expect(r.streak).toBe(1);
+  });
+});
+
+describe('computeSessionRewards — streak freezes protect exactly one missed day', () => {
+  const daysAgo = (n: number): string => {
+    const d = new Date(NOW);
+    d.setDate(d.getDate() - n);
+    return d.toDateString();
+  };
+
+  it('spends a freeze to keep the streak alive across one missed day', () => {
+    const r = computeSessionRewards(
+      base({ streak: 12, last_study_date: daysAgo(2), streak_freezes: 2 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(13);
+    expect(r.freeze_used).toBe(true);
+    expect(r.streak_freezes).toBe(1);
+  });
+
+  it('resets when the student has no freeze to spend', () => {
+    const r = computeSessionRewards(
+      base({ streak: 12, last_study_date: daysAgo(2), streak_freezes: 0 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(1);
+    expect(r.freeze_used).toBe(false);
+  });
+
+  it('cannot bridge two missed days: one freeze covers one day only', () => {
+    // Otherwise freezing would silently excuse an entire absent week.
+    const r = computeSessionRewards(
+      base({ streak: 12, last_study_date: daysAgo(3), streak_freezes: 3 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(1);
+    expect(r.freeze_used).toBe(false);
+    expect(r.streak_freezes).toBe(3);
+  });
+
+  it('cannot bridge a long absence even with a full bank', () => {
+    const r = computeSessionRewards(
+      base({ streak: 30, last_study_date: daysAgo(20), streak_freezes: STREAK_FREEZE_CAP }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(1);
+    expect(r.streak_freezes).toBe(STREAK_FREEZE_CAP);
+  });
+
+  it('never spends a freeze on a consecutive day', () => {
+    const r = computeSessionRewards(
+      base({ streak: 4, last_study_date: daysAgo(1), streak_freezes: 2 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(5);
+    expect(r.freeze_used).toBe(false);
+    expect(r.streak_freezes).toBe(2);
+  });
+
+  it('never spends a freeze on a second session the same day', () => {
+    const r = computeSessionRewards(
+      base({ streak: 4, last_study_date: TODAY, streak_freezes: 2 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(4);
+    expect(r.freeze_used).toBe(false);
+    expect(r.streak_freezes).toBe(2);
+  });
+
+  it('banks a freeze when the streak reaches a milestone', () => {
+    const r = computeSessionRewards(
+      base({ streak: 6, last_study_date: daysAgo(1), streak_freezes: 0 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(7);
+    expect(r.freeze_earned).toBe(true);
+    expect(r.streak_freezes).toBe(1);
+  });
+
+  it('banks a freeze even on the milestone it just bridged', () => {
+    const r = computeSessionRewards(
+      base({ streak: 6, last_study_date: daysAgo(2), streak_freezes: 1 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(7);
+    expect(r.freeze_used).toBe(true);
+    expect(r.freeze_earned).toBe(true);
+    // Spent one, banked one: the bank is unchanged.
+    expect(r.streak_freezes).toBe(1);
+  });
+
+  it('never banks beyond the cap', () => {
+    const r = computeSessionRewards(
+      base({ streak: 13, last_study_date: daysAgo(1), streak_freezes: STREAK_FREEZE_CAP }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(14);
+    expect(r.freeze_earned).toBe(false);
+    expect(r.streak_freezes).toBe(STREAK_FREEZE_CAP);
+  });
+
+  it('does not bank a freeze on a non-milestone streak', () => {
+    const r = computeSessionRewards(
+      base({ streak: 2, last_study_date: daysAgo(1), streak_freezes: 0 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(3);
+    expect(r.freeze_earned).toBe(false);
+    expect(r.streak_freezes).toBe(0);
+  });
+
+  it('banks only once when several sessions land on the same milestone day', () => {
+    // The streak rests on 7 for the whole day, so without the "advanced" guard
+    // each extra session would bank another freeze and the cap would be hit on
+    // the milestone day alone.
+    const first = computeSessionRewards(
+      base({ streak: 6, last_study_date: daysAgo(1), streak_freezes: 0 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(first.streak_freezes).toBe(1);
+
+    const second = computeSessionRewards(
+      base({ streak: 7, last_study_date: TODAY, streak_freezes: first.streak_freezes }),
+      { minutes: 25, completed: true, subject: 'Science', now: NOW }
+    );
+    expect(second.streak_freezes).toBe(1);
+    expect(second.freeze_earned).toBe(false);
+
+    const third = computeSessionRewards(
+      base({ streak: 7, last_study_date: TODAY, streak_freezes: second.streak_freezes }),
+      { minutes: 25, completed: true, subject: 'Art', now: NOW }
+    );
+    expect(third.streak_freezes).toBe(1);
+    expect(third.freeze_earned).toBe(false);
+  });
+
+  it('banks again once the streak moves on to the next milestone', () => {
+    const at7 = computeSessionRewards(
+      base({ streak: 6, last_study_date: daysAgo(1), streak_freezes: 0 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    const at14 = computeSessionRewards(
+      base({ streak: 13, last_study_date: daysAgo(1), streak_freezes: at7.streak_freezes }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(at14.streak).toBe(14);
+    expect(at14.freeze_earned).toBe(true);
+    expect(at14.streak_freezes).toBe(2);
+  });
+
+  it('gives a pre-feature account the starting grant instead of zero', () => {
+    // Data saved before this field existed has no key at all. Reporting zero
+    // there would mean the safety net is invisible to every existing student.
+    const r = computeSessionRewards(
+      base({ streak: 3, last_study_date: daysAgo(1) }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak_freezes).toBe(STREAK_FREEZE_STARTING_GRANT);
+  });
+
+  it('resets rather than crediting a streak it cannot date', () => {
+    // An unparseable stored date must never be read as a short gap.
+    const r = computeSessionRewards(
+      base({ streak: 9, last_study_date: 'not-a-real-date', streak_freezes: 3 }),
+      { minutes: 25, completed: true, subject: 'Math', now: NOW }
+    );
+    expect(r.streak).toBe(1);
+    expect(r.freeze_used).toBe(false);
+  });
+});
+
+describe('normalizeFreezes — a corrupt or absurd count cannot leak capacity', () => {
+  it('grants the starting amount when the field is absent', () => {
+    expect(normalizeFreezes(undefined)).toBe(STREAK_FREEZE_STARTING_GRANT);
+    expect(normalizeFreezes(null)).toBe(STREAK_FREEZE_STARTING_GRANT);
+  });
+
+  it('clamps a negative or non-finite count back to the grant', () => {
+    expect(normalizeFreezes(-5)).toBe(STREAK_FREEZE_STARTING_GRANT);
+    expect(normalizeFreezes(Number.NaN)).toBe(STREAK_FREEZE_STARTING_GRANT);
+  });
+
+  it('caps an inflated count', () => {
+    expect(normalizeFreezes(999)).toBe(STREAK_FREEZE_CAP);
+  });
+
+  it('keeps a legitimate count and floors a fraction', () => {
+    expect(normalizeFreezes(2)).toBe(2);
+    expect(normalizeFreezes(2.9)).toBe(2);
   });
 });
 

@@ -10,6 +10,7 @@ import { useStudyData } from '../../hooks/useStudyData';
 import { useSchedule } from '../../hooks/useSchedule';
 import { useCycleLang } from '../../hooks/useCycleLang';
 import { formatTime } from '../../utils/helpers';
+import { normalizeFreezes } from '../../utils/rewards';
 import ReviewDueBadge from '../ReviewDueBadge';
 import { User, LogOut, Timer, Calendar, BarChart3, Moon, Sun, Globe, X, Download, Trash2, Brain } from 'lucide-react';
 import { getAuthHeaders } from '../../services/supabase';
@@ -160,6 +161,10 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
     { label: t('focus', 'Focus'), value: formatTime(studyData?.total_seconds || 0) },
     { label: t('sessions', 'Sessions'), value: String(studyData?.sessions ?? 0) },
     { label: t('streak', 'Streak'), value: `${studyData?.streak ?? 0}d` },
+    {
+      label: t('streak_freezes', 'Streak freezes'),
+      value: String(normalizeFreezes(studyData?.streak_freezes)),
+    },
   ];
 
   const borderStyle = `1px solid ${cardBorder || 'rgba(128,128,128,0.15)'}`;
@@ -289,8 +294,9 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
                 </div>
               </div>
 
-              {/* Study stats */}
-              <div className="grid grid-cols-3 gap-2">
+              {/* Study stats — 2x2, because there are now four of them and
+                  grid-cols-3 would leave an orphan in a second row. */}
+              <div className="grid grid-cols-2 gap-2">
                 {stats.map(s => (
                   <div key={s.label} className="text-center py-3 rounded-xl" style={{ backgroundColor: `${inkFaint}10` }}>
                     <div className="font-bold text-base" style={{ color: ink }}>{s.value}</div>

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { guestKeysToClear, mergeStudyData, mergeReviewCards, userKey, guestCacheOwnedBy } from './supabase';
+import { STREAK_FREEZE_CAP, STREAK_FREEZE_STARTING_GRANT } from '../utils/rewards';
 import { GuestDeletionState } from './supabase';
 import { StudyData, ReviewCard } from '../types';
 import { createCard } from '../utils/srs';
@@ -144,6 +145,48 @@ describe('mergeStudyData — cross-device merge never loses session history', ()
   it('keeps an existing last_subject over an unknown one', () => {
     const r = mergeStudyData(study({ last_subject: '' }), study({ last_subject: 'Physics' }));
     expect(r.last_subject).toBe('Physics');
+  });
+
+  // A freeze is a consumable, so max() can hand back one already spent on another
+  // device. That is the accepted tradeoff, not the alternative: the read path
+  // merges server with local on every load and writes the whole object back, so a
+  // min() would converge both devices DOWN on a single stale read and destroy
+  // earned freezes permanently. These tests pin the direction of that tradeoff so
+  // it cannot be "fixed" into data loss later.
+  it('never loses an earned freeze to a stale device holding fewer', () => {
+    const r = mergeStudyData(
+      study({ streak_freezes: 3 }),
+      study({ streak_freezes: 1 }),
+    );
+    expect(r.streak_freezes).toBe(3);
+  });
+
+  it('keeps earned freezes even when the stale side has none at all', () => {
+    const r = mergeStudyData(
+      study({ streak_freezes: 2 }),
+      study({ streak_freezes: 0 }),
+    );
+    expect(r.streak_freezes).toBe(2);
+  });
+
+  it('does not let a stale pre-feature snapshot with no field erase a bank', () => {
+    const r = mergeStudyData(study({ streak_freezes: 3 }), study({}));
+    expect(r.streak_freezes).toBe(3);
+  });
+
+  it('grants the starting freeze only when neither side has the field', () => {
+    const r = mergeStudyData(study({}), study({}));
+    expect(r.streak_freezes).toBe(STREAK_FREEZE_STARTING_GRANT);
+  });
+
+  it('caps a corrupt freeze count during a merge', () => {
+    const r = mergeStudyData(study({ streak_freezes: 99 }), study({ streak_freezes: 1 }));
+    expect(r.streak_freezes).toBe(STREAK_FREEZE_CAP);
+  });
+
+  it('bounds a resurrected spent freeze by the cap', () => {
+    const r = mergeStudyData(study({ streak_freezes: STREAK_FREEZE_CAP }), study({ streak_freezes: 0 }));
+    expect(r.streak_freezes).toBe(STREAK_FREEZE_CAP);
   });
 });
 

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { StudyData, ScheduleData, UserPrefs, SessionRecord, ReviewCard } from '../types';
 import { MAX_REVIEW_CARDS, mergeCards, sanitizeReviewCards } from '../utils/srs';
+import { normalizeFreezes, STREAK_FREEZE_STARTING_GRANT } from '../utils/rewards';
 import { mapAuthError, needsEmailConfirmation, recoveryRedirectUrl } from '../utils/emailAuth';
 import type { EmailAuthErrorCode } from '../utils/emailAuth';
 
@@ -113,7 +114,8 @@ const DEFAULT_STUDY_DATA: StudyData = {
   xp_level: 1,
   student_name: '',
   session_log: [],
-  review_cards: []
+  review_cards: [],
+  streak_freezes: STREAK_FREEZE_STARTING_GRANT
 };
 
 const DEFAULT_SCHEDULE: ScheduleData = {
@@ -304,6 +306,15 @@ export function mergeStudyData(a: StudyData, b: StudyData): StudyData {
     student_name: a.student_name || b.student_name,
     session_log,
     review_cards: mergeReviewCards(a.review_cards, b.review_cards),
+    // Math.max, like the progress counters above — NOT the min() a consumable
+    // would suggest. The read path merges server with local on every load and
+    // then writes the whole object back, so a min() here is not "conservative":
+    // one stale device reading a smaller count would converge both devices down
+    // and destroy earned freezes permanently, with no recovery short of climbing
+    // back to the next milestone. The mirror-image error is harmless: a stale
+    // snapshot can at worst hand back one already-spent freeze, which is bounded
+    // by STREAK_FREEZE_CAP and costs the student nothing.
+    streak_freezes: Math.max(normalizeFreezes(a.streak_freezes), normalizeFreezes(b.streak_freezes)),
   };
 }
 

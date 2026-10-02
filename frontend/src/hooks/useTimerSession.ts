@@ -9,6 +9,7 @@ import { formatTime } from '../utils/helpers';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useLevelUpToast } from './useLevelUpToast';
+import { useStreakFreezeToast } from './useStreakFreezeToast';
 
 export interface UseTimerSessionOptions {
   /** Default minutes if PRESET_MINUTES is empty. Defaults to 25. */
@@ -54,6 +55,7 @@ export function useTimerSession(options: UseTimerSessionOptions = {}) {
   const { data: studyData, isLoading } = useStudyData();
 
   useLevelUpToast(lastRewards);
+  useStreakFreezeToast(lastRewards);
 
   useEffect(() => {
     if (!subjects.includes(selectedSubject) && subjects.length > 0) {

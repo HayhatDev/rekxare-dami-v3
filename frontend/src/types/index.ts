@@ -28,6 +28,11 @@ export interface StudyData {
   student_name: string;
   session_log: SessionRecord[];
   review_cards: ReviewCard[];
+  /**
+   * Banked streak freezes, each covering one missed day.
+   * Optional because data saved before this field existed must still deserialise.
+   */
+  streak_freezes?: number;
 }
 
 import type { ReviewCard } from '../utils/srs';

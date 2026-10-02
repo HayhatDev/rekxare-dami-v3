@@ -49,6 +49,7 @@ export function applySessionCompletion(prev: StudyData, opts: SessionEndInput): 
       xp_level: rewards.xp_level,
       streak: rewards.streak,
       last_study_date: rewards.last_study_date,
+      streak_freezes: rewards.streak_freezes,
       session_log,
     },
     rewards,
