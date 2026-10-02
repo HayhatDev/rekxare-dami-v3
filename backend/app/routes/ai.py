@@ -21,6 +21,19 @@ router = APIRouter()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-3.6-flash"
+GROQ_MODEL = "qwen/qwen3.8-27b"
+
+# Groq caps this account at 1000 *output* tokens per minute for the model above.
+# Asking for 4000 means a single quiz request can consume the whole per-minute
+# budget and push every other concurrent student into a 429, so each route asks
+# only for what its response actually needs. Measured on live output: dashboard
+# ~320, analyze ~100, quiz ~400, generate ~1550 (the schedule JSON is by far the
+# largest). Keeping a little headroom over the measured size absorbs longer
+# inputs without reserving quota nobody uses.
+MAX_TOKENS_DASHBOARD = 700
+MAX_TOKENS_ANALYZE = 400
+MAX_TOKENS_QUIZ = 900
+MAX_TOKENS_GENERATE = 2000
 
 # Caching keeps identical AI requests off the provider quota (the scaling
 # constraint at 100+ users). Safe here because we run a single worker.
@@ -91,6 +104,15 @@ def _sanitize_prompt_input(text: str, max_len: int) -> str:
     return text[:max_len].strip()
 
 
+class AIProviderRateLimited(RuntimeError):
+    """A provider rejected the call because its own quota was exhausted.
+
+    Distinct from a provider outage: retrying later helps, and the frontend can
+    show the same honest "come back in a moment" copy it uses for our own
+    rate limits instead of a generic outage message.
+    """
+
+
 async def _call_gemini(prompt: str, temperature: float, max_tokens: int) -> str:
     """Call Gemini API and return the text response."""
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
@@ -107,6 +129,9 @@ async def _call_gemini(prompt: str, temperature: float, max_tokens: int) -> str:
             },
             timeout=60.0,
         )
+    if resp.status_code == 429:
+        logger.error("Gemini rate limited: %s", resp.text[:200])
+        raise AIProviderRateLimited("Gemini returned 429")
     if resp.status_code != 200:
         logger.error("Gemini API error %s: %s", resp.status_code, resp.text[:200])
         raise RuntimeError(f"Gemini returned {resp.status_code}")
@@ -132,13 +157,16 @@ async def _call_groq(prompt: str, temperature: float, max_tokens: int) -> str:
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
             json={
-                "model": "qwen/qwen3.8-27b",
+                "model": GROQ_MODEL,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": temperature,
                 "max_tokens": max_tokens,
             },
             timeout=30.0,
         )
+    if resp.status_code == 429:
+        logger.error("Groq rate limited: %s", resp.text[:200])
+        raise AIProviderRateLimited("Groq returned 429")
     if resp.status_code != 200:
         logger.error("Groq API error %s: %s", resp.status_code, resp.text[:200])
         raise RuntimeError(f"Groq returned {resp.status_code}")
@@ -174,6 +202,11 @@ async def call_ai(prompt: str, temperature: float = 0.4, max_tokens: int = 500, 
                     _PRIMARY_RETRIES + 1,
                     e,
                 )
+                if isinstance(e, AIProviderRateLimited):
+                    # An exhausted provider quota cannot recover within our
+                    # retry window, so another attempt only delays the fallback
+                    # that actually has a chance of succeeding.
+                    break
                 if attempt < _PRIMARY_RETRIES:
                     await asyncio.sleep(_RETRY_DELAY_SECONDS)
     else:
@@ -184,14 +217,32 @@ async def call_ai(prompt: str, temperature: float = 0.4, max_tokens: int = 500, 
             return await fallback(prompt, temperature, max_tokens)
         except Exception as e:
             logger.warning("Fallback AI (%s) also failed: %s", fallback_name, e)
+            if isinstance(e, AIProviderRateLimited) or isinstance(last_error, AIProviderRateLimited):
+                # Both providers throttled. This is a capacity problem, not an
+                # outage, so let the caller answer 429 with the honest
+                # "try again shortly" copy instead of a generic 502.
+                raise AIProviderRateLimited("All AI providers rate limited") from e
             raise RuntimeError("All AI providers failed") from e
+    if isinstance(last_error, AIProviderRateLimited):
+        raise last_error
     raise RuntimeError("No AI provider configured") from last_error
 
 
 async def _ai_content_or_502(prompt: str, lang: str, max_tokens: int, temperature: float) -> str:
-    """Call call_ai(), converting total provider failure into a 502."""
+    """Call call_ai(), converting provider failure into the right HTTP status."""
     try:
         return await call_ai(prompt, temperature=temperature, max_tokens=max_tokens, lang=lang)
+    except AIProviderRateLimited:
+        # Our own per-student limiter is already separate from this. Reusing 429
+        # lets the frontend reuse its existing, already-translated
+        # "paused for a moment, your data is safe" copy for provider throttling
+        # instead of telling students the AI service is broken.
+        logger.warning("All AI providers rate limited")
+        raise HTTPException(
+            status_code=429,
+            detail="AI providers are busy right now. Please try again in a minute.",
+            headers={"Retry-After": "60"},
+        )
     except Exception:
         logger.exception("All AI providers failed")
         raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
@@ -470,7 +521,7 @@ async def analyze_study_data(request: Request, body: AnalyzeRequest, user: dict 
 
     async def produce():
         prompt = build_analyze_prompt(study_data, lang)
-        content = await _ai_content_or_502(prompt, lang, max_tokens=2000, temperature=0.4)
+        content = await _ai_content_or_502(prompt, lang, max_tokens=MAX_TOKENS_ANALYZE, temperature=0.4)
         try:
             parsed = json.loads(_strip_json_fences(content))
             return {
@@ -651,7 +702,7 @@ async def generate_quiz(request: Request, body: QuizRequest, user: dict = Depend
 
     async def produce():
         prompt = build_quiz_prompt(text, subject, body.question_count, lang)
-        content = await _ai_content_or_502(prompt, lang, max_tokens=4000, temperature=0.4)
+        content = await _ai_content_or_502(prompt, lang, max_tokens=MAX_TOKENS_QUIZ, temperature=0.4)
         parsed = _parse_json(content)
         if parsed is None:
             logger.error("Failed to parse quiz response for user %s", user["sub"])
@@ -684,7 +735,7 @@ async def generate_schedule(request: Request, body: GenerateScheduleRequest, use
     async def produce():
         prompt = build_generate_prompt(goal, body.preferred_time, rest_days,
                                        subjects, existing, today, lang)
-        content = await _ai_content_or_502(prompt, lang, max_tokens=4000, temperature=0.3)
+        content = await _ai_content_or_502(prompt, lang, max_tokens=MAX_TOKENS_GENERATE, temperature=0.3)
         parsed = _parse_json(content)
         if parsed is None:
             logger.exception("Failed to parse AI response")
@@ -727,7 +778,7 @@ async def dashboard_analysis(request: Request, body: DashboardRequest, user: dic
 
     async def produce():
         prompt = build_dashboard_prompt(study_data, lang)
-        content = await _ai_content_or_502(prompt, lang, max_tokens=4000, temperature=0.4)
+        content = await _ai_content_or_502(prompt, lang, max_tokens=MAX_TOKENS_DASHBOARD, temperature=0.4)
         try:
             parsed = json.loads(_strip_json_fences(content))
             return {
