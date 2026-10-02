@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Check, FileUp, Upload, X } from 'lucide-react';
 import type { ThemePalette } from '../../themes/palette';
 import { MAX_REVIEW_CARDS, deckId, type ReviewCard } from '../../utils/srs';
-import { parseDeck, type ImportResult } from '../../utils/deckImport';
+import { importWarningKey, parseDeck, type ImportResult } from '../../utils/deckImport';
 import { dayKey } from '../../utils/sessionLog';
 import { STATUS_COLORS } from '../../utils/constants';
 
@@ -13,11 +13,25 @@ interface ImportDeckProps {
   /** How many more cards the library can hold before hitting its cap. */
   room: number;
   onImport: (cards: ReviewCard[], subject: string) => Promise<void> | void;
+  /** Total cards currently in the library, used to offer a way out of a full library. */
+  totalCards: number;
+  onClearLibrary: () => Promise<void> | void;
 }
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-export default function ImportDeck({ colors, initialSubject, room, onImport }: ImportDeckProps) {
+// English copy for any warning code without a translation yet. The parser can
+// add a new code without the UI silently dropping it.
+const IMPORT_WARNING_FALLBACKS: Record<string, string> = {
+  empty_file: 'That file is empty.',
+  no_rows: 'No card rows were found in that file.',
+  no_delimiter_found: "We couldn't tell how the columns are separated.",
+  header_guessed: 'We could not recognise a header row, so we guessed which columns hold the question and the answer. Check the preview below.',
+  all_rows_rejected: 'None of the rows could be turned into a card.',
+  unknown: 'This file had a problem we could not describe.',
+};
+
+export default function ImportDeck({ colors, initialSubject, room, onImport, totalCards, onClearLibrary }: ImportDeckProps) {
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -26,6 +40,19 @@ export default function ImportDeck({ colors, initialSubject, room, onImport }: I
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [clearing, setClearing] = useState(false);
+
+  async function handleClearLibrary() {
+    setClearing(true);
+    try {
+      await onClearLibrary();
+      setConfirmClear(false);
+      reset();
+    } finally {
+      setClearing(false);
+    }
+  }
 
   const subjects = t('subjects', { returnObjects: true }) as string[];
   const options = subjects?.length ? subjects : [initialSubject];
@@ -185,13 +212,57 @@ export default function ImportDeck({ colors, initialSubject, room, onImport }: I
           )}
 
           {libraryFull ? (
-            <div className="flex items-start gap-2 rounded-2xl p-3"
-              style={{ backgroundColor: `${STATUS_COLORS.danger}14`, border: `1px solid ${STATUS_COLORS.danger}40` }}>
-              <AlertTriangle size={15} className="shrink-0 mt-px" style={{ color: STATUS_COLORS.danger }} />
-              <p className="text-[12px] leading-relaxed" style={{ color: colors.inkSoft }}>
-                {t('import_full', 'Your library is already full at {{max}} cards. Clear some cards before importing more.',
-                  { max: MAX_REVIEW_CARDS })}
-              </p>
+            <div className="space-y-2.5">
+              <div className="flex items-start gap-2 rounded-2xl p-3"
+                style={{ backgroundColor: `${STATUS_COLORS.danger}14`, border: `1px solid ${STATUS_COLORS.danger}40` }}>
+                <AlertTriangle size={15} className="shrink-0 mt-px" style={{ color: STATUS_COLORS.danger }} />
+                <p className="text-[12px] leading-relaxed" style={{ color: colors.inkSoft }}>
+                  {t('import_full', 'Your library is already full at {{max}} cards. Clear your cards before importing more.',
+                    { max: MAX_REVIEW_CARDS })}
+                </p>
+              </div>
+              {totalCards > 0 && (
+                confirmClear ? (
+                  <div className="rounded-2xl p-3 space-y-2.5"
+                    style={{ border: `1px solid ${STATUS_COLORS.danger}40` }}>
+                    <p className="text-[12px] leading-relaxed" style={{ color: colors.inkSoft }}>
+                      {t('import_clear_confirm', 'This permanently deletes all {{count}} cards, including your review progress. It cannot be undone.',
+                        { count: totalCards })}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmClear(false)}
+                        disabled={clearing}
+                        className="flex-1 py-2.5 rounded-2xl text-[12px] font-extrabold"
+                        style={{ border: `1px solid ${colors.cardBorder}`, color: colors.inkSoft }}
+                      >
+                        {t('import_cancel', 'Back')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleClearLibrary()}
+                        disabled={clearing}
+                        className="flex-1 py-2.5 rounded-2xl text-[12px] font-extrabold transition-transform active:scale-[0.98] disabled:opacity-40"
+                        style={{ backgroundColor: STATUS_COLORS.danger, color: '#fff' }}
+                      >
+                        {clearing
+                          ? t('import_clearing', 'Clearing…')
+                          : t('import_clear_confirm_btn', 'Yes, clear everything')}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClear(true)}
+                    className="w-full py-3 rounded-2xl text-[13px] font-extrabold transition-transform active:scale-[0.98]"
+                    style={{ backgroundColor: `${STATUS_COLORS.danger}14`, color: STATUS_COLORS.danger, border: `1px solid ${STATUS_COLORS.danger}40` }}
+                  >
+                    {t('import_clear', 'Clear all cards')}
+                  </button>
+                )
+              )}
             </div>
           ) : willSkip && (
             <div className="flex items-start gap-2 rounded-2xl p-3"
@@ -201,6 +272,20 @@ export default function ImportDeck({ colors, initialSubject, room, onImport }: I
                 {t('import_capped', 'You have room for {{room}} more cards ({{max}} total), so only the first {{importing}} of {{found}} will be imported and {{skipped}} left out. Review the ones you already have, or import in smaller batches by subject.',
                   { room, max: MAX_REVIEW_CARDS, importing, found, skipped: found - importing })}
               </p>
+            </div>
+          )}
+
+          {result.warnings.length > 0 && (
+            <div className="space-y-1.5">
+              {result.warnings.map((code) => (
+                <div key={code} className="flex items-start gap-2 rounded-2xl p-2.5"
+                  style={{ backgroundColor: `${STATUS_COLORS.warning}12`, border: `1px solid ${STATUS_COLORS.warning}33` }}>
+                  <AlertTriangle size={14} className="shrink-0 mt-px" style={{ color: STATUS_COLORS.warning }} />
+                  <p className="text-[11px] leading-relaxed" style={{ color: colors.inkSoft }}>
+                    {t(importWarningKey(code), IMPORT_WARNING_FALLBACKS[code] || IMPORT_WARNING_FALLBACKS.unknown)}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
 

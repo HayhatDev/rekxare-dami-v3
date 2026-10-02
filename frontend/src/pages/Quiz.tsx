@@ -186,7 +186,12 @@ export default function Quiz() {
               colors={c}
               initialSubject={fallbackSubject}
               room={review.room}
+              totalCards={review.cards.length}
               onImport={handleImport}
+              onClearLibrary={async () => {
+                await review.clearAll();
+                setImported(0);
+              }}
             />
           </div>
         )}

@@ -12,8 +12,17 @@ export interface ImportResult {
   format: ImportFormat;
   /** Lines that could not be turned into a card, with the reason. */
   skipped: ImportSkip[];
-  /** Non-fatal problems worth surfacing before the user commits. */
+  /**
+   * Machine-readable warnings (e.g. `header_guessed`). The UI maps these to
+   * translated copy through `import_warning_<code>`; a new code must have a
+   * matching entry in all four languages.
+   */
   warnings: string[];
+}
+
+/** Maps an import warning code to the copy key the UI renders. */
+export function importWarningKey(code: string): string {
+  return `import_warning_${code}`;
 }
 
 const NAME_KEYS = ['front', 'term', 'question', 'word', 'prompt', 'definition_a'];
