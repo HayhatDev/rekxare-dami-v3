@@ -61,13 +61,16 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
 }
 
 /**
- * Thrown when the server's per-IP rate limit rejects a request (HTTP 429).
+ * Thrown when an HTTP 429 rejects a request.
  *
- * The backend emits this from three very different budgets (Schedule 30/hour,
- * Insights 5/hour, Quiz 20/hour), so the message cannot promise a specific
- * reset time. It is surfaced separately from other failures because retrying
- * immediately only burns more of the same budget, and because telling someone
- * a rate limit is "something went wrong" is the bug this type exists to fix.
+ * Two different things produce a 429 and both are worth the same honest
+ * treatment: our own per-student budgets (Schedule 30/hour, Insights
+ * 20/hour, Quiz 20/hour) and provider-side throttling when Groq and Gemini
+ * both refuse a call at once. Different budgets mean the message cannot
+ * promise a specific reset time. It is surfaced separately from other
+ * failures because retrying immediately only burns more of the same budget,
+ * and because telling someone a rate limit is "something went wrong" is the
+ * bug this type exists to fix.
  */
 export const RATE_LIMITED = 'RATE_LIMITED';
 
