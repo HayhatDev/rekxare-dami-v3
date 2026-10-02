@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { generateQuiz, type QuizQuestion } from '../services/aiAdvisor';
+import { generateQuiz, RATE_LIMITED, type QuizQuestion } from '../services/aiAdvisor';
 import { useStudyData } from './useStudyData';
 import { dayKey } from '../utils/sessionLog';
 
@@ -11,6 +11,7 @@ export type QuizErrorCode =
   | 'NO_USABLE_TEXT'
   | 'NOT_ENOUGH_TEXT'
   | 'AUTH_REQUIRED'
+  | 'RATE_LIMITED'
   | 'GENERIC';
 
 export const QUIZ_DAILY_LIMIT = 5;
@@ -114,6 +115,7 @@ export function useQuiz() {
         const msg = e instanceof Error ? e.message : '';
         setError(
           msg === 'AUTH_REQUIRED' ? 'AUTH_REQUIRED'
+            : msg === RATE_LIMITED ? 'RATE_LIMITED'
             : msg === 'NO_USABLE_TEXT' ? 'NO_USABLE_TEXT'
             : msg === 'NOT_ENOUGH_TEXT' ? 'NOT_ENOUGH_TEXT'
             : 'GENERIC'

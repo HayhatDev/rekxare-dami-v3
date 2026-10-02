@@ -21,14 +21,17 @@ export function useScheduleActions() {
   const [existingTasks, setExistingTasks] = useState('');
   const [aiExplanation, setAiExplanation] = useState('');
   const [showExplanation, setShowExplanation] = useState(true);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const generateSchedule = useGenerateScheduleSuggestion();
 
+  // A rate limit lasts up to an hour, so unlike the transient AI messages this
+  // one stays on screen until the student dismisses it or tries again.
   useEffect(() => {
-    if (showExplanation && aiExplanation) {
+    if (showExplanation && aiExplanation && !isRateLimited) {
       const timer = setTimeout(() => setShowExplanation(false), 10000);
       return () => clearTimeout(timer);
     }
-  }, [showExplanation, aiExplanation]);
+  }, [showExplanation, aiExplanation, isRateLimited]);
 
   const handleAddTask = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +91,10 @@ export function useScheduleActions() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!aiGoal.trim() || !schedule) return;
+      // Reopening the form means they want to try again, so drop the stale
+      // limit banner rather than leaving it up while they type.
+      setIsRateLimited(false);
+      setShowExplanation(false);
       const subjects = t('subjects', { returnObjects: true }) as string[];
       generateSchedule.mutate(
         {
@@ -122,13 +129,17 @@ export function useScheduleActions() {
               }
             });
             updateSchedule(newSchedule);
-            if (res.explanation) {
+            setIsRateLimited(Boolean(res.rateLimited));
+            if (res.rateLimited) {
+              setAiExplanation(t('schedule_rate_limited', "You've made a lot of AI schedules in the last hour, so we've paused the AI for a bit. Here's a basic plan you can edit, and you can try the AI again soon."));
+              setShowExplanation(true);
+            } else if (res.explanation) {
               setAiExplanation(res.explanation);
               setShowExplanation(true);
             } else if (res.authError) {
               setAiExplanation(t('ai_sign_in_hint', 'Sign in with Google to unlock AI-powered schedules.'));
               setShowExplanation(true);
-            } else if ((res as any).apiError) {
+            } else if (res.apiError) {
               setAiExplanation(t('ai_api_error', 'AI service returned an error. Showing a basic schedule instead.'));
               setShowExplanation(true);
             } else if (!res.usedAI) {

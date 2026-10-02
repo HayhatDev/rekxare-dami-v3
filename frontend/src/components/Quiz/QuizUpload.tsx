@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { FileText, Loader2, Sparkles, Upload, Clipboard, X } from 'lucide-react';
 import type { ThemePalette } from '../../themes/palette';
 import { extractTextFromFile } from '../../utils/ocr';
+import { STATUS_COLORS } from '../../utils/constants';
+import { QUIZ_DAILY_LIMIT } from '../../hooks/useQuiz';
 
 const COUNT_OPTIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -91,7 +93,10 @@ export default function QuizUpload({
 
   const ocrLang = lang === 'en' ? 'eng' : 'ara';
   const pasteReady = pasteText.trim().length >= 10;
-  const startDisabled = busy || extracting || (tab === 'paste' ? !pasteReady : !file);
+  // Disable at zero rather than letting the student fill in notes, press the
+  // button, and only then be told they are out of quizzes.
+  const outOfQuizzes = remaining <= 0;
+  const startDisabled = busy || extracting || outOfQuizzes || (tab === 'paste' ? !pasteReady : !file);
 
   async function handleFile(selected: File | null) {
     if (!selected) return;
@@ -134,7 +139,11 @@ export default function QuizUpload({
           <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: colors.inkFaint }}>
             {t('quiz_count_label', 'Number of questions')}
           </span>
-          {remaining < 3 && (
+          {outOfQuizzes ? (
+            <span className="text-[11px] font-bold" style={{ color: STATUS_COLORS.warning }}>
+              {t('quizzes_used_today', "You've used all {{count}} for today", { count: QUIZ_DAILY_LIMIT })}
+            </span>
+          ) : remaining < 3 && (
             <span className="text-[11px] font-bold" style={{ color: colors.pink }}>
               {t('quiz_daily_remaining', { count: remaining, defaultValue: '{{count}} quiz generations left today' })}
             </span>

@@ -68,3 +68,90 @@ describe('useQuiz daily-limit helpers', () => {
     }
   });
 });
+
+describe('limit messages', () => {
+  const REQUIRED = [
+    'quiz_daily_limit',
+    'quiz_rate_limited',
+    'quizzes_used_today',
+    'schedule_rate_limited',
+    'insights_rate_limited_title',
+    'insights_rate_limited_hint',
+  ];
+
+  it('every limit message exists in all four languages', () => {
+    for (const key of REQUIRED) {
+      for (const lang of Object.keys(translations)) {
+        const value = translations[lang].translation[key];
+        expect(value, `${lang}.${key}`).toBeTruthy();
+      }
+    }
+  });
+
+  it('the quiz limit copy renders the real daily allowance', () => {
+    for (const lang of Object.keys(translations)) {
+      const template = translations[lang].translation['quiz_daily_limit'];
+      expect(
+        interpolate(template, QUIZ_DAILY_LIMIT),
+        `lang ${lang}`
+      ).toContain(String(QUIZ_DAILY_LIMIT));
+    }
+  });
+
+  it('the used-today badge renders the real daily allowance', () => {
+    for (const lang of Object.keys(translations)) {
+      const template = translations[lang].translation['quizzes_used_today'];
+      expect(
+        interpolate(template, QUIZ_DAILY_LIMIT),
+        `lang ${lang}`
+      ).toContain(String(QUIZ_DAILY_LIMIT));
+    }
+  });
+
+  it('rate limit copy is distinct from generic failure copy', () => {
+    for (const lang of Object.keys(translations)) {
+      const t = translations[lang].translation;
+      expect(t['insights_rate_limited_title']).not.toBe(t['ai_error_title']);
+      expect(t['quiz_rate_limited']).not.toBe(t['quiz_generic_error']);
+      expect(t['schedule_rate_limited']).not.toBe(t['ai_api_error']);
+    }
+  });
+});
+
+describe('429 handling', () => {
+  function jsonResponse(status: number) {
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => ({ error: 'Rate limit exceeded' }),
+    } as unknown as Response;
+  }
+
+  async function callQuiz(res: Response) {
+    const { generateQuiz } = await import('../services/aiAdvisor');
+    const orig = globalThis.fetch;
+    globalThis.fetch = (async () => res) as unknown as typeof fetch;
+    try {
+      await generateQuiz({ text: 'some study notes about algebra' });
+      return null;
+    } catch (e) {
+      return (e as Error).message;
+    } finally {
+      globalThis.fetch = orig;
+    }
+  }
+
+  it('surfaces a 429 from quiz as the rate limit signal', async () => {
+    const { RATE_LIMITED } = await import('../services/aiAdvisor');
+    expect(await callQuiz(jsonResponse(429))).toBe(RATE_LIMITED);
+  });
+
+  it('does not confuse a 429 with a generic quiz failure', async () => {
+    expect(await callQuiz(jsonResponse(500))).not.toBe('RATE_LIMITED');
+  });
+
+  it('still maps auth and text errors as before', async () => {
+    expect(await callQuiz(jsonResponse(401))).toBe('AUTH_REQUIRED');
+    expect(await callQuiz(jsonResponse(400))).toBe('NOT_ENOUGH_TEXT');
+  });
+});

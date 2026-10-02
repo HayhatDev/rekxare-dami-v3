@@ -21,7 +21,7 @@ export default function Insights() {
   const { lang } = useLangStore();
   const [location] = useLocation();
   const isRTL = lang === 'ar' || lang === 'badini' || lang === 'sorani';
-  const { data, isLoading, isError, needsAuth, refresh } = useDashboardAnalysis();
+  const { data, isLoading, isError, needsAuth, isRateLimited, refresh } = useDashboardAnalysis();
   const { data: studyData } = useStudyData();
   const scheduleQuery = useSchedule();
 
@@ -156,10 +156,23 @@ export default function Insights() {
               style={{ background: brandGradientSoft(c.accent, c.pink), border: `2px dashed ${c.accent}30` }}>
               <AlertTriangle className="w-10 h-10" style={{ color: STATUS_COLORS.warning }} />
             </div>
-            <h2 className="text-xl font-bold mb-2" style={{ color: c.ink }}>{t('ai_error_title', 'Something went wrong')}</h2>
-            <p className="text-sm max-w-md mb-6 leading-relaxed" style={{ color: c.inkSoft }}>
-              {t('ai_error_hint', 'Failed to load insights. Please try again.')}
-            </p>
+            {isRateLimited ? (
+              <>
+                <h2 className="text-xl font-bold mb-2" style={{ color: c.ink }}>
+                  {t('insights_rate_limited_title', "You've used your insights for now")}
+                </h2>
+                <p className="text-sm max-w-md mb-6 leading-relaxed" style={{ color: c.inkSoft }}>
+                  {t('insights_rate_limited_hint', "Insights are refreshed a few times an hour, and you've reached that for now. Your study data is safe and waiting — check back a little later.")}
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold mb-2" style={{ color: c.ink }}>{t('ai_error_title', 'Something went wrong')}</h2>
+                <p className="text-sm max-w-md mb-6 leading-relaxed" style={{ color: c.inkSoft }}>
+                  {t('ai_error_hint', 'Failed to load insights. Please try again.')}
+                </p>
+              </>
+            )}
             <button onClick={() => refresh()}
               className="flex items-center gap-2 px-5 py-2.5 rounded-[16px] text-sm font-bold transition-all hover:scale-[1.03] active:scale-[0.97]"
               style={{ backgroundColor: c.accent, color: '#fff', boxShadow: c.clayShadow !== 'none' ? c.clayShadow : undefined }}>

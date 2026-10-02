@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLangStore } from '../stores/useLangStore';
+import { RATE_LIMITED } from '../services/aiAdvisor';
 
 interface UseAIFetchOptions<T> {
   queryKey: string;
@@ -27,6 +28,9 @@ export function useAIFetch<T>({ queryKey, fetcher, enabled = true }: UseAIFetchO
     gcTime: 60 * 60 * 1000,
     retry: (failureCount, error) => {
       if (error?.message === 'AUTH_REQUIRED') return false;
+      // Retrying a rate-limited request immediately burns the same hourly
+      // budget it just refused, so it can only turn one refusal into two.
+      if (error?.message === RATE_LIMITED) return false;
       return failureCount < 1;
     },
     enabled,
@@ -37,12 +41,14 @@ export function useAIFetch<T>({ queryKey, fetcher, enabled = true }: UseAIFetchO
   };
 
   const needsAuth = query.error?.message === 'AUTH_REQUIRED';
+  const isRateLimited = query.error?.message === RATE_LIMITED;
 
   return {
     data: query.data,
     isLoading: query.isLoading,
     isError: query.isError && !needsAuth,
     needsAuth,
+    isRateLimited,
     refresh,
   };
 }

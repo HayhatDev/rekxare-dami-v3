@@ -60,6 +60,22 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
   return res;
 }
 
+/**
+ * Thrown when the server's per-IP rate limit rejects a request (HTTP 429).
+ *
+ * The backend emits this from three very different budgets (Schedule 30/hour,
+ * Insights 5/hour, Quiz 20/hour), so the message cannot promise a specific
+ * reset time. It is surfaced separately from other failures because retrying
+ * immediately only burns more of the same budget, and because telling someone
+ * a rate limit is "something went wrong" is the bug this type exists to fix.
+ */
+export const RATE_LIMITED = 'RATE_LIMITED';
+
+function assertNotRateLimited(res: Response, fallback: string): void {
+  if (res.status === 429) throw new Error(RATE_LIMITED);
+  if (!res.ok) throw new Error(fallback);
+}
+
 export async function fetchDashboardAnalysis(lang: string = 'en'): Promise<DashboardData> {
   const studyData = await api.getStudyData();
   if (!(await getAuthHeaders()).Authorization) {
@@ -71,7 +87,7 @@ export async function fetchDashboardAnalysis(lang: string = 'en'): Promise<Dashb
     body: JSON.stringify({ lang, data: studyData }),
   });
   if (res.status === 401) throw new Error('AUTH_REQUIRED');
-  if (!res.ok) throw new Error('Failed to fetch dashboard analysis');
+  assertNotRateLimited(res, 'Failed to fetch dashboard analysis');
   return res.json();
 }
 
@@ -81,7 +97,7 @@ export async function generateAISchedule(prefs: SchedulePreferences): Promise<Sc
     body: JSON.stringify(prefs),
   });
   if (res.status === 401) throw new Error('AUTH_REQUIRED');
-  if (!res.ok) throw new Error('Failed to generate schedule');
+  assertNotRateLimited(res, 'Failed to generate schedule');
   return res.json();
 }
 
@@ -102,6 +118,7 @@ export async function generateQuiz(opts: {
   });
   if (res.status === 401) throw new Error('AUTH_REQUIRED');
   if (res.status === 400) throw new Error('NOT_ENOUGH_TEXT');
+  if (res.status === 429) throw new Error(RATE_LIMITED);
   if (!res.ok) {
     if (res.status === 422) {
       const bodyText = await res.json().catch(() => null);

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { generateAISchedule, SchedulePreferences } from './aiAdvisor';
+import { generateAISchedule, RATE_LIMITED, SchedulePreferences } from './aiAdvisor';
 import i18next from 'i18next';
 
 export interface GenerateScheduleInput {
@@ -95,6 +95,8 @@ export interface ScheduleMutationResult {
   usedAI: boolean;
   authError: boolean;
   apiError?: boolean;
+  /** The server rate limit (429) rejected the request, so AI could not be used. */
+  rateLimited?: boolean;
 }
 
 export function useGenerateScheduleSuggestion() {
@@ -125,6 +127,12 @@ export function useGenerateScheduleSuggestion() {
         if (import.meta.env.DEV) console.error('[AI] Schedule generation failed:', e?.message || e);
         if (e?.message === 'AUTH_REQUIRED') {
           return { ...buildLocalSchedule(data), usedAI: false, authError: true };
+        }
+        // A rate limit is not a broken service, so it gets its own flag: the
+        // fallback schedule is still shown, but the banner explains that AI is
+        // temporarily unavailable instead of calling it an error.
+        if (e?.message === RATE_LIMITED) {
+          return { ...buildLocalSchedule(data), usedAI: false, authError: false, rateLimited: true };
         }
         if (e?.message?.includes('Failed to generate schedule')) {
           return { ...buildLocalSchedule(data), usedAI: false, authError: false, apiError: true };
