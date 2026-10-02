@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { StudyData, ScheduleData, UserPrefs, SessionRecord, ReviewCard } from '../types';
 import { MAX_REVIEW_CARDS, mergeCards, sanitizeReviewCards } from '../utils/srs';
+import { mapAuthError, needsEmailConfirmation, recoveryRedirectUrl } from '../utils/emailAuth';
+import type { EmailAuthErrorCode } from '../utils/emailAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
@@ -30,6 +32,60 @@ export const getUserKey = () => {
   } catch {
     return 'user_' + generateSecureId();
   }
+};
+
+export type AuthResult = { ok: true } | { ok: false; code: EmailAuthErrorCode };
+
+/**
+ * Email + password authentication.
+ *
+ * The project is configured with `mailer_autoconfirm = false`, so a new sign-up
+ * returns an unconfirmed identity that cannot sign in until the emailed link is
+ * followed. `signupWithEmail` therefore reports `needsConfirmation` instead of
+ * pretending the student is signed in.
+ *
+ * Every branch maps Supabase's error text to a stable code
+ * (`mapAuthError`) so components translate the reason rather than showing a raw
+ * provider message.
+ */
+export const emailAuth = {
+  async signupWithEmail(email: string, password: string): Promise<{ ok: true; needsConfirmation: boolean } | { ok: false; code: EmailAuthErrorCode }> {
+    if (!supabase) return { ok: false, code: 'not_configured' };
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: recoveryRedirectUrl(window.location.origin) },
+    });
+    if (error) return { ok: false, code: mapAuthError(error) };
+    return { ok: true, needsConfirmation: needsEmailConfirmation(data.user) };
+  },
+
+  async signinWithEmail(email: string, password: string): Promise<AuthResult> {
+    if (!supabase) return { ok: false, code: 'not_configured' };
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) return { ok: false, code: mapAuthError(error) };
+    return { ok: true };
+  },
+
+  async sendPasswordReset(email: string): Promise<AuthResult> {
+    if (!supabase) return { ok: false, code: 'not_configured' };
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: recoveryRedirectUrl(window.location.origin),
+    });
+    if (error) return { ok: false, code: mapAuthError(error) };
+    return { ok: true };
+  },
+
+  /**
+   * Store the new password for the recovery grant. Requires an active session
+   * that came from the emailed link; the caller checks for one first.
+   */
+  async updatePassword(password: string): Promise<AuthResult> {
+    if (!supabase) return { ok: false, code: 'not_configured' };
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { ok: false, code: mapAuthError(error) };
+    return { ok: true };
+  },
 };
 
 export const getAuthHeaders = async (): Promise<Record<string, string>> => {

@@ -315,6 +315,74 @@
       "share_total": "کۆمێ سەرنجێ",
       "share_xp": "خاڵێن XP",
       "sign_in_google": "چوونەژوورێ ب Google",
+
+      "auth_sign_in": "چوونەژوورێ",
+
+      "auth_create_account": "درووستکرنا هەژمار",
+
+      "auth_email": "ئیمەیل",
+
+      "auth_password": "پاسورد",
+
+      "auth_confirm_password": "پاسوردێ دووبارە بکە",
+
+      "auth_sign_in_action": "چوونەژوورێ",
+
+      "auth_create_action": "درووستکرن",
+
+      "auth_send_reset": "فرێکرنا لینکێ نوێکردنەوە",
+
+      "auth_forgot_password": "پاسوردێ لەبیرچووە؟",
+
+      "auth_back_to_sign_in": "زڤرین بۆ چوونەژوورێ",
+
+      "auth_check_email_title": "ئیمەیلێک چێکێ بکە",
+
+      "auth_check_email_body": "لینکێکی دڵنیاکرنا ئیمەیلێ بۆ نێرینا. بیکە بۆ تەواوکرنا هەژمارێ.",
+
+      "auth_reset_sent": "ئەگەر بۆ {{email}} هەژمار هەبێت، لینکێکی نوێکردنەوە دێت.",
+
+      "auth_err_email_required": "ئیمەیلێک بنڤیسە.",
+
+      "auth_err_email_invalid": "ئیمەیلێکی ڕاست نییە.",
+
+      "auth_err_password_required": "پاسوردێک بنڤیسە.",
+
+      "auth_err_password_too_short": "لانیکەم ٨ پیت بەکاربهێنە.",
+
+      "auth_err_passwords_match": "دوو پاسوردێک یەکسان نین.",
+
+      "auth_error_not_configured": "هەژمار لەم وەختەدا بەردەست نین. کەمێک پاشتر دووبارە هەوڵ بدە.",
+
+      "auth_error_invalid": "ئەم ئیمەیل و پاسوردە بە هیچ هەژمارێک ناگونجێن.",
+
+      "auth_error_email_taken": "ئەم ئیمەیلە پێشتر هەژمارێکی هەیە. بچە ژوورێ بۆ چوونەژوورێ.",
+
+      "auth_error_email_rate_limited": "ئیمەیلێک زۆر داواکراوە. چەند چرکەیەک چاوەڕێ بکە، پاشتر دووبارە هەوڵ بدە.",
+
+      "auth_error_rate_limited": "هەوڵێکی زۆر کراوە. چەند چرکەیەک چاوەڕێ بکە.",
+
+      "auth_error_weak_password": "پاسوردێکی باشتر هەڵبژێرە.",
+
+      "auth_error_same_password": "پاسوردێکی جیاواز لە پاسوردێ کۆن هەڵبژێرە.",
+
+      "auth_error_session_expired": "ئەم لینکە بەسەرچووە. لینکێکی نوێ داوا بکە.",
+
+      "auth_error_unknown": "هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدە.",
+
+      "auth_recovery_title": "پاسوردێکی نوێ هەڵبژێرە",
+
+      "auth_recovery_hint": "شتێک هەڵبژێرە کە پێشتر بەکارینەتی نەهێنووە.",
+
+      "auth_recovery_done": "پاسوردێک نوێ کرایەوە",
+
+      "auth_recovery_done_hint": "دەتگوهێنینە بۆ برنامەکە.",
+
+      "auth_new_password": "پاسوردێکی نوێ",
+
+      "auth_save_password": "پاشەکەوتکرنا پاسوردێکی نوێ",
+
+      "auth_recovery_cancel": "هەژمارێکی تر بەکاربهێنە",
       "sign_in_insights_hint": "بچە ژوورێ بۆ بەدەستهێنانا شیکاریێن ب زیرەکیا دەستکرد دەربارەی دابونەریتێن خوێندنێ و پێشکەوتنا تە.",
       "sign_in_title": "پێویست ب چوونەژوورێیە",
       "sign_out": "دەرکەڤتن",
@@ -762,6 +830,74 @@
       "share_total": "Total focus",
       "share_xp": "XP",
       "sign_in_google": "Sign in with Google",
+
+      "auth_sign_in": "Sign in",
+
+      "auth_create_account": "Create account",
+
+      "auth_email": "Email",
+
+      "auth_password": "Password",
+
+      "auth_confirm_password": "Confirm password",
+
+      "auth_sign_in_action": "Sign in",
+
+      "auth_create_action": "Create account",
+
+      "auth_send_reset": "Send reset link",
+
+      "auth_forgot_password": "Forgot password?",
+
+      "auth_back_to_sign_in": "Back to sign in",
+
+      "auth_check_email_title": "Check your email",
+
+      "auth_check_email_body": "We sent a confirmation link to {{email}}. Open it to finish setting up your account.",
+
+      "auth_reset_sent": "If {{email}} has an account, a reset link is on its way.",
+
+      "auth_err_email_required": "Enter your email.",
+
+      "auth_err_email_invalid": "That does not look like an email address.",
+
+      "auth_err_password_required": "Enter a password.",
+
+      "auth_err_password_too_short": "Use at least 8 characters.",
+
+      "auth_err_passwords_match": "The two passwords do not match.",
+
+      "auth_error_not_configured": "Accounts are unavailable right now. Try again later.",
+
+      "auth_error_invalid": "That email and password do not match an account.",
+
+      "auth_error_email_taken": "That email already has an account. Sign in instead.",
+
+      "auth_error_email_rate_limited": "Too many emails requested. Wait a few minutes, then try again.",
+
+      "auth_error_rate_limited": "Too many attempts. Wait a minute, then try again.",
+
+      "auth_error_weak_password": "Choose a stronger password.",
+
+      "auth_error_same_password": "Choose a password different from your old one.",
+
+      "auth_error_session_expired": "This link has expired. Request a new one.",
+
+      "auth_error_unknown": "Something went wrong. Please try again.",
+
+      "auth_recovery_title": "Choose a new password",
+
+      "auth_recovery_hint": "Pick something you have not used before.",
+
+      "auth_recovery_done": "Password updated",
+
+      "auth_recovery_done_hint": "Taking you to the app.",
+
+      "auth_new_password": "New password",
+
+      "auth_save_password": "Save new password",
+
+      "auth_recovery_cancel": "Use a different account",
       "sign_in_insights_hint": "Sign in to unlock AI-powered insights about your study habits and progress.",
       "sign_in_title": "Sign in required",
       "sign_out": "Sign Out",
@@ -1209,6 +1345,74 @@
       "share_total": "إجمالي التركيز",
       "share_xp": "نقاط الخبرة",
       "sign_in_google": "تسجيل الدخول بـ Google",
+
+      "auth_sign_in": "تسجيل الدخول",
+
+      "auth_create_account": "إنشاء حساب",
+
+      "auth_email": "البريد الإلكتروني",
+
+      "auth_password": "كلمة المرور",
+
+      "auth_confirm_password": "تأكيد كلمة المرور",
+
+      "auth_sign_in_action": "تسجيل الدخول",
+
+      "auth_create_action": "إنشاء الحساب",
+
+      "auth_send_reset": "إرسال رابط الاستعادة",
+
+      "auth_forgot_password": "نسيت كلمة المرور؟",
+
+      "auth_back_to_sign_in": "العودة لتسجيل الدخول",
+
+      "auth_check_email_title": "تحقق من بريدك الإلكتروني",
+
+      "auth_check_email_body": "أرسلنا رابط تأكيد إلى {{email}}. افتحه لإكمال إعداد حسابك.",
+
+      "auth_reset_sent": "إذا كان لدى {{email}} حساب، فرابط الاستعادة في الطريق.",
+
+      "auth_err_email_required": "أدخل بريدك الإلكتروني.",
+
+      "auth_err_email_invalid": "هذا لا يبدو بريدًا إلكترونيًا صحيحًا.",
+
+      "auth_err_password_required": "أدخل كلمة المرور.",
+
+      "auth_err_password_too_short": "استخدم ٨ أحرف على الأقل.",
+
+      "auth_err_passwords_match": "كلمتا المرور غير متطابقتين.",
+
+      "auth_error_not_configured": "الحسابات غير متاحة حاليًا. حاول لاحقًا.",
+
+      "auth_error_invalid": "البريد الإلكتروني وكلمة المرور لا يطابقان أي حساب.",
+
+      "auth_error_email_taken": "لهذا البريد حساب مسبقًا. سجّل الدخول بدلًا من ذلك.",
+
+      "auth_error_email_rate_limited": "تم طلب عدد كبير من الرسائل. انتظر بضع دقائق ثم حاول مجددًا.",
+
+      "auth_error_rate_limited": "محاولات كثيرة. انتظر دقيقة ثم حاول مجددًا.",
+
+      "auth_error_weak_password": "اختر كلمة مرور أقوى.",
+
+      "auth_error_same_password": "اختر كلمة مرور مختلفة عن السابقة.",
+
+      "auth_error_session_expired": "انتهت صلاحية هذا الرابط. اطلب رابطًا جديدًا.",
+
+      "auth_error_unknown": "حدث خطأ ما. حاول مرة أخرى.",
+
+      "auth_recovery_title": "اختر كلمة مرور جديدة",
+
+      "auth_recovery_hint": "اختر شيئًا لم تستخدمه من قبل.",
+
+      "auth_recovery_done": "تم تحديث كلمة المرور",
+
+      "auth_recovery_done_hint": "جارٍ الانتقال إلى التطبيق.",
+
+      "auth_new_password": "كلمة المرور الجديدة",
+
+      "auth_save_password": "حفظ كلمة المرور الجديدة",
+
+      "auth_recovery_cancel": "استخدام حساب آخر",
       "sign_in_insights_hint": "سجّل الدخول لفتح تحليلات الذكاء الاصطناعي عن عاداتك الدراسية وتقدمك.",
       "sign_in_title": "التسجيل مطلوب",
       "sign_out": "تسجيل الخروج",
@@ -1656,6 +1860,74 @@
       "share_total": "کۆی سەرنج",
       "share_xp": "خاڵەکانی XP",
       "sign_in_google": "چوونەژوورەوە بە Google",
+
+      "auth_sign_in": "چوونەژوورەوە",
+
+      "auth_create_account": "درووستکردنی هەژمار",
+
+      "auth_email": "ئیمەیل",
+
+      "auth_password": "وشەی نهێنی",
+
+      "auth_confirm_password": "پشتڕاستکردنەوەی وشەی نهێنی",
+
+      "auth_sign_in_action": "چوونەژوورەوە",
+
+      "auth_create_action": "درووستکردن",
+
+      "auth_send_reset": "ناردنی بەستەری نوێکردنەوە",
+
+      "auth_forgot_password": "وشەی نهێنیت لەبیرچووە؟",
+
+      "auth_back_to_sign_in": "گەڕانەوە بۆ چوونەژوورەوە",
+
+      "auth_check_email_title": "ئیمەیلەکەت پشکنین بکە",
+
+      "auth_check_email_body": "بەستەرێکی دڵنیاکردنەوە بۆ {{email}} نێردرا. بیکە بۆ تەواوکردنی هەژمارەکەت.",
+
+      "auth_reset_sent": "ئەگەر بۆ {{email}} هەژمار هەبێت، بەستەرێکی نوێکردنەوە دێت.",
+
+      "auth_err_email_required": "ئیمەیلەکەت بنڤیسە.",
+
+      "auth_err_email_invalid": "ئیمەیلەکەت ڕاست نییە.",
+
+      "auth_err_password_required": "وشەی نهێنی بنڤیسە.",
+
+      "auth_err_password_too_short": "لانیکەم ٨ پیت بەکاربهێنە.",
+
+      "auth_err_passwords_match": "دوو وشەی نهێنی یەکسان نین.",
+
+      "auth_error_not_configured": "هەژمارەکان ئێستا بەردەست نین. کەمێک دواتر دووبارە هەوڵ بدەوە.",
+
+      "auth_error_invalid": "ئیمەیل و وشەی نهێنی بە هیچ هەژمارێک ناگونجێن.",
+
+      "auth_error_email_taken": "ئەم ئیمەیلە پێشتر هەژمارێکی هەیە. بچۆ ژوورەوە بۆ چوونەژوورەوە.",
+
+      "auth_error_email_rate_limited": "ئیمەیلی زۆر داواکرا. چەند خولەکێک چاوەڕێ بکە، پاشتر دووبارە هەوڵ بدەوە.",
+
+      "auth_error_rate_limited": "هەوڵێکی زۆر کرا. خولەکێک چاوەڕێ بکە.",
+
+      "auth_error_weak_password": "وشەی نهێنییەکی باشتر هەڵبژێرە.",
+
+      "auth_error_same_password": "وشەی نهێنییەکی جیاواز لە کۆنەکە هەڵبژێرە.",
+
+      "auth_error_session_expired": "ئەم بەستەرە بەسەرچووە. داوای بەستەرێکی نوێ بکە.",
+
+      "auth_error_unknown": "هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەوە.",
+
+      "auth_recovery_title": "وشەی نهێنییەکی نوێ هەڵبژێرە",
+
+      "auth_recovery_hint": "شتێک هەڵبژێرە کە پێشتر بەکارت نەهێناوە.",
+
+      "auth_recovery_done": "وشەی نهێنی نوێ کرایەوە",
+
+      "auth_recovery_done_hint": "دەتگوهێنینەوە بۆ ئەپەکە.",
+
+      "auth_new_password": "وشەی نهێنییەکی نوێ",
+
+      "auth_save_password": "پاشەکەوتکردنی وشەی نهێنی نوێ",
+
+      "auth_recovery_cancel": "هەژمارێکی تر بەکاربهێنە",
       "sign_in_insights_hint": "بچۆ ژوورەوە بۆ دەستگەیشتن بە شیکارییەکانی سەر بە زیرەکیی دەستکرد دەربارەی ڕاهاتنەکانی خوێندن و پێشکەوتنت.",
       "sign_in_title": "چوونەژوورەوە پێویستە",
       "sign_out": "دەرچوون",

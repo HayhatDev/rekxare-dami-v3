@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase, api } from '../services/supabase';
+import { isRecoveryUrl } from '../utils/emailAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +11,9 @@ interface AuthContextType {
   signInAsGuest: () => void;
   signOut: () => Promise<void>;
   isGuest: boolean;
+  /** True while the student arrived from a password-recovery email link. */
+  inPasswordRecovery: boolean;
+  dismissPasswordRecovery: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +24,8 @@ const AuthContext = createContext<AuthContextType>({
   signInAsGuest: () => {},
   signOut: async () => {},
   isGuest: false,
+  inPasswordRecovery: false,
+  dismissPasswordRecovery: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -46,6 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try { return localStorage.getItem(GUEST_KEY) === 'true'; }
     catch { return false; }
   });
+  // A recovery link carries `type=recovery` in the fragment. The implicit
+  // session exchange then also fires PASSWORD_RECOVERY, so both are watched:
+  // the URL covers a cold load, the event covers a link opened in a tab that is
+  // already running.
+  const [inPasswordRecovery, setInPasswordRecovery] = useState(() =>
+    typeof window !== 'undefined' && isRecoveryUrl(window.location.href),
+  );
 
   useEffect(() => {
     if (!supabase) {
@@ -64,7 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'PASSWORD_RECOVERY') setInPasswordRecovery(true);
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
@@ -76,6 +90,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  /**
+   * Leaving the reset screen without changing the password drops the recovery
+   * grant, so a later visit cannot still write a password from a stale link.
+   */
+  const dismissPasswordRecovery = () => {
+    setInPasswordRecovery(false);
+    try { window.history.replaceState(null, '', window.location.origin + window.location.pathname); } catch {}
+  };
 
   const signInWithGoogle = async () => {
     if (!supabase) return;
@@ -104,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signInAsGuest, signOut, isGuest }}>
+    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signInAsGuest, signOut, isGuest, inPasswordRecovery, dismissPasswordRecovery }}>
       {children}
     </AuthContext.Provider>
   );
