@@ -20,9 +20,10 @@ import {
   REVIEW_SESSION_LIMIT,
   LEARNING_DELAY_MS,
   nextIntervalHint,
-  createRecallCard,
+createRecallCard,
   isRecallCard,
   isReviewCard,
+  reviewStepState,
   type ReviewCard,
   type ReviewGrade,
 } from './srs';
@@ -489,7 +490,78 @@ describe('recall cards', () => {
     expect(isRecallCard(clean)).toBe(true);
   });
 
-  it('gives the same id as the equivalent multiple choice front', () => {
+it('gives the same id as the equivalent multiple choice front', () => {
     expect(recall().id).toBe(cid('Kurdish', 'saloma'));
+  });
+});
+
+describe('reviewStepState', () => {
+  function recallCard(front = 'saloma', answer = 'hello'): ReviewCard {
+    return createRecallCard(front, answer, 'Kurdish', 'kurdish:2026-09-02', NOW);
+  }
+
+  function mcCard(): ReviewCard {
+    return createCard(
+      { question: '2 + 2?', options: ['3', '4'], correct: 1, explanation: '' },
+      'Math',
+      'math:2026-09-02',
+      NOW,
+    );
+  }
+
+  const none = { chosen: null, revealShown: false, recalled: null };
+
+  it('does not reveal a recall card before the student asks', () => {
+    const s = reviewStepState(recallCard(), none);
+    expect(s.revealed).toBe(false);
+    expect(s.needsSelfAssessment).toBe(false);
+    expect(s.canGrade).toBe(false);
+  });
+
+  it('revealing the answer still asks for a self-assessment', () => {
+    // Conflating "revealed" with "recalled" made the Forgot it / Got it pair
+    // unreachable: Show answer set recalled to true and skipped this step.
+    const s = reviewStepState(recallCard(), { ...none, revealShown: true });
+    expect(s.revealed).toBe(true);
+    expect(s.needsSelfAssessment).toBe(true);
+    expect(s.canGrade).toBe(false);
+    expect(s.isCorrect).toBe(false);
+  });
+
+  it('counts a revealed but unassessed recall card as not correct', () => {
+    const s = reviewStepState(recallCard(), { ...none, revealShown: true });
+    expect(s.isCorrect).toBe(false);
+  });
+
+  it('allows grading once the student says they recalled it', () => {
+    const s = reviewStepState(recallCard(), { ...none, revealShown: true, recalled: true });
+    expect(s.needsSelfAssessment).toBe(false);
+    expect(s.canGrade).toBe(true);
+    expect(s.isCorrect).toBe(true);
+  });
+
+  it('allows grading a forgotten recall card and does not count it correct', () => {
+    const s = reviewStepState(recallCard(), { ...none, revealShown: true, recalled: false });
+    expect(s.canGrade).toBe(true);
+    expect(s.isCorrect).toBe(false);
+  });
+
+  it('never asks for self-assessment on a multiple choice card', () => {
+    const s = reviewStepState(mcCard(), { ...none, chosen: 1 });
+    expect(s.revealed).toBe(true);
+    expect(s.needsSelfAssessment).toBe(false);
+    expect(s.canGrade).toBe(true);
+    expect(s.isCorrect).toBe(true);
+  });
+
+  it('marks a wrong multiple choice pick as incorrect', () => {
+    const s = reviewStepState(mcCard(), { ...none, chosen: 0 });
+    expect(s.canGrade).toBe(true);
+    expect(s.isCorrect).toBe(false);
+  });
+
+  it('ignores a stray multiple choice pick on a recall card', () => {
+    const s = reviewStepState(recallCard(), { chosen: 2, revealShown: false, recalled: null });
+    expect(s.revealed).toBe(false);
   });
 });

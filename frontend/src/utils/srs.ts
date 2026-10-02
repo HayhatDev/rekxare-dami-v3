@@ -189,6 +189,53 @@ export function nextIntervalHint(
   };
 }
 
+/**
+ * Per-card answers given so far in a review session.
+ *
+ * `chosen` is the multiple-choice selection; `revealShown` is whether a recall
+ * card's answer is on screen; `recalled` is the student's self-assessment of a
+ * recall card. Revealing an answer and remembering it are different events:
+ * conflating them made the Forgot it / Got it choice unreachable and marked
+ * every recall card correct.
+ */
+export interface ReviewAnswers {
+  chosen: number | null;
+  revealShown: boolean;
+  recalled: boolean | null;
+}
+
+export interface ReviewStepState {
+  /** The back of the card is showing. */
+  revealed: boolean;
+  /** Whether this answer counts toward the session's correct total. */
+  isCorrect: boolean;
+  /** Recall cards must be self-assessed before the grade buttons appear. */
+  needsSelfAssessment: boolean;
+  /** The four-grade scheduler can be used now. */
+  canGrade: boolean;
+}
+
+/** Derives what a review card should show from the answers given so far. */
+export function reviewStepState(card: ReviewCard, answers: ReviewAnswers): ReviewStepState {
+  const { chosen, revealShown, recalled } = answers;
+  if (isRecallCard(card)) {
+    const revealed = revealShown;
+    return {
+      revealed,
+      isCorrect: recalled === true,
+      needsSelfAssessment: revealed && recalled === null,
+      canGrade: revealed && recalled !== null,
+    };
+  }
+  const revealed = chosen !== null;
+  return {
+    revealed,
+    isCorrect: chosen === card.correct,
+    needsSelfAssessment: false,
+    canGrade: revealed,
+  };
+}
+
 export function isDue(card: ReviewCard, now: Date = new Date()): boolean {
   if (card.reps === 0) return true;
   const due = new Date(card.due_at).getTime();

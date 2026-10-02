@@ -4,7 +4,7 @@ import { Check, Layers, X } from 'lucide-react';
 import type { ThemePalette } from '../../themes/palette';
 import type { ReviewCard, ReviewGrade } from '../../utils/srs';
 import { STATUS_COLORS } from '../../utils/constants';
-import { nextIntervalHint, isRecallCard } from '../../utils/srs';
+import { nextIntervalHint, isRecallCard, reviewStepState } from '../../utils/srs';
 
 interface ReviewSessionProps {
   colors: ThemePalette;
@@ -20,9 +20,19 @@ export default function ReviewSession({ colors, cards, onGrade, onExit }: Review
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [chosen, setChosen] = useState<number | null>(null);
+  // `revealShown` is "the back of the card is visible"; `recalled` is the
+  // student's self-assessment of whether they got it. Keeping them separate is
+  // what makes the Forgot it / Got it pair reachable on recall cards.
+  const [revealShown, setRevealShown] = useState(false);
   const [recalled, setRecalled] = useState<boolean | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [reviewed, setReviewed] = useState(0);
+
+  const resetCard = () => {
+    setChosen(null);
+    setRevealShown(false);
+    setRecalled(null);
+  };
 
   const card = cards[index];
   const total = cards.length;
@@ -76,17 +86,19 @@ export default function ReviewSession({ colors, cards, onGrade, onExit }: Review
 
   if (!card) return null;
 
-  const recall = isRecallCard(card);
-  const revealed = recall ? recalled !== null : chosen !== null;
-  const isCorrect = recall ? recalled === true : chosen === card.correct;
+const recall = isRecallCard(card);
+  const { revealed, isCorrect, needsSelfAssessment, canGrade } = reviewStepState(card, {
+    chosen,
+    revealShown,
+    recalled,
+  });
 
   const handleGrade = async (grade: ReviewGrade) => {
-    if (!revealed) return;
+    if (!canGrade) return;
     if (isCorrect) setCorrectCount((c) => c + 1);
     await onGrade(card.id, grade);
     setReviewed((r) => r + 1);
-    setChosen(null);
-    setRecalled(null);
+    resetCard();
     setIndex((i) => Math.min(i + 1, total - 1));
   };
 
@@ -160,7 +172,7 @@ export default function ReviewSession({ colors, cards, onGrade, onExit }: Review
       {recall && !revealed && (
         <button
           type="button"
-          onClick={() => setRecalled(true)}
+          onClick={() => setRevealShown(true)}
           className="w-full py-3.5 rounded-2xl text-[14px] font-extrabold transition-transform active:scale-[0.98]"
           style={{ backgroundColor: colors.accent, color: '#fff' }}
         >
@@ -194,7 +206,7 @@ export default function ReviewSession({ colors, cards, onGrade, onExit }: Review
             </div>
           )}
 
-          {recall && recalled === null ? (
+          {needsSelfAssessment ? (
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
