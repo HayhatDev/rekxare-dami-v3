@@ -6,7 +6,7 @@ import logging
 import jwt
 import httpx
 from jwt import PyJWKSet
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 logger = logging.getLogger("rekxare.auth")
@@ -164,12 +164,18 @@ async def decode_token(token: str) -> dict:
 
 
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
     if not credentials:
         logger.warning("No Authorization header provided")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    return await decode_token(credentials.credentials)
+    user = await decode_token(credentials.credentials)
+    # Stash the subject so downstream rate-limit key functions can identify the
+    # account. FastAPI resolves dependencies before the route body (and thus
+    # before slowapi's limit check) runs, so this is set in time.
+    request.state.user_id = user.get("sub")
+    return user
 
 
 async def require_auth(

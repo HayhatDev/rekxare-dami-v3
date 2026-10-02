@@ -26,4 +26,18 @@ def get_client_key(request) -> str:
     return get_remote_address(request)
 
 
+def get_account_key(request) -> str:
+    """Rate-limit key for authenticated, per-student AI endpoints.
+
+    Falls back to the IP key only when auth has not populated
+    ``request.state.user_id`` yet. Keying these routes by IP means every
+    student behind one school or carrier NAT shares a single budget, so one
+    classmate's refreshes rate-limit everyone else.
+    """
+    user_id = getattr(getattr(request, "state", None), "user_id", None)
+    if user_id:
+        return f"user:{user_id}"
+    return f"ip:{get_client_key(request)}"
+
+
 limiter = Limiter(key_func=get_client_key)

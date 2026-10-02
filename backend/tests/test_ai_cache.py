@@ -108,3 +108,57 @@ async def test_cached_or_produce_does_not_store_on_exception(monkeypatch):
     with pytest.raises(HTTPException):
         await _cached_or_produce("k", 60, producer)
     assert ai_response_cache.get("k") is None
+
+
+def test_insights_cache_key_is_scoped_per_user_and_data():
+    """Two students must never share an insights cache entry."""
+    from app.routes.ai import CACHE_TTL_INSIGHTS, make_key as route_make_key
+
+    assert CACHE_TTL_INSIGHTS > 0
+
+    data = {"total_seconds": 100, "sessions": [{"subject": "Math"}]}
+    a = route_make_key("dashboard", "user-a", "en", data)
+    b = route_make_key("dashboard", "user-b", "en", data)
+    assert a != b, "different users must not collide"
+
+    # Same user, different language -> different entry.
+    assert a != route_make_key("dashboard", "user-a", "ku", data)
+    # Same user, changed study data -> different entry (no stale insights).
+    changed = {"total_seconds": 200, "sessions": [{"subject": "Math"}]}
+    assert a != route_make_key("dashboard", "user-a", "en", changed)
+    # Identical inputs still hit the cache.
+    assert a == route_make_key("dashboard", "user-a", "en", dict(data))
+
+    # /analyze must not collide with /dashboard for the same inputs.
+    assert a != route_make_key("analyze", "user-a", "en", data)
+
+
+def test_account_rate_limit_key_prefers_user_over_ip():
+    """Students behind one NAT must not share a rate-limit bucket."""
+    from app.utils import rate_limit
+
+    class _State:
+        user_id = "student-7"
+
+    class _Req:
+        state = _State()
+        headers: dict = {}
+        client = type("C", (), {"host": "10.0.0.9"})()
+
+    shared_ip = _Req()
+    assert rate_limit.get_account_key(shared_ip) == "user:student-7"
+
+    # Another student on the same IP gets its own bucket.
+    class _OtherState:
+        user_id = "student-8"
+
+    shared_ip.state = _OtherState()
+    assert rate_limit.get_account_key(shared_ip) == "user:student-8"
+
+    # Unauthenticated requests (no user_id) still fall back to the IP key.
+    class _AnonState:
+        user_id = None
+
+    anon = _Req()
+    anon.state = _AnonState()
+    assert rate_limit.get_account_key(anon).startswith("ip:")

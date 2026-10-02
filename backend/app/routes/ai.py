@@ -11,7 +11,7 @@ import httpx
 from datetime import datetime
 from app.utils.supabase import supabase_request, sanitize_key
 from app.utils.auth import require_auth
-from app.utils.rate_limit import limiter
+from app.utils.rate_limit import get_account_key, limiter
 from app.utils.day_keys import normalize_day_keys
 from app.utils.ai_cache import TTLCache, make_key
 
@@ -27,6 +27,12 @@ GEMINI_MODEL = "gemini-3.6-flash"
 ai_response_cache = TTLCache(max_entries=512, default_ttl=3600)
 CACHE_TTL_QUIZ = 3600 * 1       # same material re-quizzed shortly after is common
 CACHE_TTL_SCHEDULE = 3600 * 6   # same goal + same weekday -> same schedule
+# Insights read the student's own study log, so the key includes their id and
+# the TTL matches the frontend's 30-minute staleTime: a refresh inside that
+# window is answered from cache instead of spending provider quota. /dashboard
+# and /analyze were previously uncached, which made every past-staleTime reload
+# a real API call against the tightest limit in the app (5/hour).
+CACHE_TTL_INSIGHTS = 3600 * 0.5  # same study data + language -> same insights
 
 MAX_GOAL_LENGTH = 500
 MAX_EXISTING_TASKS_LENGTH = 1000
@@ -432,7 +438,7 @@ Also include a brief explanation field:
 
 
 @router.post("/analyze")
-@limiter.limit("10/hour")
+@limiter.limit("20/hour", key_func=get_account_key)
 async def analyze_study_data(request: Request, body: AnalyzeRequest, user: dict = Depends(require_auth)):
     if not GROQ_API_KEY and not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="AI service not configured")
@@ -456,27 +462,30 @@ async def analyze_study_data(request: Request, body: AnalyzeRequest, user: dict 
             logger.exception("Error fetching study data for AI analysis, user %s", user_id)
             study_data = {}
 
-    prompt = build_analyze_prompt(study_data, body.lang or "en")
+    lang = body.lang or "en"
+    # Scoped to the user so one student's insights can never be served to
+    # another, and keyed on the exact data the prompt is built from so a cache
+    # hit is always the same answer the prompt would have produced.
+    key = make_key("analyze", user_id, lang, study_data)
 
-    try:
-        content = await call_ai(prompt, temperature=0.4, max_tokens=2000, lang=body.lang or "en")
-    except Exception:
-        logger.exception("All AI providers failed for /analyze")
-        raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
+    async def produce():
+        prompt = build_analyze_prompt(study_data, lang)
+        content = await _ai_content_or_502(prompt, lang, max_tokens=2000, temperature=0.4)
+        try:
+            parsed = json.loads(_strip_json_fences(content))
+            return {
+                "insight": str(parsed.get("insight", ""))[:500],
+                "advice": str(parsed.get("advice", ""))[:500],
+                "encouragement": str(parsed.get("encouragement", ""))[:500],
+            }
+        except Exception:
+            return {
+                "insight": content[:200] if content else "",
+                "advice": "",
+                "encouragement": "",
+            }
 
-    try:
-        parsed = json.loads(_strip_json_fences(content))
-        return {
-            "insight": str(parsed.get("insight", ""))[:500],
-            "advice": str(parsed.get("advice", ""))[:500],
-            "encouragement": str(parsed.get("encouragement", ""))[:500],
-        }
-    except Exception:
-        return {
-            "insight": content[:200] if content else "",
-            "advice": "",
-            "encouragement": "",
-        }
+    return await _cached_or_produce(key, CACHE_TTL_INSIGHTS, produce)
 
 
 def build_dashboard_prompt(data: dict, lang: str) -> str:
@@ -627,7 +636,7 @@ def _normalize_questions(raw, question_count: int) -> List[dict]:
 
 
 @router.post("/quiz")
-@limiter.limit("20/hour")
+@limiter.limit("20/hour", key_func=get_account_key)
 async def generate_quiz(request: Request, body: QuizRequest, user: dict = Depends(require_auth)):
     if not GROQ_API_KEY and not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="AI service not configured")
@@ -657,7 +666,7 @@ async def generate_quiz(request: Request, body: QuizRequest, user: dict = Depend
 
 
 @router.post("/generate")
-@limiter.limit("30/hour")
+@limiter.limit("30/hour", key_func=get_account_key)
 async def generate_schedule(request: Request, body: GenerateScheduleRequest, user: dict = Depends(require_auth)):
     if not GROQ_API_KEY and not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="AI service not configured")
@@ -687,7 +696,7 @@ async def generate_schedule(request: Request, body: GenerateScheduleRequest, use
 
 
 @router.post("/dashboard")
-@limiter.limit("5/hour")
+@limiter.limit("20/hour", key_func=get_account_key)
 async def dashboard_analysis(request: Request, body: DashboardRequest, user: dict = Depends(require_auth)):
     if not GROQ_API_KEY and not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="AI service not configured")
@@ -711,44 +720,46 @@ async def dashboard_analysis(request: Request, body: DashboardRequest, user: dic
             logger.exception("Error fetching study data for dashboard, user %s", user_id)
             study_data = {}
 
-    prompt = build_dashboard_prompt(study_data, body.lang or "en")
+    lang = body.lang or "en"
+    # Same reasoning as /analyze: user-scoped key, cached for the length of the
+    # frontend's stale window so reopening Insights does not spend quota.
+    key = make_key("dashboard", user_id, lang, study_data)
 
-    try:
-        content = await call_ai(prompt, temperature=0.4, max_tokens=4000, lang=body.lang or "en")
-    except Exception:
-        logger.exception("All AI providers failed for /dashboard")
-        raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
+    async def produce():
+        prompt = build_dashboard_prompt(study_data, lang)
+        content = await _ai_content_or_502(prompt, lang, max_tokens=4000, temperature=0.4)
+        try:
+            parsed = json.loads(_strip_json_fences(content))
+            return {
+                "summary": str(parsed.get("summary", ""))[:500],
+                "strengths": [str(s)[:120] for s in (parsed.get("strengths") or [])[:3]],
+                "weaknesses": [str(w)[:120] for w in (parsed.get("weaknesses") or [])[:3]],
+                "weekly_trend": str(parsed.get("weekly_trend", "stable")),
+                "subject_breakdown": [
+                    {
+                        "subject": str(s.get("subject", ""))[:100],
+                        "hours": round(float(s.get("hours", 0)), 1),
+                        "percentage": int(s.get("percentage", 0)),
+                        "trend": str(s.get("trend", "stable")),
+                    }
+                    for s in (parsed.get("subject_breakdown") or [])[:10]
+                ],
+                "recommendations": [str(r)[:150] for r in (parsed.get("recommendations") or [])[:4]],
+                "score": max(0, min(100, int(parsed.get("score", 0)))),
+            }
+        except Exception:
+            logger.exception("Failed to parse dashboard response")
+            return {
+                "summary": content[:300] if content else "",
+                "strengths": [],
+                "weaknesses": [],
+                "weekly_trend": "stable",
+                "subject_breakdown": [],
+                "recommendations": [],
+                "score": 0,
+            }
 
-    try:
-        parsed = json.loads(_strip_json_fences(content))
-        return {
-            "summary": str(parsed.get("summary", ""))[:500],
-            "strengths": [str(s)[:120] for s in (parsed.get("strengths") or [])[:3]],
-            "weaknesses": [str(w)[:120] for w in (parsed.get("weaknesses") or [])[:3]],
-            "weekly_trend": str(parsed.get("weekly_trend", "stable")),
-            "subject_breakdown": [
-                {
-                    "subject": str(s.get("subject", ""))[:100],
-                    "hours": round(float(s.get("hours", 0)), 1),
-                    "percentage": int(s.get("percentage", 0)),
-                    "trend": str(s.get("trend", "stable")),
-                }
-                for s in (parsed.get("subject_breakdown") or [])[:10]
-            ],
-            "recommendations": [str(r)[:150] for r in (parsed.get("recommendations") or [])[:4]],
-            "score": max(0, min(100, int(parsed.get("score", 0)))),
-        }
-    except Exception:
-        logger.exception("Failed to parse dashboard response")
-        return {
-            "summary": content[:300] if content else "",
-            "strengths": [],
-            "weaknesses": [],
-            "weekly_trend": "stable",
-            "subject_breakdown": [],
-            "recommendations": [],
-            "score": 0,
-        }
+    return await _cached_or_produce(key, CACHE_TTL_INSIGHTS, produce)
 
 
 
