@@ -12,6 +12,7 @@ import QuizUpload from '../components/Quiz/QuizUpload';
 import QuizPlayer from '../components/Quiz/QuizPlayer';
 import QuizResults from '../components/Quiz/QuizResults';
 import ReviewSession from '../components/Quiz/ReviewSession';
+import ImportDeck from '../components/Quiz/ImportDeck';
 import type { ReviewCard } from '../utils/srs';
 
 export default function Quiz() {
@@ -23,6 +24,7 @@ export default function Quiz() {
   const [questionCount, setQuestionCount] = useState(5);
   const [reviewing, setReviewing] = useState(false);
   const [queue, setQueue] = useState<ReviewCard[]>([]);
+  const [imported, setImported] = useState(0);
 
   const c = useMemo(() => getThemeColors(themeId, isDark), [themeId, isDark]);
   const fontFamily = useMemo(() => getThemeFont(themeId), [themeId]);
@@ -58,6 +60,8 @@ export default function Quiz() {
 
   const sessionId = log.find((r) => r.id === lastCompleted?.id)?.id;
   const subject = lastCompleted?.subject || data?.last_subject || '';
+  const subjectOptions = t('subjects', { returnObjects: true }) as string[];
+  const fallbackSubject = subject || subjectOptions[0] || '';
 
   async function handleSubmit(text: string) {
     const generated = await quiz.start({
@@ -73,8 +77,16 @@ export default function Quiz() {
     }
   }
 
+  async function handleImport(cards: ReviewCard[], cardSubject: string) {
+    await review.importCards(cards);
+    setImported(cards.length);
+  }
+
   const errorText =
-    quiz.error === 'DAILY_LIMIT' ? t('quiz_daily_limit', "You've reached your free quiz limit for today. Come back tomorrow!")
+    quiz.error === 'DAILY_LIMIT' ? t('quiz_daily_limit', "You've used your {{count}} quizzes for today. They refill tomorrow — your library and reviews are untouched in the meantime.",
+      { count: QUIZ_DAILY_LIMIT })
+    : quiz.error === 'RATE_LIMITED' ? t('quiz_rate_limited', "A lot of people are making quizzes right now, so we've paused new ones for a moment. Your {{count}} daily quizzes are still ready to use — please try again in a little while.",
+      { count: QUIZ_DAILY_LIMIT })
     : quiz.error === 'NO_USABLE_TEXT' ? t('quiz_no_text', "We couldn't read enough text. Try pasting your notes instead.")
     : quiz.error === 'NOT_ENOUGH_TEXT' ? t('quiz_short_text', 'Please paste a bit more text so we can make good questions.')
     : quiz.error === 'AUTH_REQUIRED' ? t('quiz_auth_hint', 'Please sign in to create quizzes.')
@@ -163,6 +175,18 @@ export default function Quiz() {
               lang={lang}
               onQuestionCountChange={setQuestionCount}
               onSubmit={(text) => void handleSubmit(text)}
+            />
+            {imported > 0 && (
+              <p className="text-[12px] font-semibold text-center px-4 py-2.5 rounded-2xl"
+                style={{ backgroundColor: `${c.accent}12`, color: c.accent }}>
+                {t('import_done', '{{count}} cards added to your library.', { count: imported })}
+              </p>
+            )}
+            <ImportDeck
+              colors={c}
+              initialSubject={fallbackSubject}
+              room={review.room}
+              onImport={handleImport}
             />
           </div>
         )}

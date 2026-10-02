@@ -8,6 +8,7 @@ import {
   mergeCards,
   reviewCounts,
   scheduleCard,
+  MAX_REVIEW_CARDS,
   type ReviewGrade,
   type ReviewCard,
 } from '../utils/srs';
@@ -61,6 +62,24 @@ export function summarize(cards: ReviewCard[], now: Date = new Date()): ReviewSu
   return { ...counts, memory: memoryScore(cards) };
 }
 
+/**
+ * Folds an imported deck into the existing library.
+ *
+ * Two rules keep an import from destroying work the student already did:
+ *  - a card whose id is already present is skipped, so re-importing a deck
+ *    cannot reset its `reps`, `ease`, or `due_at`;
+ *  - fresh cards are trimmed to the remaining room, because `mergeCards`
+ *    resolves the cap by due date and would otherwise evict the cards a
+ *    student has studied longest.
+ */
+export function mergeImported(current: ReviewCard[], incoming: ReviewCard[]): ReviewCard[] {
+  if (incoming.length === 0) return current;
+  const known = new Set(current.map((c) => c.id));
+  const fresh = incoming.filter((c) => !known.has(c.id));
+  const room = Math.max(0, MAX_REVIEW_CARDS - current.length);
+  return mergeCards(current, fresh.slice(0, room));
+}
+
 export function useReviewCards() {
   const { data, updateData, isUpdating } = useStudyData();
 
@@ -112,6 +131,19 @@ export function useReviewCards() {
     []
   );
 
+  /**
+   * Adds imported cards, keeping the progress of any card already in the
+   * library. See `mergeImported` for the two rules this enforces.
+   */
+  const importCards = useCallback(
+    async (incoming: ReviewCard[]): Promise<number> => {
+      if (incoming.length === 0) return 0;
+      await commit((current) => mergeImported(current, incoming));
+      return cardsRef.current.length;
+    },
+    [commit]
+  );
+
   const clearAll = useCallback(async (): Promise<void> => {
     await commit(() => []);
   }, [commit]);
@@ -119,7 +151,9 @@ export function useReviewCards() {
   return {
     cards,
     summary,
+    room: Math.max(0, MAX_REVIEW_CARDS - cardsRef.current.length),
     saveDeck,
+    importCards,
     grade,
     startReview,
     clearAll,

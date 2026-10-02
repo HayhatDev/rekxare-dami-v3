@@ -7,15 +7,27 @@ export interface ReviewCard {
   deck_id: string;
   subject: string;
   question: string;
+  /** Empty for recall cards, which show a single free-text answer instead. */
   options: string[];
   correct: number;
   explanation: string;
+  /** Back-of-card text for recall cards. Absent on multiple-choice cards. */
+  answer?: string;
   ease: number;
   interval_days: number;
   due_at: string;
   reps: number;
   lapses: number;
   created_at: string;
+}
+
+/**
+ * Anki, Quizlet and most CSV decks are two-sided: a front and a back, with no
+ * distractors. Those cannot be expressed as multiple choice without inventing
+ * wrong answers, so recall cards carry no options and reveal one answer text.
+ */
+export function isRecallCard(card: ReviewCard): boolean {
+  return !Array.isArray(card.options) || card.options.length === 0;
 }
 
 export const MIN_EASE = 1.3;
@@ -68,6 +80,31 @@ export function createCard(
     options: [...question.options],
     correct: question.correct,
     explanation: question.explanation,
+    ease: START_EASE,
+    interval_days: 0,
+    due_at: now.toISOString(),
+    reps: 0,
+    lapses: 0,
+    created_at: now.toISOString(),
+  };
+}
+
+export function createRecallCard(
+  front: string,
+  back: string,
+  subject: string,
+  deck: string,
+  now: Date = new Date()
+): ReviewCard {
+  return {
+    id: cardId(subject, front),
+    deck_id: deck,
+    subject,
+    question: front,
+    options: [],
+    correct: 0,
+    explanation: '',
+    answer: back,
     ease: START_EASE,
     interval_days: 0,
     due_at: now.toISOString(),
@@ -225,13 +262,14 @@ export function mergeCards(
 export function isReviewCard(value: unknown): value is ReviewCard {
   if (!value || typeof value !== 'object') return false;
   const c = value as Partial<ReviewCard>;
-  return (
-    typeof c.id === 'string' &&
-    c.id.length > 0 &&
-    typeof c.question === 'string' &&
-    typeof c.correct === 'number' &&
-    Array.isArray(c.options)
-  );
+  if (typeof c.id !== 'string' || c.id.length === 0) return false;
+  if (typeof c.question !== 'string') return false;
+  // Multiple choice needs a real option list; recall cards instead need the
+  // answer text they reveal.
+  if (Array.isArray(c.options) && c.options.length > 0) {
+    return typeof c.correct === 'number' && c.correct >= 0 && c.correct < c.options.length;
+  }
+  return typeof c.answer === 'string' && c.answer.trim().length > 0;
 }
 
 export function sanitizeReviewCards(value: unknown): ReviewCard[] {

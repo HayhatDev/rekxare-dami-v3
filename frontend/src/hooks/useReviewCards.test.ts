@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { deckFromQuiz, applyGrade, summarize } from './useReviewCards';
-import { scheduleCard, cardId, REVIEW_SESSION_LIMIT } from '../utils/srs';
+import { deckFromQuiz, applyGrade, summarize, mergeImported } from './useReviewCards';
+import { scheduleCard, cardId, REVIEW_SESSION_LIMIT, createRecallCard, MAX_REVIEW_CARDS } from '../utils/srs';
 import type { ReviewCard } from '../utils/srs';
 import type { QuizQuestion } from '../services/aiAdvisor';
 
@@ -208,5 +208,71 @@ describe('summarize', () => {
       id: `bulk-${i}`,
     }));
     expect(summarize(many, NOW).due).toBeGreaterThan(REVIEW_SESSION_LIMIT);
+  });
+});
+
+describe('mergeImported', () => {
+  function recall(front: string, subject = 'Kurdish'): ReviewCard {
+    return createRecallCard(front, `english-${front}`, subject, DAY, NOW);
+  }
+
+  it('adds cards that are not in the library yet', () => {
+    const current = [recall('one')];
+    const next = mergeImported(current, [recall('two'), recall('three')]);
+    expect(next).toHaveLength(3);
+  });
+
+  it('keeps the progress of a card it already has', () => {
+    let current = [recall('one'), recall('two')];
+    current = applyGrade(current, cardId('Kurdish', 'one'), 3, NOW);
+    const studied = current.find((c) => c.question === 'one')!;
+    expect(studied.reps).toBe(1);
+
+    const next = mergeImported(current, [recall('one')]);
+    expect(next).toHaveLength(2);
+    expect(next.find((c) => c.question === 'one')).toEqual(studied);
+  });
+
+  it('does not reset the due date of a re-imported card', () => {
+    let current = [recall('one')];
+    current = applyGrade(current, cardId('Kurdish', 'one'), 3, NOW);
+    const before = current.find((c) => c.question === 'one')!.due_at;
+    const next = mergeImported(current, [recall('one')]);
+    expect(next.find((c) => c.question === 'one')!.due_at).toBe(before);
+  });
+
+  it('is a no-op when nothing new is in the file', () => {
+    const current = [recall('one')];
+    expect(mergeImported(current, [recall('one')])).toHaveLength(1);
+  });
+
+  it('returns the library untouched for an empty import', () => {
+    const current = [recall('one')];
+    expect(mergeImported(current, [])).toBe(current);
+  });
+
+  it('never exceeds the cap', () => {
+    const current = Array.from({ length: MAX_REVIEW_CARDS - 2 }, (_, i) => recall(`c${i}`));
+    const next = mergeImported(current, Array.from({ length: 40 }, (_, i) => recall(`n${i}`)));
+    expect(next).toHaveLength(MAX_REVIEW_CARDS);
+  });
+
+  it('keeps the studied cards rather than evicting them for fresh ones', () => {
+    const base = Array.from({ length: MAX_REVIEW_CARDS - 2 }, (_, i) => recall(`c${i}`));
+    const studied = applyGrade(base, base[0].id, 3, NOW);
+    const next = mergeImported(studied, [recall('brand-new-1'), recall('brand-new-2')]);
+    expect(next).toHaveLength(MAX_REVIEW_CARDS);
+    expect(next.some((c) => c.id === studied[0].id)).toBe(true);
+    expect(next.filter((c) => c.reps > 0)).toHaveLength(1);
+  });
+
+  it('adds nothing when the library is already full', () => {
+    const current = Array.from({ length: MAX_REVIEW_CARDS }, (_, i) => recall(`c${i}`));
+    expect(mergeImported(current, [recall('new')])).toHaveLength(MAX_REVIEW_CARDS);
+  });
+
+  it('deduplicates repeats inside a single file', () => {
+    const next = mergeImported([], [recall('one'), recall('one'), recall('two')]);
+    expect(next).toHaveLength(2);
   });
 });

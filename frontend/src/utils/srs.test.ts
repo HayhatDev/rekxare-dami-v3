@@ -20,6 +20,9 @@ import {
   REVIEW_SESSION_LIMIT,
   LEARNING_DELAY_MS,
   nextIntervalHint,
+  createRecallCard,
+  isRecallCard,
+  isReviewCard,
   type ReviewCard,
   type ReviewGrade,
 } from './srs';
@@ -434,5 +437,59 @@ describe('nextIntervalHint', () => {
     const before = JSON.stringify(original);
     nextIntervalHint(original, NOW);
     expect(JSON.stringify(original)).toBe(before);
+  });
+});
+describe('recall cards', () => {
+  function recall(front = 'saloma', answer = 'hello') {
+    return createRecallCard(front, answer, 'Kurdish', 'kurdish:2026-09-02', NOW);
+  }
+
+  it('builds a two-sided card with no options', () => {
+    const c = recall();
+    expect(c.question).toBe('saloma');
+    expect(c.answer).toBe('hello');
+    expect(c.options).toEqual([]);
+    expect(c.correct).toBe(0);
+  });
+
+  it('starts unreviewed and due immediately', () => {
+    const c = recall();
+    expect(c.reps).toBe(0);
+    expect(c.lapses).toBe(0);
+    expect(isDue(c, NOW)).toBe(true);
+  });
+
+  it('is recognized as a recall card but not a multiple choice one', () => {
+    expect(isRecallCard(recall())).toBe(true);
+    expect(isReviewCard(recall())).toBe(true);
+    expect(isRecallCard(createCard({ question: '2 + 2?', options: ['3', '4'], correct: 1, explanation: 'Two plus two.' }, 'Math', 'math:2026-09-02', NOW))).toBe(false);
+  });
+
+  it('schedules like any other card once graded', () => {
+    const graded = scheduleCard(recall(), 3, NOW);
+    expect(graded.reps).toBe(1);
+    expect(graded.interval_days).toBeGreaterThan(0);
+    expect(isRecallCard(graded)).toBe(true);
+  });
+
+  it('rejects a card with an empty answer', () => {
+    expect(isReviewCard({ ...recall(), answer: '   ' })).toBe(false);
+    expect(isReviewCard({ ...recall(), answer: undefined })).toBe(false);
+  });
+
+  it('keeps grading legacy multiple choice cards that have no answer', () => {
+    const mcq = createCard({ question: '2 + 2?', options: ['3', '4'], correct: 1, explanation: 'Two plus two.' }, 'Math', 'math:2026-09-02', NOW);
+    expect(isReviewCard(mcq)).toBe(true);
+  });
+
+  it('survives a sanitize round trip', () => {
+    const [clean] = sanitizeReviewCards([recall()]);
+    expect(isReviewCard(clean)).toBe(true);
+    expect(clean.answer).toBe('hello');
+    expect(isRecallCard(clean)).toBe(true);
+  });
+
+  it('gives the same id as the equivalent multiple choice front', () => {
+    expect(recall().id).toBe(cid('Kurdish', 'saloma'));
   });
 });

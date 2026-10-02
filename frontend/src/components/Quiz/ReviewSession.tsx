@@ -4,7 +4,7 @@ import { Check, Layers, X } from 'lucide-react';
 import type { ThemePalette } from '../../themes/palette';
 import type { ReviewCard, ReviewGrade } from '../../utils/srs';
 import { STATUS_COLORS } from '../../utils/constants';
-import { nextIntervalHint } from '../../utils/srs';
+import { nextIntervalHint, isRecallCard } from '../../utils/srs';
 
 interface ReviewSessionProps {
   colors: ThemePalette;
@@ -20,6 +20,7 @@ export default function ReviewSession({ colors, cards, onGrade, onExit }: Review
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [chosen, setChosen] = useState<number | null>(null);
+  const [recalled, setRecalled] = useState<boolean | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [reviewed, setReviewed] = useState(0);
 
@@ -75,15 +76,17 @@ export default function ReviewSession({ colors, cards, onGrade, onExit }: Review
 
   if (!card) return null;
 
-  const revealed = chosen !== null;
-  const isCorrect = chosen === card.correct;
+  const recall = isRecallCard(card);
+  const revealed = recall ? recalled !== null : chosen !== null;
+  const isCorrect = recall ? recalled === true : chosen === card.correct;
 
   const handleGrade = async (grade: ReviewGrade) => {
-    if (chosen === null) return;
-    if (chosen === card.correct) setCorrectCount((c) => c + 1);
+    if (!revealed) return;
+    if (isCorrect) setCorrectCount((c) => c + 1);
     await onGrade(card.id, grade);
     setReviewed((r) => r + 1);
     setChosen(null);
+    setRecalled(null);
     setIndex((i) => Math.min(i + 1, total - 1));
   };
 
@@ -117,6 +120,7 @@ export default function ReviewSession({ colors, cards, onGrade, onExit }: Review
         {card.question}
       </h2>
 
+      {!recall && (
       <div className="space-y-2">
         {card.options.map((option, i) => {
           const optionCorrect = i === card.correct;
@@ -151,46 +155,91 @@ export default function ReviewSession({ colors, cards, onGrade, onExit }: Review
           );
         })}
       </div>
+      )}
+
+      {recall && !revealed && (
+        <button
+          type="button"
+          onClick={() => setRecalled(true)}
+          className="w-full py-3.5 rounded-2xl text-[14px] font-extrabold transition-transform active:scale-[0.98]"
+          style={{ backgroundColor: colors.accent, color: '#fff' }}
+        >
+          {t('review_show_answer', 'Show answer')}
+        </button>
+      )}
 
       {revealed && (
         <div className="space-y-3">
-          <div className="rounded-2xl p-4 space-y-1.5"
-            style={{ backgroundColor: isCorrect ? `${GREEN}0E` : `${RED}0E`, border: `1px solid ${isCorrect ? `${GREEN}30` : `${RED}30`}` }}>
-            <span className="text-[12px] font-extrabold" style={{ color: isCorrect ? GREEN : RED }}>
-              {isCorrect ? t('quiz_correct_answer', 'Correct!') : t('quiz_incorrect_answer', 'Incorrect')}
-            </span>
-            {card.explanation && (
-              <p className="text-[13px] leading-relaxed" style={{ color: colors.inkSoft }}>
-                <span className="font-bold">{t('quiz_explanation', 'Explanation')}:</span> {card.explanation}
+          {recall ? (
+            <div className="rounded-2xl p-4 space-y-1.5"
+              style={{ backgroundColor: `${colors.accent}0E`, border: `1px solid ${colors.accent}30` }}>
+              <span className="text-[12px] font-extrabold" style={{ color: colors.accent }}>
+                {t('review_answer_label', 'Answer')}
+              </span>
+              <p className="text-[13px] leading-relaxed" style={{ color: colors.ink }}>
+                {card.answer}
               </p>
-            )}
-          </div>
-
-          <div>
-            <p className="text-[12px] font-bold uppercase tracking-wider mb-2" style={{ color: colors.inkFaint }}>
-              {t('review_how_well', 'How well did you remember?')}
-            </p>
-            <div className="grid grid-cols-4 gap-1.5">
-              {([0, 1, 2, 3] as ReviewGrade[]).map((grade) => (
-                <button
-                  key={grade}
-                  type="button"
-                  onClick={() => void handleGrade(grade)}
-                  className="py-2.5 rounded-xl text-[12px] font-extrabold transition-transform active:scale-95"
-                  style={{
-                    backgroundColor: `${colors.accent}${grade === 0 ? '22' : '12'}`,
-                    color: colors.accent,
-                    border: `1px solid ${colors.accent}33`,
-                  }}
-                >
-                  {t(`review_grade_${grade}`, ['Again', 'Hard', 'Good', 'Easy'][grade])}
-                  <span className="block text-[10px] font-semibold opacity-70 tabular-nums">
-                    {formatHint(grade)}
-                  </span>
-                </button>
-              ))}
             </div>
-          </div>
+          ) : (
+            <div className="rounded-2xl p-4 space-y-1.5"
+              style={{ backgroundColor: isCorrect ? `${GREEN}0E` : `${RED}0E`, border: `1px solid ${isCorrect ? `${GREEN}30` : `${RED}30`}` }}>
+              <span className="text-[12px] font-extrabold" style={{ color: isCorrect ? GREEN : RED }}>
+                {isCorrect ? t('quiz_correct_answer', 'Correct!') : t('quiz_incorrect_answer', 'Incorrect')}
+              </span>
+              {card.explanation && (
+                <p className="text-[13px] leading-relaxed" style={{ color: colors.inkSoft }}>
+                  <span className="font-bold">{t('quiz_explanation', 'Explanation')}:</span> {card.explanation}
+                </p>
+              )}
+            </div>
+          )}
+
+          {recall && recalled === null ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setRecalled(false)}
+                className="py-3 rounded-2xl text-[13px] font-extrabold transition-transform active:scale-95"
+                style={{ backgroundColor: `${RED}14`, color: RED, border: `1px solid ${RED}40` }}
+              >
+                {t('review_forgot', 'Forgot it')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecalled(true)}
+                className="py-3 rounded-2xl text-[13px] font-extrabold transition-transform active:scale-95"
+                style={{ backgroundColor: `${GREEN}14`, color: GREEN, border: `1px solid ${GREEN}40` }}
+              >
+                {t('review_got_it', 'Got it')}
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p className="text-[12px] font-bold uppercase tracking-wider mb-2" style={{ color: colors.inkFaint }}>
+                {t('review_how_well', 'How well did you remember?')}
+              </p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {([0, 1, 2, 3] as ReviewGrade[]).map((grade) => (
+                  <button
+                    key={grade}
+                    type="button"
+                    onClick={() => void handleGrade(grade)}
+                    className="py-2.5 rounded-xl text-[12px] font-extrabold transition-transform active:scale-95"
+                    style={{
+                      backgroundColor: `${colors.accent}${grade === 0 ? '22' : '12'}`,
+                      color: colors.accent,
+                      border: `1px solid ${colors.accent}33`,
+                    }}
+                  >
+                    {t(`review_grade_${grade}`, ['Again', 'Hard', 'Good', 'Easy'][grade])}
+                    <span className="block text-[10px] font-semibold opacity-70 tabular-nums">
+                      {formatHint(grade)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
