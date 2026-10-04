@@ -13,6 +13,7 @@ import MobileBottomNav from '../../MobileBottomNav';
 import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
+import QuestList from '../QuestList';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { sessionLogStats } from '../../../utils/sessionLog';
 
@@ -310,6 +311,17 @@ export default function ForestHome() {
 
               {/* Daily goal */}
               <GoalCard
+                radius={0}
+                colors={{
+                  card: tok.surface.panel,
+                  cardBorder: `${leafGreen}33`,
+                  ink: textColor,
+                  inkSoft: tok.text.inkSoft,
+                  inkFaint: tok.text.inkFaint,
+                  accent: leafGreen,
+                }}
+              />
+              <QuestList
                 radius={0}
                 colors={{
                   card: tok.surface.panel,

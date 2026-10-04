@@ -88,8 +88,20 @@ export interface RewardOutcome {
   xp_earned: number;
   finish_bonus: number;
   variety_bonus: number;
+  /** XP from daily quests finished by this session, on top of session XP. */
+  quest_bonus: number;
   leveled_up: boolean;
   previous_level: number;
+  /**
+   * Unique id of the session these rewards came from.
+   *
+   * Set by `applySessionCompletion`, not here, because the id belongs to the
+   * session record. Toast hooks need it to fire exactly once per session:
+   * `xp_points` is not a safe dedupe key, since two consecutive sessions of the
+   * same length produce the same total and a later quest payout could be
+   * swallowed by an earlier one.
+   */
+  session_id?: string;
   /** A freeze was spent to bridge a single missed day. */
   freeze_used: boolean;
   /** The streak crossed a milestone and banked a freeze. */
@@ -148,6 +160,11 @@ export function computeSessionRewards(
     completed: boolean;
     subject: string;
     last_subject?: string;
+    /**
+     * XP from daily quests this session completed. Added on top of session XP
+     * rather than folded into it, so the toast can credit the bonus separately.
+     */
+    quest_xp?: number;
     now?: Date;
   }
 ): RewardOutcome {
@@ -163,7 +180,8 @@ export function computeSessionRewards(
       : 0;
 
   const xp_earned = minutes * XP_PER_MINUTE + finish_bonus + variety_bonus;
-  const newXp = (prev.xp_points || 0) + xp_earned;
+  const quest_bonus = Math.max(0, Math.floor(opts.quest_xp || 0));
+  const newXp = (prev.xp_points || 0) + xp_earned + quest_bonus;
   const newLevel = calculateXPLevel(newXp);
   const previous_level = calculateXPLevel(prev.xp_points || 0);
 
@@ -222,6 +240,7 @@ export function computeSessionRewards(
     xp_earned,
     finish_bonus,
     variety_bonus,
+    quest_bonus,
     leveled_up: newLevel > previous_level,
     previous_level,
     freeze_used,

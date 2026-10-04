@@ -11,6 +11,7 @@ import MobileBottomNav from '../../MobileBottomNav';
 import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
+import QuestList from '../QuestList';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { sessionLogStats } from '../../../utils/sessionLog';
 import { getOceanTokens } from '../../../lib/oceanTokens';
@@ -415,6 +416,17 @@ export default function OceanHome() {
             </section>
 
             <GoalCard
+              radius={24}
+              colors={{
+                card: panelBg,
+                cardBorder: border,
+                ink: text,
+                inkSoft: tok.text.inkMuted,
+                inkFaint: tok.text.inkFaint,
+                accent: teal,
+              }}
+            />
+            <QuestList
               radius={24}
               colors={{
                 card: panelBg,

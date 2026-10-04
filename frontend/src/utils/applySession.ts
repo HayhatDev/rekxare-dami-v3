@@ -1,6 +1,7 @@
 import type { StudyData, SessionRecord } from '../types';
 import { computeSessionRewards, RewardOutcome } from './rewards';
 import { appendSessionRecord, buildSessionRecord, dayKey } from './sessionLog';
+import { DailyQuestState, newlyCompletedQuests, nextQuestState, questXpTotal, QuestId } from './quests';
 
 export interface SessionEndInput {
   startedAt: string;
@@ -21,15 +22,13 @@ export interface CompletionOutcome {
  * persisted value. The day key (daily/weekly attribution) is derived from the
  * session END timestamp so a session crossing midnight lands on the day it
  * finished; `started_at` stays raw for display.
+ *
+ * Daily quests are settled here rather than in a separate effect, so the quest
+ * XP and the claim record are written in the SAME patch as the session that
+ * earned them. Two writes could otherwise disagree — a quest paying out that was
+ * never marked claimed, or being marked claimed without paying.
  */
 export function applySessionCompletion(prev: StudyData, opts: SessionEndInput): CompletionOutcome {
-  const rewards = computeSessionRewards(prev, {
-    minutes: Math.floor(opts.focusSeconds / 60),
-    completed: true,
-    subject: opts.subject,
-    last_subject: prev.last_subject,
-    now: opts.endAt,
-  });
   const record = buildSessionRecord({
     startedAt: opts.startedAt,
     day: dayKey(opts.endAt),
@@ -39,6 +38,22 @@ export function applySessionCompletion(prev: StudyData, opts: SessionEndInput): 
     completed: true,
   });
   const session_log = appendSessionRecord(prev.session_log, record);
+
+  // Quest progress is derived from the log, so evaluate against the log that
+  // already includes this session and compare against the log without it.
+  const day = dayKey(opts.endAt);
+  const after: StudyData = { ...prev, session_log };
+  const completed = newlyCompletedQuests(prev, after, day, prev.daily_quests);
+
+  const rewards = computeSessionRewards(prev, {
+    minutes: Math.floor(opts.focusSeconds / 60),
+    completed: true,
+    subject: opts.subject,
+    last_subject: prev.last_subject,
+    quest_xp: questXpTotal(completed),
+    now: opts.endAt,
+  });
+
   return {
     patch: {
       total_seconds: rewards.total_seconds,
@@ -50,9 +65,10 @@ export function applySessionCompletion(prev: StudyData, opts: SessionEndInput): 
       streak: rewards.streak,
       last_study_date: rewards.last_study_date,
       streak_freezes: rewards.streak_freezes,
+      daily_quests: nextQuestState(prev.daily_quests, day, completed.map((q) => q.id) as QuestId[]),
       session_log,
     },
-    rewards,
+    rewards: { ...rewards, session_id: record.id },
     record,
   };
 }

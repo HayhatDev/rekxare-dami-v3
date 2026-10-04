@@ -13,6 +13,7 @@ import { CelebrationOverlay, shouldCelebrate } from '../../CelebrationOverlay';
 import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
+import QuestList from '../QuestList';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { Timer, CheckCircle2, Flame, Target, Moon, Sun } from 'lucide-react';
 import ReviewDueBadge from '../../ReviewDueBadge';
@@ -237,6 +238,19 @@ export default function ClayHome() {
           <div className="lg:col-span-3 flex flex-col gap-6">
             {/* Daily Goal */}
             <GoalCard
+              radius={24}
+              shadow={tok.elevation.raised}
+              colors={{
+                card: c.card,
+                cardBorder: c.cardBorder,
+                ink: c.ink,
+                inkSoft: c.inkSoft,
+                inkFaint: c.inkFaint,
+                accent: c.accent,
+              }}
+            />
+            {/* Daily Quests */}
+            <QuestList
               radius={24}
               shadow={tok.elevation.raised}
               colors={{
