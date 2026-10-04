@@ -1,7 +1,8 @@
 import i18n from '../i18n';
 import type { StudyData, ScheduleData, SessionRecord, Task, DayName } from '../types';
 import type { DashboardData } from './aiAdvisor';
-import { dayKey } from '../utils/sessionLog';
+import { dayKey, completedFocusSecondsOnDay } from '../utils/sessionLog';
+import { DEFAULT_DAILY_GOAL_SECONDS } from '../utils/dailyGoal';
 
 const DAY_NAMES: DayName[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -157,8 +158,14 @@ export function buildLocalDashboard(studyData: StudyData, schedule: ScheduleData
   const thisStart = isoTs(now, -6);
   const lastStart = isoTs(now, -13);
   const daysStudied = new Set(log.filter((r) => r.day >= thisStart).map((r) => r.day)).size;
-  const goalMinutes = (studyData.daily_goal_seconds || 7200) / 60;
-  const todayMinutes = Number(minutesOn(log, dayKey(now)).toFixed(1));
+  const goalMinutes = (studyData.daily_goal_seconds || DEFAULT_DAILY_GOAL_SECONDS) / 60;
+  // Completed sessions only, so this agrees with the daily goal card. Counting
+  // abandoned sessions here let Insights report the goal as met while the card
+  // showed it unmet. Weekly bars keep the looser basis: for an activity chart
+  // time spent is time spent.
+  const todayMinutes = Number(
+    (completedFocusSecondsOnDay(log, dayKey(now)) / 60).toFixed(1)
+  );
   const goalPct = goalMinutes > 0 ? Math.round(Math.min(100, (todayMinutes / goalMinutes) * 100)) : 0;
 
   const totalThis = log.filter((r) => r.day >= thisStart).reduce((acc, r) => acc + (r.focus_seconds || 0), 0);

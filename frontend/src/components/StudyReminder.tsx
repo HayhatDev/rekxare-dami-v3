@@ -5,6 +5,7 @@ import { useThemeStore } from '../stores/useThemeStore';
 import { useStudyData } from '../hooks/useStudyData';
 import { getThemeColors } from '../themes/palette';
 import { dayKey, formatMinutes } from '../utils/sessionLog';
+import { dailyGoalProgress } from '../utils/dailyGoal';
 import { BellRing, X } from 'lucide-react';
 
 export default function StudyReminder() {
@@ -26,8 +27,11 @@ export default function StudyReminder() {
     } catch {}
     const threshold = Number(import.meta.env.VITE_REMINDER_HOUR || 16);
     if (new Date().getHours() < threshold) return;
-    const goalSec = studyData.daily_goal_seconds || 7200;
-    if (goalSec > 0 && (studyData.daily_seconds || 0) >= goalSec) return;
+    // Derived from the log, not `daily_seconds`: reading the counter here meant
+    // a student who had hit their goal yesterday was not reminded at all today,
+    // because the stale total kept looking like the goal was already met.
+    const { goalSeconds: goalSec, reached } = dailyGoalProgress(studyData);
+    if (goalSec > 0 && reached) return;
     try {
       localStorage.setItem(remindedKey, '1');
     } catch {}
@@ -43,9 +47,7 @@ export default function StudyReminder() {
 
   if (!visible) return null;
 
-  const goalSec = studyData?.daily_goal_seconds || 7200;
-  const minutes = Math.round(goalSec / 60);
-  const remaining = Math.max(0, goalSec - (studyData?.daily_seconds || 0));
+  const { goalMinutes: minutes, remainingMinutes: remaining } = dailyGoalProgress(studyData);
 
   return (
     <div

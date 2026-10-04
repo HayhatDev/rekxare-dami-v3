@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Check, Minus, Pencil, Plus, X } from 'lucide-react';
 import { useStudyData } from '../../hooks/useStudyData';
+import { dailyGoalProgress } from '../../utils/dailyGoal';
 
 const GOAL_PRESETS = [30, 60, 90, 120, 180];
 const STEP = 5;
@@ -42,13 +43,11 @@ export default function GoalCard({ colors, radius = 16, shadow }: GoalCardProps)
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(60);
 
-  const goalSeconds = data?.daily_goal_seconds || 3600;
-  const goalMinutes = Math.round(goalSeconds / 60);
-  const doneSeconds = data?.daily_seconds || 0;
-  const doneMinutes = Math.floor(doneSeconds / 60);
-  const pct = Math.min(100, Math.round((doneSeconds / Math.max(1, goalSeconds)) * 100));
-  const remaining = Math.max(0, Math.round((goalSeconds - doneSeconds) / 60));
-  const reached = doneSeconds >= goalSeconds;
+  // Derived from the session log, not `daily_seconds`: that counter is only
+  // rewritten when a session completes, so on a new day it would still show
+  // yesterday's total and read "Goal reached" before any work.
+  const { goalMinutes, doneMinutes, pct, remainingMinutes: remaining, reached } =
+    dailyGoalProgress(data);
 
   const openEditor = () => {
     setDraft(Math.min(MAX_GOAL, Math.max(MIN_GOAL, goalMinutes)));

@@ -1,8 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import { buildShareSummary, formatMinutes } from './share';
-import { StudyData } from '../types';
+import { dayKey } from './sessionLog';
+import { SessionRecord, StudyData } from '../types';
 
 const t = (key: string, fallback: string) => fallback;
+
+function session(over: Partial<SessionRecord> = {}): SessionRecord {
+  return {
+    id: 'x',
+    started_at: new Date().toISOString(),
+    day: dayKey(new Date()),
+    subject: 'Math',
+    planned_minutes: 30,
+    focus_seconds: 1500,
+    completed: true,
+    ...over,
+  };
+}
+
+const today = (focus_seconds: number, completed = true) =>
+  session({ focus_seconds, completed });
 
 function base(overrides: Partial<StudyData> = {}): StudyData {
   return {
@@ -32,10 +49,32 @@ describe('formatMinutes', () => {
 });
 
 describe('buildShareSummary', () => {
-  it('derives today minutes from daily_seconds', () => {
-    const s = buildShareSummary(base({ daily_seconds: 1500 }), t);
+  it('derives today minutes from the session log', () => {
+    const s = buildShareSummary(base({ session_log: [today(1500)] }), t);
     expect(s.todayMinutes).toBe(25);
     expect(s.text).toContain('Today I\'ve studied 25m');
+  });
+
+  it('never shares a stale daily_seconds total as today', () => {
+    // Yesterday's counter is still in the record. Publishing it would put
+    // "Today I've studied 2h" in a public post on a day with no study.
+    const s = buildShareSummary(
+      base({
+        daily_seconds: 7200,
+        session_log: [session({ day: dayKey(new Date(Date.now() - 86400000)), focus_seconds: 7200 })],
+      }),
+      t
+    );
+    expect(s.todayMinutes).toBe(0);
+    expect(s.text).toContain('Today I\'ve studied 0m');
+  });
+
+  it('counts only completed sessions towards today', () => {
+    const s = buildShareSummary(
+      base({ session_log: [today(1500, false)] }),
+      t
+    );
+    expect(s.todayMinutes).toBe(0);
   });
 
   it('computes level and progress from cumulative xp', () => {

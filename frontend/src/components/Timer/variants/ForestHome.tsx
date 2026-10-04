@@ -14,6 +14,7 @@ import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
 import QuestList from '../QuestList';
+import { dailyGoalProgress } from '../../../utils/dailyGoal';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { sessionLogStats } from '../../../utils/sessionLog';
 
@@ -293,7 +294,7 @@ export default function ForestHome() {
               {/* Stats */}
               <div className="space-y-4 fo-fade-in">
                 {[
-                  { label: t('todays_growth', "Today's Growth"), value: formatTime(studyData?.daily_seconds || 0) },
+                  { label: t('todays_growth', "Today's Growth"), value: formatTime(dailyGoalProgress(studyData).doneSeconds) },
                   { label: t('seeds_planted', 'Seeds Planted'), value: studyData?.sessions || 0 },
                   { label: t('root_depth', 'Root Depth'), value: `${studyData?.streak || 0} ${t('streak_days', 'days')}` },
                   { label: t('completion_rate', 'Completion Rate'), value: isLoading ? '...' : (logStats.total > 0 ? `${logStats.completionRate}%` : '0%') },

@@ -83,6 +83,26 @@ export function sessionLogStats(
   };
 }
 
+/**
+ * Completed focus seconds on a given calendar day.
+ *
+ * This is the correct basis for anything phrased as "today": the persisted
+ * `daily_seconds` counter is only rewritten when a session completes, so across
+ * a day boundary it still holds yesterday's total until the student finishes
+ * another session. Deriving from the log means the value is correct the moment
+ * the day rolls over, with no reset write and nothing to fall out of sync.
+ *
+ * Abandoned sessions are excluded to match how `daily_seconds` is accumulated.
+ */
+export function completedFocusSecondsOnDay(
+  log: SessionRecord[] | undefined,
+  day: string
+): number {
+  return (log || [])
+    .filter((r) => r.day === day && r.completed)
+    .reduce((acc, r) => acc + (r.focus_seconds || 0), 0);
+}
+
 export function formatMinutes(seconds: number): string {
   const total = Math.round(seconds / 60);
   if (total < 60) return `${total}m`;
