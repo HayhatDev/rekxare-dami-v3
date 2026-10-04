@@ -111,3 +111,48 @@ describe('buildLocalDashboard — streak strength must not contradict the consis
     expect(d.summary).toContain('20');
   });
 });
+
+describe('buildLocalDashboard ΓÇö the daily goal must agree with the goal card', () => {
+  // `goal_pct` is not exposed; it surfaces as these copy strings.
+  const goalWeakness = (d: { weaknesses: string[] }) =>
+    d.weaknesses.some((w) => w.includes("of today's goal"));
+  const goalStrength = (d: { strengths: string[] }) =>
+    d.strengths.some((s) => s.includes('of your daily goal'));
+  const nagsAboutGoal = (d: { recommendations: string[] }) =>
+    d.recommendations.some((r) => r.includes('Finish your daily goal'));
+
+  it('does not count abandoned sessions toward the daily goal', () => {
+    const now = new Date();
+    const abandoned = { ...sessionOn(0, now), completed: false };
+    const d = buildLocalDashboard({ ...dataWith(1, []), session_log: [abandoned] }, emptySchedule);
+    expect(goalWeakness(d)).toBe(true);
+    expect(goalStrength(d)).toBe(false);
+    expect(nagsAboutGoal(d)).toBe(true);
+  });
+
+  it('credits completed sessions toward the daily goal', () => {
+    // 1800s of a 7200s goal = 25%.
+    const d = buildLocalDashboard(dataWith(1, [0]), emptySchedule);
+    expect(d.weaknesses.join(' ')).toContain("25% of today's goal");
+  });
+
+  it('credits a second same-day session so the goal can be met', () => {
+    const now = new Date();
+    const log = [
+      { ...sessionOn(0, now), id: 'a' },
+      { ...sessionOn(0, now), id: 'b' },
+    ];
+    const d = buildLocalDashboard(
+      { ...dataWith(2, []), session_log: log },
+      emptySchedule
+    );
+    expect(d.strengths.join(' ')).toContain('50% of your daily goal');
+  });
+
+  it('reads today from the log, so a new day starts back at zero', () => {
+    // `daily_seconds` still holds a full day, but nothing is logged today.
+    const d = buildLocalDashboard({ ...dataWith(9, [-1]), daily_seconds: 7200 }, emptySchedule);
+    expect(d.weaknesses.join(' ')).toContain("0% of today's goal");
+    expect(goalStrength(d)).toBe(false);
+  });
+});

@@ -14,6 +14,7 @@
 //    student is never worse off for finishing a quest than for ignoring it.
 
 import type { StudyData } from '../types';
+import { completedFocusSecondsOnDay } from './sessionLog';
 
 export type QuestId = 'focus' | 'sessions' | 'variety';
 
@@ -64,7 +65,7 @@ function questById(id: string): QuestDef | undefined {
  */
 export function questProgress(data: StudyData, day: string): Record<QuestId, number> {
   const todays = (data.session_log || []).filter((r) => r.day === day && r.completed);
-  const minutes = todays.reduce((acc, r) => acc + (r.focus_seconds || 0) / 60, 0);
+  const minutes = completedFocusSecondsOnDay(data.session_log || [], day) / 60;
   const subjects = new Set(todays.map((r) => (r.subject || '').trim()).filter(Boolean));
   return {
     focus: Math.floor(minutes),

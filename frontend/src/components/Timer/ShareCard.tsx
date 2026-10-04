@@ -9,8 +9,8 @@ import { calculateXPLevel, calculateXPProgress } from '../../utils/rewards';
 interface ShareCardProps {
   studyData: Pick<
     StudyData,
-    'xp_points' | 'daily_seconds' | 'streak' | 'sessions' | 'total_seconds'
-  > | null
+    'xp_points' | 'streak' | 'sessions' | 'total_seconds'
+  > & { session_log?: StudyData['session_log'] } | null
   | undefined;
   colors: {
     card: string;
@@ -39,7 +39,7 @@ export default function ShareCard({ studyData, colors, radius = 16 }: ShareCardP
       buildShareSummary(
         {
           xp_points: studyData?.xp_points || 0,
-          daily_seconds: studyData?.daily_seconds || 0,
+          session_log: studyData?.session_log,
           streak: studyData?.streak || 0,
           sessions: studyData?.sessions || 0,
           total_seconds: studyData?.total_seconds || 0,

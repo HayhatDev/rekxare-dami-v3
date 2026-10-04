@@ -1,10 +1,11 @@
 import type { StudyData } from '../types';
 import { calculateXPLevel, calculateXPProgress } from './rewards';
+import { completedFocusSecondsOnDay, dayKey } from './sessionLog';
 
 export interface ShareSummary {
   /** Full shareable block of text (copy / native share body). */
   text: string;
-  /** Human-friendly "today" totals derived from daily_seconds (minutes). */
+  /** Human-friendly "today" totals, in minutes. */
   todayMinutes: number;
   totalMinutes: number;
   level: number;
@@ -33,15 +34,20 @@ export function formatMinutes(minutes: number): string {
 export function buildShareSummary(
   studyData: Pick<
     StudyData,
-    'xp_points' | 'daily_seconds' | 'streak' | 'sessions' | 'total_seconds'
-  >,
+    'xp_points' | 'streak' | 'sessions' | 'total_seconds'
+  > & { session_log?: StudyData['session_log'] },
   t: Translate,
   appName = 'Rekxare Dami'
 ): ShareSummary {
   const xp = studyData.xp_points || 0;
   const level = calculateXPLevel(xp);
   const levelProgress = calculateXPProgress(xp);
-  const todayMinutes = Math.round((studyData.daily_seconds || 0) / 60);
+  // Derived from the log rather than accepting `daily_seconds`, so a shared post
+  // can never claim yesterday's total as today's. This text is published
+  // publicly, which makes a stale "Today I've studied 2h" the worst place for
+  // this value to be wrong.
+  const todaySeconds = completedFocusSecondsOnDay(studyData.session_log, dayKey(new Date()));
+  const todayMinutes = Math.round(todaySeconds / 60);
   const totalMinutes = Math.round((studyData.total_seconds || 0) / 60);
   const streak = studyData.streak || 0;
   const sessions = studyData.sessions || 0;

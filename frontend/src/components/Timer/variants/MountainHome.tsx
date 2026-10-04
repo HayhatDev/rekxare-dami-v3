@@ -14,6 +14,7 @@ import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
 import QuestList from '../QuestList';
+import { dailyGoalProgress } from '../../../utils/dailyGoal';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { useMemo } from 'react';
 
@@ -33,7 +34,7 @@ export default function MountainHome() {
   const tok = useMemo(() => getMountainTokens(isDark), [isDark]);
   const txt = tok.text;
 
-  const todayTimeFormatted = studyData ? formatTime(studyData.daily_seconds) : "00:00";
+  const todayTimeFormatted = formatTime(dailyGoalProgress(studyData).doneSeconds);
   const sessionsToday = studyData?.sessions || 0;
   const currentStreak = studyData?.streak || 0;
 

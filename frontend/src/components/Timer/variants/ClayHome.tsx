@@ -14,6 +14,7 @@ import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
 import QuestList from '../QuestList';
+import { dailyGoalProgress } from '../../../utils/dailyGoal';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { Timer, CheckCircle2, Flame, Target, Moon, Sun } from 'lucide-react';
 import ReviewDueBadge from '../../ReviewDueBadge';
@@ -40,7 +41,7 @@ export default function ClayHome() {
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference - ((progress || 0) / 100) * circumference;
   const pct = Math.round(progress || 0);
-  const goalPct = Math.round(((data?.daily_seconds || 0) / Math.max(data?.daily_goal_seconds || 3600, 1)) * 100);
+  const goalPct = dailyGoalProgress(data).pct;
 
   const stats = [
     { label: t('focus', 'Focus'), value: formatTime(data?.total_seconds || 0), icon: Timer },
