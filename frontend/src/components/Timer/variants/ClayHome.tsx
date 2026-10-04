@@ -9,7 +9,7 @@ import { brandGradient, mixBlack } from '../../../themes/palette';
 import ProfileDrawer from '../../Auth/ProfileDrawer';
 import StreakCalendar from '../../StreakCalendar';
 import MobileBottomNav from '../../MobileBottomNav';
-import { CelebrationOverlay, isStreakMilestone } from '../../CelebrationOverlay';
+import { CelebrationOverlay, shouldCelebrate } from '../../CelebrationOverlay';
 import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
@@ -23,7 +23,7 @@ export default function ClayHome() {
   const {
     selectedSubject, setSelectedSubject,
     selectedMinutes, setSelectedMinutes,
-    subjects, presets, secondsLeft, isActive, isDone, progress,
+    subjects, presets, secondsLeft, isActive, isDone, progress, lastRewards,
     toggle, reset, studyData: data, isLoading,
     isDark, toggleDark, lang, isRTL, cycleLang, location,
   } = useTimerSession({ stripEmojis: true, presetIndex: 2 });
@@ -294,7 +294,7 @@ export default function ClayHome() {
 
       <MobileBottomNav accent={c.accent} card={c.card} cardBorder={c.cardBorder} inkFaint={c.inkFaint} bg={c.bg} />
 
-      <CelebrationOverlay isDone={isDone} colorA={c.accent} colorB={c.pink} minutes={selectedMinutes} celebrate={isStreakMilestone(data?.streak || 0)} onQuiz={() => navigate('/quiz')} />
+      <CelebrationOverlay isDone={isDone} colorA={c.accent} colorB={c.pink} minutes={selectedMinutes} celebrate={shouldCelebrate(data?.streak || 0, lastRewards?.freeze_used ?? false)} onQuiz={() => navigate('/quiz')} />
     </div>
   );
 }

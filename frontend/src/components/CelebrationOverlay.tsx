@@ -28,6 +28,21 @@ export function isStreakMilestone(streak: number): boolean {
   return streak >= 1 && (streak === 1 || streak % 5 === 0);
 }
 
+/**
+ * Whether a completed session earned the full celebration.
+ *
+ * A streak freeze makes this matter more than it looks. Before freezes, every
+ * streak that was not a "nice" number was the result of a RESET, and a reset
+ * always landed on 1, which is a milestone — so the day you broke a streak got
+ * confetti. Now the same mistake survives as, say, a 13-day streak, which is not
+ * a milestone, so the day a freeze rescued a streak would get the quiet card
+ * while the day it was lost still got confetti. That is exactly backwards: the
+ * freeze day is the better outcome and should feel like it.
+ */
+export function shouldCelebrate(streak: number, freezeUsed: boolean): boolean {
+  return freezeUsed || isStreakMilestone(streak);
+}
+
 interface Piece {
   id: number;
   tx: number;

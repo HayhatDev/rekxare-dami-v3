@@ -168,7 +168,12 @@ export function buildLocalDashboard(studyData: StudyData, schedule: ScheduleData
 
   const strengths: string[] = [];
   if (daysStudied >= 3) strengths.push(t('local_consistency_strength', { days: daysStudied }));
-  if (streak >= 2) strengths.push(t('local_streak_strength', { streak }));
+  // Only cite the streak when the last 7 days corroborate it. A streak survives
+  // days the student did not study (via freezes), so it can stay high while
+  // daysStudied is low — and "You're on a 20-day study streak" next to "Only 2
+  // study days in the last 7" reads as the app disagreeing with itself. If the
+  // recent record contradicts the streak, do not present the streak as a strength.
+  if (streak >= 2 && daysStudied >= 3) strengths.push(t('local_streak_strength', { streak }));
   if (goalPct >= 50) strengths.push(t('local_goal_strength', { pct: goalPct }));
 
   const weaknesses: string[] = [];

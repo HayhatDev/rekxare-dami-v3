@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useTimerSession } from '../../../hooks/useTimerSession';
-import { CelebrationOverlay, isStreakMilestone } from '../../CelebrationOverlay';
+import { CelebrationOverlay, shouldCelebrate } from '../../CelebrationOverlay';
 import { formatTime, calculateXPProgress } from '../../../utils/helpers';
 import { SUBJECT_COLORS } from '../../../utils/constants';
 import ProfileDrawer from '../../Auth/ProfileDrawer';
@@ -144,7 +144,7 @@ export default function OceanHome() {
     selectedSubject, setSelectedSubject,
     selectedMinutes, setSelectedMinutes,
     subjects, presets,
-    secondsLeft, isActive, isDone, progress,
+    secondsLeft, isActive, isDone, progress, lastRewards,
     toggle, reset, studyData, isLoading,
     isDark, toggleDark, lang, isRTL, cycleLang, location,
   } = useTimerSession();
@@ -464,7 +464,7 @@ export default function OceanHome() {
         </div>
       </main>
       <MobileBottomNav accent={isDark ? '#3898C8' : '#1478A8'} card={isDark ? '#0E1E30' : '#FFFFFF'} cardBorder={isDark ? 'rgba(20,120,168,0.18)' : 'rgba(20,120,168,0.12)'} inkFaint={isDark ? 'rgba(204,228,245,0.40)' : 'rgba(6,16,30,0.40)'} bg={isDark ? '#030A14' : '#EBF4FB'} />
-      <CelebrationOverlay isDone={isDone} colorA={isDark ? '#3898C8' : '#1478A8'} colorB={isDark ? '#20D0C0' : '#00B4A8'} minutes={selectedMinutes} celebrate={isStreakMilestone(studyData?.streak || 0)} onQuiz={() => navigate('/quiz')} />
+      <CelebrationOverlay isDone={isDone} colorA={isDark ? '#3898C8' : '#1478A8'} colorB={isDark ? '#20D0C0' : '#00B4A8'} minutes={selectedMinutes} celebrate={shouldCelebrate(studyData?.streak || 0, lastRewards?.freeze_used ?? false)} onQuiz={() => navigate('/quiz')} />
     </div>
   );
 }
