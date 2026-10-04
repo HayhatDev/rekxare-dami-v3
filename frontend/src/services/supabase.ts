@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { StudyData, ScheduleData, UserPrefs, SessionRecord, ReviewCard } from '../types';
 import { MAX_REVIEW_CARDS, mergeCards, sanitizeReviewCards } from '../utils/srs';
 import { normalizeFreezes, STREAK_FREEZE_STARTING_GRANT } from '../utils/rewards';
+import type { QuestId } from '../utils/quests';
 import { mapAuthError, needsEmailConfirmation, recoveryRedirectUrl } from '../utils/emailAuth';
 import type { EmailAuthErrorCode } from '../utils/emailAuth';
 
@@ -115,7 +116,8 @@ const DEFAULT_STUDY_DATA: StudyData = {
   student_name: '',
   session_log: [],
   review_cards: [],
-  streak_freezes: STREAK_FREEZE_STARTING_GRANT
+  streak_freezes: STREAK_FREEZE_STARTING_GRANT,
+  daily_quests: { day: '', claimed: [] }
 };
 
 const DEFAULT_SCHEDULE: ScheduleData = {
@@ -315,6 +317,22 @@ export function mergeStudyData(a: StudyData, b: StudyData): StudyData {
     // snapshot can at worst hand back one already-spent freeze, which is bounded
     // by STREAK_FREEZE_CAP and costs the student nothing.
     streak_freezes: Math.max(normalizeFreezes(a.streak_freezes), normalizeFreezes(b.streak_freezes)),
+    // Quest claims are scoped to a calendar day, so two records only combine
+    // when they describe the SAME day — that union is what stops a stale
+    // snapshot from losing a payout. Across different days only the newer
+    // record's claims are meaningful: unioning a stale day's claims into
+    // today's record would mark today's quests as already banked and silently
+    // deny the student the reward. `day: ''` is the "nothing claimed" sentinel.
+    daily_quests: (() => {
+      const x = a.daily_quests;
+      const y = b.daily_quests;
+      if (!x) return y || { day: '', claimed: [] };
+      if (!y) return x;
+      if (x.day === y.day) {
+        return { day: x.day, claimed: [...new Set<QuestId>([...(x.claimed || []), ...(y.claimed || [])])] };
+      }
+      return x.day > y.day ? x : y;
+    })(),
   };
 }
 

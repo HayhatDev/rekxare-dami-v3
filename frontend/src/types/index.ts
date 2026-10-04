@@ -33,7 +33,14 @@ export interface StudyData {
    * Optional because data saved before this field existed must still deserialise.
    */
   streak_freezes?: number;
+  /**
+   * Which daily quests have already paid out, and the day they belong to.
+   * Optional because data saved before quests existed must still deserialise.
+   */
+  daily_quests?: DailyQuestState;
 }
+
+import type { DailyQuestState } from '../utils/quests';
 
 import type { ReviewCard } from '../utils/srs';
 

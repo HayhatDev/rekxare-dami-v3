@@ -70,7 +70,100 @@ describe('applySessionCompletion', () => {
     expect(second.patch.session_log?.length).toBe(2);
     // Same-day accumulation: daily_seconds keeps growing and XP keeps growing.
     expect(second.patch.daily_seconds).toBe(25 * 60 * 2);
-    expect(second.patch.xp_points).toBe((25 + 5) * 2); // 1 XP/min + 5 finish bonus
+    // Session XP is 30 each (25 x 1/min + 5 finish bonus), so 60, plus the 15 XP
+    // focus-quest bonus the FIRST session earned. The second session did not
+    // re-earn it: the quest was already complete and already claimed.
+    expect(first.rewards.quest_bonus).toBe(15);
+    expect(second.rewards.quest_bonus).toBe(0);
+    expect(second.patch.xp_points).toBe(60 + 15);
+  });
+
+  it('settles quest XP and the claim record in the same patch as the session', () => {
+    // Two writes could disagree: a quest paying out that was never marked
+    // claimed, or marked claimed without paying. One patch cannot.
+    const base = baseStudyData({
+      last_study_date: null,
+      daily_seconds: 0,
+      streak: 0,
+      sessions: 0,
+      xp_points: 0,
+      total_seconds: 0,
+      session_log: [],
+    });
+    const { patch, rewards } = applySessionCompletion(base, {
+      startedAt: '2026-09-02T11:00:00.000Z',
+      endAt: new Date(2026, 8, 2, 12, 0, 0),
+      subject: 'Math',
+      focusSeconds: 25 * 60,
+      plannedMinutes: 25,
+    });
+    expect(rewards.quest_bonus).toBeGreaterThan(0);
+    expect(patch.xp_points).toBe(rewards.xp_earned + rewards.quest_bonus);
+    expect(patch.daily_quests?.claimed).toContain('focus');
+    expect(patch.daily_quests?.day).toBe(dayKey(new Date(2026, 8, 2, 12, 0, 0)));
+  });
+
+  it('never pays a quest twice across three sessions in one day', () => {
+    const base = baseStudyData({
+      last_study_date: null,
+      daily_seconds: 0,
+      streak: 0,
+      sessions: 0,
+      xp_points: 0,
+      total_seconds: 0,
+      session_log: [],
+    });
+    const end = new Date(2026, 8, 2, 12, 0, 0);
+    let state = base;
+    let totalQuestXp = 0;
+    // Chained through each patch, the way the timer persists them.
+    for (let i = 0; i < 3; i++) {
+      const r = applySessionCompletion(state, {
+        startedAt: '2026-09-02T11:00:00.000Z',
+        endAt: end,
+        subject: 'Math',
+        focusSeconds: 15 * 60,
+        plannedMinutes: 15,
+      });
+      totalQuestXp += r.rewards.quest_bonus;
+      state = { ...state, ...r.patch };
+    }
+    // 3 x 15 min in one subject crosses focus on the 2nd session and the
+    // 3-session count on the 3rd. Nothing is paid twice.
+    expect(totalQuestXp).toBe(15 + 15);
+    expect(state.daily_quests?.claimed.sort()).toEqual(['focus', 'sessions']);
+    expect(state.xp_points).toBe(3 * (15 + 5) + 30);
+  });
+
+  it('pays a quest again on the next day', () => {
+    const base = baseStudyData({
+      last_study_date: null,
+      daily_seconds: 0,
+      streak: 0,
+      sessions: 0,
+      xp_points: 0,
+      total_seconds: 0,
+      session_log: [],
+    });
+    const day1 = applySessionCompletion(base, {
+      startedAt: '2026-09-02T11:00:00.000Z',
+      endAt: new Date(2026, 8, 2, 12, 0, 0),
+      subject: 'Math',
+      focusSeconds: 25 * 60,
+      plannedMinutes: 25,
+    });
+    const afterDay1 = { ...base, ...day1.patch };
+    const day2 = applySessionCompletion(afterDay1, {
+      startedAt: '2026-09-03T11:00:00.000Z',
+      endAt: new Date(2026, 8, 3, 12, 0, 0),
+      subject: 'Math',
+      focusSeconds: 25 * 60,
+      plannedMinutes: 25,
+    });
+    expect(day1.rewards.quest_bonus).toBe(15);
+    expect(day2.rewards.quest_bonus).toBe(15); // yesterday's payout does not carry over
+    expect(day2.patch.daily_quests?.claimed).toEqual(['focus']);
+    expect(day2.patch.daily_quests?.day).toBe('2026-09-03');
   });
 
   it('resets daily_seconds and bumps the streak when landing on a new day', () => {

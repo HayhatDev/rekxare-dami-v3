@@ -13,6 +13,7 @@ import MobileBottomNav from '../../MobileBottomNav';
 import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
+import QuestList from '../QuestList';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { useMemo } from 'react';
 
@@ -175,6 +176,17 @@ export default function MountainHome() {
 
                 {/* Goal as elevation */}
                 <GoalCard
+                  radius={20}
+                  colors={{
+                    card: tok.surface.well,
+                    cardBorder: isDark ? 'rgba(107,142,111,0.2)' : 'rgba(74,93,69,0.15)',
+                    ink: txt.ink,
+                    inkSoft: txt.inkSoft,
+                    inkFaint: txt.label,
+                    accent: tok.terrain.trail,
+                  }}
+                />
+                <QuestList
                   radius={20}
                   colors={{
                     card: tok.surface.well,

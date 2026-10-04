@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { useLevelUpToast } from './useLevelUpToast';
 import { useStreakFreezeToast } from './useStreakFreezeToast';
+import { useQuestToast } from './useQuestToast';
 
 export interface UseTimerSessionOptions {
   /** Default minutes if PRESET_MINUTES is empty. Defaults to 25. */
@@ -56,6 +57,7 @@ export function useTimerSession(options: UseTimerSessionOptions = {}) {
 
   useLevelUpToast(lastRewards);
   useStreakFreezeToast(lastRewards);
+  useQuestToast(lastRewards);
 
   useEffect(() => {
     if (!subjects.includes(selectedSubject) && subjects.length > 0) {

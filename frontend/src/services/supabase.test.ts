@@ -4,6 +4,7 @@ import { STREAK_FREEZE_CAP, STREAK_FREEZE_STARTING_GRANT } from '../utils/reward
 import { GuestDeletionState } from './supabase';
 import { StudyData, ReviewCard } from '../types';
 import { createCard } from '../utils/srs';
+import type { QuestId } from '../utils/quests';
 import type { QuizQuestion } from './aiAdvisor';
 
 function study(overrides: Partial<StudyData> = {}): StudyData {
@@ -187,6 +188,50 @@ describe('mergeStudyData — cross-device merge never loses session history', ()
   it('bounds a resurrected spent freeze by the cap', () => {
     const r = mergeStudyData(study({ streak_freezes: STREAK_FREEZE_CAP }), study({ streak_freezes: 0 }));
     expect(r.streak_freezes).toBe(STREAK_FREEZE_CAP);
+  });
+});
+
+describe('mergeStudyData — daily quest claims', () => {
+  const q = (day: string, claimed: QuestId[] = []) => study({ daily_quests: { day, claimed } });
+
+  it('unions two records from the SAME day so no payout is lost', () => {
+    const r = mergeStudyData(q('2026-09-10', ['focus']), q('2026-09-10', ['variety']));
+    expect(r.daily_quests?.day).toBe('2026-09-10');
+    expect(r.daily_quests?.claimed.sort()).toEqual(['focus', 'variety']);
+  });
+
+  it('does not carry a STALE day’s claims into today', () => {
+    // Yesterday banked 'sessions'. Today the student must be able to earn it
+    // again, so that claim must not travel forward.
+    const r = mergeStudyData(q('2026-09-10', ['focus']), q('2026-09-09', ['sessions']));
+    expect(r.daily_quests?.day).toBe('2026-09-10');
+    expect(r.daily_quests?.claimed).toEqual(['focus']);
+  });
+
+  it('keeps the newer record whichever side it is on', () => {
+    const newerFirst = mergeStudyData(q('2026-09-10', ['focus']), q('2026-09-09', ['sessions']));
+    const newerSecond = mergeStudyData(q('2026-09-09', ['sessions']), q('2026-09-10', ['focus']));
+    expect(newerFirst.daily_quests).toEqual(newerSecond.daily_quests);
+    expect(newerSecond.daily_quests?.claimed).toEqual(['focus']);
+  });
+
+  it('drops a stale claim list rather than carrying it onto the newer day', () => {
+    const r = mergeStudyData(q('2026-09-10', ['variety']), q('2026-09-08', ['focus', 'sessions']));
+    expect(r.daily_quests?.claimed).toEqual(['variety']);
+  });
+
+  it('survives a pre-quests record with no field at all', () => {
+    const r = mergeStudyData(q('2026-09-10', ['focus']), study({}));
+    expect(r.daily_quests?.claimed).toEqual(['focus']);
+    expect(mergeStudyData(study({}), study({})).daily_quests).toEqual({ day: '', claimed: [] });
+  });
+
+  it('does not mutate either input record', () => {
+    const a = q('2026-09-10', ['focus']);
+    const b = q('2026-09-10', ['variety']);
+    mergeStudyData(a, b);
+    expect(a.daily_quests?.claimed).toEqual(['focus']);
+    expect(b.daily_quests?.claimed).toEqual(['variety']);
   });
 });
 

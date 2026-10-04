@@ -13,6 +13,7 @@ import ReviewDueBadge from '../../ReviewDueBadge';
 import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
+import QuestList from '../QuestList';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { getNightSkyTokens } from '../../../lib/nightSkyTokens';
 
@@ -363,6 +364,17 @@ export default function NightSkyHome() {
           </div>
 
           <GoalCard
+            radius={4}
+            colors={{
+              card: bgDeep,
+              cardBorder: border,
+              ink: text,
+              inkSoft: text,
+              inkFaint: text,
+              accent: gold,
+            }}
+          />
+          <QuestList
             radius={4}
             colors={{
               card: bgDeep,

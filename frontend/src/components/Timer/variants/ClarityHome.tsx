@@ -13,6 +13,7 @@ import { getClarityTokens } from '../../../lib/clarityTokens';
 import MomentumBanner from '../MomentumBanner';
 import ShareCard from '../ShareCard';
 import GoalCard from '../GoalCard';
+import QuestList from '../QuestList';
 import SessionHistoryCard from '../SessionHistoryCard';
 import { sessionLogStats } from '../../../utils/sessionLog';
 
@@ -241,6 +242,17 @@ export default function ClarityHome() {
           {/* Daily goal */}
           <section className="mt-8">
             <GoalCard
+              radius={0}
+              colors={{
+                card: c.panel,
+                cardBorder: c.line,
+                ink: c.ink,
+                inkSoft: c.inkSoft,
+                inkFaint: c.inkFaint,
+                accent: c.accent,
+              }}
+            />
+            <QuestList
               radius={0}
               colors={{
                 card: c.panel,

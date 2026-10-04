@@ -517,7 +517,19 @@
       "trend_down": "دابەزی",
       "trend_stable": "سەقامگیر",
       "start_time": "سەعاتا دەستپێک",
-      "end_time": "سەعاتا دەمای"
+      "end_time": "سەعاتا دەمای",
+      "daily_quests": "چالاکییەکانی ڕۆژانە",
+      "quest_focus": "بۆ ٢٥ خولەک چڕ دەخە",
+      "quest_sessions": "٣ وانە تەواو بکە",
+      "quest_variety": "٢ بابەت فێربە",
+      "quest_unit_focus": "خولەک",
+      "quest_unit_sessions": "وانە",
+      "quest_unit_variety": "بابەت",
+      "quests_progress_count": "{{done}} / {{total}}",
+      "quest_banked": "پاشەکەوتکراو",
+      "quest_xp_short": "XP",
+      "quest_complete_title": "چالاکیی ڕۆژانە تەواو بوو!",
+      "quest_complete_desc": "تۆ {{xp}} خاڵی زیاتری XP بەدەستهێنا."
     }
   },
   "en": {
@@ -1038,7 +1050,19 @@
       "trend_down": "Declining",
       "trend_stable": "Stable",
       "start_time": "Start time",
-      "end_time": "End time"
+      "end_time": "End time",
+      "daily_quests": "Daily Quests",
+      "quest_focus": "Focus for 25 minutes",
+      "quest_sessions": "Finish 3 sessions",
+      "quest_variety": "Study 2 subjects",
+      "quest_unit_focus": "min",
+      "quest_unit_sessions": "sessions",
+      "quest_unit_variety": "subjects",
+      "quests_progress_count": "{{done}} / {{total}}",
+      "quest_banked": "Banked",
+      "quest_xp_short": "XP",
+      "quest_complete_title": "Daily quest complete!",
+      "quest_complete_desc": "You earned {{xp}} bonus XP."
     }
   },
   "ar": {
@@ -1559,7 +1583,19 @@
       "trend_down": "انخفاض",
       "trend_stable": "مستقر",
       "start_time": "وقت البدء",
-      "end_time": "وقت الانتهاء"
+      "end_time": "وقت الانتهاء",
+      "daily_quests": "المهام اليومية",
+      "quest_focus": "تركيز لمدة ٢٥ دقيقة",
+      "quest_sessions": "إنهاء ٣ جلسات",
+      "quest_variety": "دراسة ٢ مواد",
+      "quest_unit_focus": "دقيقة",
+      "quest_unit_sessions": "جلسات",
+      "quest_unit_variety": "مواد",
+      "quests_progress_count": "{{done}} / {{total}}",
+      "quest_banked": "مكتمل",
+      "quest_xp_short": "XP",
+      "quest_complete_title": "أتممت المهمة اليومية!",
+      "quest_complete_desc": "كسبت {{xp}} نقطة خبرة إضافية."
     }
   },
   "sorani": {
@@ -2080,7 +2116,19 @@
       "trend_down": "دابەزیوە",
       "trend_stable": "جێگیر",
       "start_time": "کاتی دەستپێک",
-      "end_time": "کاتی کۆتایی"
+      "end_time": "کاتی کۆتایی",
+      "daily_quests": "ئامانجەکانی ڕۆژانە",
+      "quest_focus": "بۆ ٢٥ خولەک چڕ بکە",
+      "quest_sessions": "٣ وانە تەواو بکە",
+      "quest_variety": "٢ بابەت فێر بە",
+      "quest_unit_focus": "خولەک",
+      "quest_unit_sessions": "وانە",
+      "quest_unit_variety": "بابەت",
+      "quests_progress_count": "{{done}} / {{total}}",
+      "quest_banked": "پاشەکەوتکراو",
+      "quest_xp_short": "XP",
+      "quest_complete_title": "ئامانجی ڕۆژانە تەواو بوو!",
+      "quest_complete_desc": "تۆ {{xp}} خاڵی زیاتری XP بەدەستهێنا."
     }
   }
 }
