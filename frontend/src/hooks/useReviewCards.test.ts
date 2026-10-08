@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deckFromQuiz, applyGrade, summarize, mergeImported } from './useReviewCards';
+import { deckFromQuiz, applyGrade, summarize, mergeImported, commitCollection } from './useReviewCards';
 import { scheduleCard, cardId, REVIEW_SESSION_LIMIT, createRecallCard, MAX_REVIEW_CARDS } from '../utils/srs';
 import type { ReviewCard } from '../utils/srs';
 import type { QuizQuestion } from '../services/aiAdvisor';
@@ -274,5 +274,72 @@ describe('mergeImported', () => {
   it('deduplicates repeats inside a single file', () => {
     const next = mergeImported([], [recall('one'), recall('one'), recall('two')]);
     expect(next).toHaveLength(2);
+  });
+});
+describe('commitCollection - a failed write must not poison the next one', () => {
+  const library = () => deck();
+
+  it('advances the ref optimistically so back-to-back writes compose', async () => {
+    const ref = { current: library() };
+    const writes: ReviewCard[][] = [];
+    const write = async (next: ReviewCard[]) => { writes.push(next); };
+
+    await commitCollection(ref, (c) => applyGrade(c, c[0].id, 2, NOW), write);
+    await commitCollection(ref, (c) => applyGrade(c, c[1].id, 2, NOW), write);
+
+    // The second write must see the first write's grade, not the original deck.
+    expect(writes[1].find((c) => c.id === ref.current[0].id)?.reps).toBe(1);
+    expect(ref.current.every((c) => c.reps === 1)).toBe(true);
+  });
+
+  it('restores the previous collection when the write rejects', async () => {
+    const before = library();
+    const ref = { current: before };
+    const boom = async () => { throw new Error('offline'); };
+
+    await expect(commitCollection(ref, () => [], boom)).rejects.toThrow('offline');
+    expect(ref.current).toEqual(before);
+  });
+
+  it('propagates the failure so the caller can surface it', async () => {
+    const ref = { current: library() };
+    await expect(
+      commitCollection(ref, () => [], async () => { throw new Error('quota exceeded'); })
+    ).rejects.toThrow('quota exceeded');
+  });
+
+  it('does not let a failed clear wipe the library on the next grade', async () => {
+    // The exact chain: "clear all" fails, then the student grades a card.
+    const stored = library();
+    const ref = { current: stored };
+    const failNext = { armed: true };
+    const write = async (next: ReviewCard[]) => {
+      if (failNext.armed) {
+        failNext.armed = false;
+        throw new Error('offline');
+      }
+      stored.splice(0, stored.length, ...next);
+    };
+
+    // 1. clear all — fails.
+    await expect(commitCollection(ref, () => [], write)).rejects.toThrow('offline');
+    // 2. the library must still be intact in the ref, not silently empty.
+    expect(ref.current).toHaveLength(2);
+
+    // 3. grading any card must grade the real library, not an empty one.
+    await commitCollection(ref, (c) => applyGrade(c, c[0].id, 3, NOW), write);
+
+    expect(stored).toHaveLength(2);
+    expect(stored[0].reps).toBe(1);
+    expect(stored.every((c) => c.id === library()[0].id || c.id === library()[1].id)).toBe(true);
+  });
+
+  it('leaves the ref untouched when the transform itself throws', async () => {
+    const before = library();
+    const ref = { current: before };
+    await expect(
+      commitCollection(ref, () => { throw new Error('bad transform'); }, async () => {})
+    ).rejects.toThrow('bad transform');
+    expect(ref.current).toBe(before);
   });
 });

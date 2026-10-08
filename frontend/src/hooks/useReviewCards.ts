@@ -80,6 +80,36 @@ export function mergeImported(current: ReviewCard[], incoming: ReviewCard[]): Re
   return mergeCards(current, fresh.slice(0, room));
 }
 
+/**
+ * Applies an optimistic update through a ref and writes it, rolling the ref
+ * back if the write fails.
+ *
+ * The rollback is the point. A failed write never changes `data.review_cards`,
+ * so the hook's resync (which only reacts to a new array identity) cannot
+ * recover on its own. Without this, the ref keeps whatever value the failed
+ * write installed: after a failed "clear all" it holds `[]` while the UI still
+ * renders the full library, and the next grade computes from `[]` and persists
+ * it — silently destroying every card and all review progress.
+ *
+ * Taking the ref as a parameter keeps this testable without a DOM.
+ */
+export async function commitCollection<T>(
+  ref: { current: T },
+  transform: (current: T) => T,
+  write: (next: T) => Promise<void>
+): Promise<T> {
+  const previous = ref.current;
+  const next = transform(previous);
+  ref.current = next;
+  try {
+    await write(next);
+  } catch (err) {
+    ref.current = previous;
+    throw err;
+  }
+  return next;
+}
+
 export function useReviewCards() {
   const { data, updateData, isUpdating } = useStudyData();
 
@@ -102,9 +132,7 @@ export function useReviewCards() {
 
   const commit = useCallback(
     async (transform: (current: ReviewCard[]) => ReviewCard[]): Promise<void> => {
-      const next = transform(cardsRef.current);
-      cardsRef.current = next;
-      await updateData({ review_cards: next });
+      await commitCollection(cardsRef, transform, (next) => updateData({ review_cards: next }));
     },
     [updateData]
   );
