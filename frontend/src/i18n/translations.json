@@ -320,73 +320,39 @@
       "share_total": "کۆمێ سەرنجێ",
       "share_xp": "خاڵێن XP",
       "sign_in_google": "چوونەژوورێ ب Google",
-
       "auth_sign_in": "چوونەژوورێ",
-
       "auth_create_account": "درووستکرنا هەژمار",
-
       "auth_email": "ئیمەیل",
-
       "auth_password": "پاسورد",
-
       "auth_confirm_password": "پاسوردێ دووبارە بکە",
-
       "auth_sign_in_action": "چوونەژوورێ",
-
       "auth_create_action": "درووستکرن",
-
       "auth_send_reset": "فرێکرنا لینکێ نوێکردنەوە",
-
       "auth_forgot_password": "پاسوردێ لەبیرچووە؟",
-
       "auth_back_to_sign_in": "زڤرین بۆ چوونەژوورێ",
-
       "auth_check_email_title": "ئیمەیلێک چێکێ بکە",
-
       "auth_check_email_body": "لینکێکی دڵنیاکرنا ئیمەیلێ بۆ نێرینا. بیکە بۆ تەواوکرنا هەژمارێ.",
-
       "auth_reset_sent": "ئەگەر بۆ {{email}} هەژمار هەبێت، لینکێکی نوێکردنەوە دێت.",
-
       "auth_err_email_required": "ئیمەیلێک بنڤیسە.",
-
       "auth_err_email_invalid": "ئیمەیلێکی ڕاست نییە.",
-
       "auth_err_password_required": "پاسوردێک بنڤیسە.",
-
       "auth_err_password_too_short": "لانیکەم ٨ پیت بەکاربهێنە.",
-
       "auth_err_passwords_match": "دوو پاسوردێک یەکسان نین.",
-
       "auth_error_not_configured": "هەژمار لەم وەختەدا بەردەست نین. کەمێک پاشتر دووبارە هەوڵ بدە.",
-
       "auth_error_invalid": "ئەم ئیمەیل و پاسوردە بە هیچ هەژمارێک ناگونجێن.",
-
       "auth_error_email_taken": "ئەم ئیمەیلە پێشتر هەژمارێکی هەیە. بچە ژوورێ بۆ چوونەژوورێ.",
-
       "auth_error_email_rate_limited": "ئیمەیلێک زۆر داواکراوە. چەند چرکەیەک چاوەڕێ بکە، پاشتر دووبارە هەوڵ بدە.",
-
       "auth_error_rate_limited": "هەوڵێکی زۆر کراوە. چەند چرکەیەک چاوەڕێ بکە.",
-
       "auth_error_weak_password": "پاسوردێکی باشتر هەڵبژێرە.",
-
       "auth_error_same_password": "پاسوردێکی جیاواز لە پاسوردێ کۆن هەڵبژێرە.",
-
       "auth_error_session_expired": "ئەم لینکە بەسەرچووە. لینکێکی نوێ داوا بکە.",
-
       "auth_error_unknown": "هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدە.",
-
       "auth_recovery_title": "پاسوردێکی نوێ هەڵبژێرە",
-
       "auth_recovery_hint": "شتێک هەڵبژێرە کە پێشتر بەکارینەتی نەهێنووە.",
-
       "auth_recovery_done": "پاسوردێک نوێ کرایەوە",
-
       "auth_recovery_done_hint": "دەتگوهێنینە بۆ برنامەکە.",
-
       "auth_new_password": "پاسوردێکی نوێ",
-
       "auth_save_password": "پاشەکەوتکرنا پاسوردێکی نوێ",
-
       "auth_recovery_cancel": "هەژمارێکی تر بەکاربهێنە",
       "sign_in_insights_hint": "بچە ژوورێ بۆ بەدەستهێنانا شیکاریێن ب زیرەکیا دەستکرد دەربارەی دابونەریتێن خوێندنێ و پێشکەوتنا تە.",
       "sign_in_title": "پێویست ب چوونەژوورێیە",
@@ -529,7 +495,27 @@
       "quest_banked": "پاشەکەوتکراو",
       "quest_xp_short": "XP",
       "quest_complete_title": "چالاکیی ڕۆژانە تەواو بوو!",
-      "quest_complete_desc": "تۆ {{xp}} خاڵی زیاتری XP بەدەستهێنا."
+      "quest_complete_desc": "تۆ {{xp}} خاڵی زیاتری XP بەدەستهێنا.",
+      "session_save_error_title": "Danishê nehat",
+      "session_save_error_desc": "Dema xebûnê te nehat tom bikekirin. Girêdana xwe binirînin û dîsa biceribîn.",
+      "schedule_save_error_title": "Tenê li ser cîma tê de qeydartkirin",
+      "schedule_save_error_desc": "Keqfa xwe nemiha bi hesabê te heye. E li vir tune, dibe li ser navnasên din xue nebe.",
+      "schedule_save_failed_title": "Plan nehat",
+      "schedule_save_failed_desc": "Amarana ew lewaleyê nebirê plansaziyê te, bo vê tu plansaziyê nehat. Xatirê bîyê asan û dîsa bicêwî.",
+      "landing_badge": "بەخۆڕایی · بێ وێبگەڕی هەڕەمەیی · بەبێ ئینتەرنێت کاردەکات",
+      "landing_title": "بە سەرنجێکی وەڕاتر بخوێنە.",
+      "landing_subtitle": "دەمژمێرێکی وەڕ، خشتەیێ هەفتانە، تاقیکرنەوەی زیرەکی دەستکرد و شیکارییێکی ڕاستگۆ — هەموو ئەوەی دانیشتنێک پێویستە، ب چوار زمان.",
+      "landing_cta_start": "بەخۆڕایی دەستپێبکە",
+      "landing_features_title": "هەموو ئەوەی دانیشتنێک پێویستە",
+      "landing_feature_timer_desc": "دانیشتنێن سەرنج ب کاتژمێر، ڕەنگی تیپ و ئارمانجا ڕۆژانەیەک بڕاستی دەگەهیتیەوە.",
+      "landing_feature_schedule_desc": "هەفتەکەیەک جار بپلانێرە، پاشان بە بەرەوپێی بچۆ — ب یارمەتیی زیرەکی دەستکرد کاتێک پلانەکە بێر بچێت.",
+      "landing_feature_quiz_desc": "ئەوا تە خوێندی بگردینە تاقیکرنەکێک ب لەز، و ئەو لەبیرچووەکانت دووبارە بیربکەرەوە.",
+      "landing_feature_insights_desc": "زنجیرەکەت، کاتی سەرنج و تەوەرەکانت ببینە بێ ئەوەی خشتەی داتا بکەیت.",
+      "landing_feature_streak_desc": "زنجیرە، خاڵێن XP و چالاکییەکانی ڕۆژانە ڕەفتارەکە بچالاک دەگرنەوە لە ڕۆژانی سەختدا.",
+      "landing_feature_themes_desc": "شەش ڕووکار و چوار زمان — هەرکات بڵێیگۆڕە، ئەپەکە بیردەکەتەوە.",
+      "landing_themes_title": "شەش سەیر، یەک شوێنی کار",
+      "landing_cta_title": "دانیشتنێ داهاتوو بە یەک کرتەیە.",
+      "landing_cta_sub": "وەک میوان تاقیبکەوە — پێویستی بە هەژمار نییە."
     }
   },
   "en": {
@@ -853,73 +839,39 @@
       "share_total": "Total focus",
       "share_xp": "XP",
       "sign_in_google": "Sign in with Google",
-
       "auth_sign_in": "Sign in",
-
       "auth_create_account": "Create account",
-
       "auth_email": "Email",
-
       "auth_password": "Password",
-
       "auth_confirm_password": "Confirm password",
-
       "auth_sign_in_action": "Sign in",
-
       "auth_create_action": "Create account",
-
       "auth_send_reset": "Send reset link",
-
       "auth_forgot_password": "Forgot password?",
-
       "auth_back_to_sign_in": "Back to sign in",
-
       "auth_check_email_title": "Check your email",
-
       "auth_check_email_body": "We sent a confirmation link to {{email}}. Open it to finish setting up your account.",
-
       "auth_reset_sent": "If {{email}} has an account, a reset link is on its way.",
-
       "auth_err_email_required": "Enter your email.",
-
       "auth_err_email_invalid": "That does not look like an email address.",
-
       "auth_err_password_required": "Enter a password.",
-
       "auth_err_password_too_short": "Use at least 8 characters.",
-
       "auth_err_passwords_match": "The two passwords do not match.",
-
       "auth_error_not_configured": "Accounts are unavailable right now. Try again later.",
-
       "auth_error_invalid": "That email and password do not match an account.",
-
       "auth_error_email_taken": "That email already has an account. Sign in instead.",
-
       "auth_error_email_rate_limited": "Too many emails requested. Wait a few minutes, then try again.",
-
       "auth_error_rate_limited": "Too many attempts. Wait a minute, then try again.",
-
       "auth_error_weak_password": "Choose a stronger password.",
-
       "auth_error_same_password": "Choose a password different from your old one.",
-
       "auth_error_session_expired": "This link has expired. Request a new one.",
-
       "auth_error_unknown": "Something went wrong. Please try again.",
-
       "auth_recovery_title": "Choose a new password",
-
       "auth_recovery_hint": "Pick something you have not used before.",
-
       "auth_recovery_done": "Password updated",
-
       "auth_recovery_done_hint": "Taking you to the app.",
-
       "auth_new_password": "New password",
-
       "auth_save_password": "Save new password",
-
       "auth_recovery_cancel": "Use a different account",
       "sign_in_insights_hint": "Sign in to unlock AI-powered insights about your study habits and progress.",
       "sign_in_title": "Sign in required",
@@ -1062,7 +1014,27 @@
       "quest_banked": "Banked",
       "quest_xp_short": "XP",
       "quest_complete_title": "Daily quest complete!",
-      "quest_complete_desc": "You earned {{xp}} bonus XP."
+      "quest_complete_desc": "You earned {{xp}} bonus XP.",
+      "session_save_error_title": "Session not saved",
+      "session_save_error_desc": "Your study time could not be saved. Check your connection and try again.",
+      "schedule_save_error_title": "Saved on this device only",
+      "schedule_save_error_desc": "Your schedule could not be synced to your account. It is safe here, but may not appear on your other devices.",
+      "schedule_save_failed_title": "Schedule not saved",
+      "schedule_save_failed_desc": "This device could not store your schedule, so the change was not saved. Free up some storage and try again.",
+      "landing_badge": "Free · No ads · Works offline",
+      "landing_title": "Study with a calmer kind of focus.",
+      "landing_subtitle": "A quiet timer, a weekly plan, AI quizzes and honest insights — everything one study session needs, in four languages.",
+      "landing_cta_start": "Start for free",
+      "landing_features_title": "Everything a study session needs",
+      "landing_feature_timer_desc": "Timed focus sessions, subject colors and a daily goal you can actually hit.",
+      "landing_feature_schedule_desc": "Plan the week once, then follow it — with AI help when the plan slips.",
+      "landing_feature_quiz_desc": "Turn what you studied into a quiz in seconds, and review what you forgot.",
+      "landing_feature_insights_desc": "See your streak, focus time and weak spots without a spreadsheet.",
+      "landing_feature_streak_desc": "Streaks, XP and daily quests keep the habit alive on the hard days.",
+      "landing_feature_themes_desc": "Six visual themes and four languages — switch any time, it remembers.",
+      "landing_themes_title": "Six moods, one workspace",
+      "landing_cta_title": "Your next session is one tap away.",
+      "landing_cta_sub": "Try it as a guest — no account needed."
     }
   },
   "ar": {
@@ -1386,73 +1358,39 @@
       "share_total": "إجمالي التركيز",
       "share_xp": "نقاط الخبرة",
       "sign_in_google": "تسجيل الدخول بـ Google",
-
       "auth_sign_in": "تسجيل الدخول",
-
       "auth_create_account": "إنشاء حساب",
-
       "auth_email": "البريد الإلكتروني",
-
       "auth_password": "كلمة المرور",
-
       "auth_confirm_password": "تأكيد كلمة المرور",
-
       "auth_sign_in_action": "تسجيل الدخول",
-
       "auth_create_action": "إنشاء الحساب",
-
       "auth_send_reset": "إرسال رابط الاستعادة",
-
       "auth_forgot_password": "نسيت كلمة المرور؟",
-
       "auth_back_to_sign_in": "العودة لتسجيل الدخول",
-
       "auth_check_email_title": "تحقق من بريدك الإلكتروني",
-
       "auth_check_email_body": "أرسلنا رابط تأكيد إلى {{email}}. افتحه لإكمال إعداد حسابك.",
-
       "auth_reset_sent": "إذا كان لدى {{email}} حساب، فرابط الاستعادة في الطريق.",
-
       "auth_err_email_required": "أدخل بريدك الإلكتروني.",
-
       "auth_err_email_invalid": "هذا لا يبدو بريدًا إلكترونيًا صحيحًا.",
-
       "auth_err_password_required": "أدخل كلمة المرور.",
-
       "auth_err_password_too_short": "استخدم ٨ أحرف على الأقل.",
-
       "auth_err_passwords_match": "كلمتا المرور غير متطابقتين.",
-
       "auth_error_not_configured": "الحسابات غير متاحة حاليًا. حاول لاحقًا.",
-
       "auth_error_invalid": "البريد الإلكتروني وكلمة المرور لا يطابقان أي حساب.",
-
       "auth_error_email_taken": "لهذا البريد حساب مسبقًا. سجّل الدخول بدلًا من ذلك.",
-
       "auth_error_email_rate_limited": "تم طلب عدد كبير من الرسائل. انتظر بضع دقائق ثم حاول مجددًا.",
-
       "auth_error_rate_limited": "محاولات كثيرة. انتظر دقيقة ثم حاول مجددًا.",
-
       "auth_error_weak_password": "اختر كلمة مرور أقوى.",
-
       "auth_error_same_password": "اختر كلمة مرور مختلفة عن السابقة.",
-
       "auth_error_session_expired": "انتهت صلاحية هذا الرابط. اطلب رابطًا جديدًا.",
-
       "auth_error_unknown": "حدث خطأ ما. حاول مرة أخرى.",
-
       "auth_recovery_title": "اختر كلمة مرور جديدة",
-
       "auth_recovery_hint": "اختر شيئًا لم تستخدمه من قبل.",
-
       "auth_recovery_done": "تم تحديث كلمة المرور",
-
       "auth_recovery_done_hint": "جارٍ الانتقال إلى التطبيق.",
-
       "auth_new_password": "كلمة المرور الجديدة",
-
       "auth_save_password": "حفظ كلمة المرور الجديدة",
-
       "auth_recovery_cancel": "استخدام حساب آخر",
       "sign_in_insights_hint": "سجّل الدخول لفتح تحليلات الذكاء الاصطناعي عن عاداتك الدراسية وتقدمك.",
       "sign_in_title": "التسجيل مطلوب",
@@ -1595,7 +1533,27 @@
       "quest_banked": "مكتمل",
       "quest_xp_short": "XP",
       "quest_complete_title": "أتممت المهمة اليومية!",
-      "quest_complete_desc": "كسبت {{xp}} نقطة خبرة إضافية."
+      "quest_complete_desc": "كسبت {{xp}} نقطة خبرة إضافية.",
+      "session_save_error_title": "لم يتم حفظ الجلسة",
+      "session_save_error_desc": "لم يتم حفظ وقت دراستك. تحقق من اتصالك وحاول مرة أخرى.",
+      "schedule_save_error_title": "تم الحفظ على هذا الجهاز فقط",
+      "schedule_save_error_desc": "تعذّرت مزامنة جدولك مع حسابك. هو محفوظ هنا، لكنه قد لا يظهر على أجهزتك الأخرى.",
+      "schedule_save_failed_title": "لم يتم حفظ الجدول",
+      "schedule_save_failed_desc": "لم يستطع هذا الجهاز تخزين جدولك، لذلك لم يتم حفظ التغيير. حرّر بعض المساحة ثم أعد المحاولة.",
+      "landing_badge": "مجاني · بلا إعلانات · يعمل دون إنترنت",
+      "landing_title": "ادرس بنَفَس أكثر هدوءًا.",
+      "landing_subtitle": "مؤقت هادئ، وخطة أسبوعية، واختبارات بالذكاء الاصطناعي، وتحليلات صادقة — كل ما تحتاجه جلسة دراسة واحدة، بأربع لغات.",
+      "landing_cta_start": "ابدأ مجانًا",
+      "landing_features_title": "كل ما تحتاجه جلسة الدراسة",
+      "landing_feature_timer_desc": "جلسات تركيز موقوتة، وألوان لكل مادة، وهدف يومي تصل إليه فعلًا.",
+      "landing_feature_schedule_desc": "خطّط للأسبوع مرة واحدة ثم التزم به — مع مساعدة الذكاء الاصطناعي عند الانحراف.",
+      "landing_feature_quiz_desc": "حوّل ما درسته إلى اختبار في ثوانٍ، وراجع ما نسيته.",
+      "landing_feature_insights_desc": "شاهد سلسلتك ووقت تركيزك ومجالات التحسّن دون جداول بيانات.",
+      "landing_feature_streak_desc": "السلسلة ونقاط الخبرة والمهام اليومية تُبقي عادة الدراسة حيّة حتى في الأيام الصعبة.",
+      "landing_feature_themes_desc": "ستة مظهرات وأربع لغات — بدّلها متى شئت، وسيتذكّرها التطبيق.",
+      "landing_themes_title": "ستة أجواء، مساحة عمل واحدة",
+      "landing_cta_title": "جلستك التالية على بُعد نقرة واحدة.",
+      "landing_cta_sub": "جرّبه كضيف — لا حاجة إلى حساب."
     }
   },
   "sorani": {
@@ -1919,73 +1877,39 @@
       "share_total": "کۆی سەرنج",
       "share_xp": "خاڵەکانی XP",
       "sign_in_google": "چوونەژوورەوە بە Google",
-
       "auth_sign_in": "چوونەژوورەوە",
-
       "auth_create_account": "درووستکردنی هەژمار",
-
       "auth_email": "ئیمەیل",
-
       "auth_password": "وشەی نهێنی",
-
       "auth_confirm_password": "پشتڕاستکردنەوەی وشەی نهێنی",
-
       "auth_sign_in_action": "چوونەژوورەوە",
-
       "auth_create_action": "درووستکردن",
-
       "auth_send_reset": "ناردنی بەستەری نوێکردنەوە",
-
       "auth_forgot_password": "وشەی نهێنیت لەبیرچووە؟",
-
       "auth_back_to_sign_in": "گەڕانەوە بۆ چوونەژوورەوە",
-
       "auth_check_email_title": "ئیمەیلەکەت پشکنین بکە",
-
       "auth_check_email_body": "بەستەرێکی دڵنیاکردنەوە بۆ {{email}} نێردرا. بیکە بۆ تەواوکردنی هەژمارەکەت.",
-
       "auth_reset_sent": "ئەگەر بۆ {{email}} هەژمار هەبێت، بەستەرێکی نوێکردنەوە دێت.",
-
       "auth_err_email_required": "ئیمەیلەکەت بنڤیسە.",
-
       "auth_err_email_invalid": "ئیمەیلەکەت ڕاست نییە.",
-
       "auth_err_password_required": "وشەی نهێنی بنڤیسە.",
-
       "auth_err_password_too_short": "لانیکەم ٨ پیت بەکاربهێنە.",
-
       "auth_err_passwords_match": "دوو وشەی نهێنی یەکسان نین.",
-
       "auth_error_not_configured": "هەژمارەکان ئێستا بەردەست نین. کەمێک دواتر دووبارە هەوڵ بدەوە.",
-
       "auth_error_invalid": "ئیمەیل و وشەی نهێنی بە هیچ هەژمارێک ناگونجێن.",
-
       "auth_error_email_taken": "ئەم ئیمەیلە پێشتر هەژمارێکی هەیە. بچۆ ژوورەوە بۆ چوونەژوورەوە.",
-
       "auth_error_email_rate_limited": "ئیمەیلی زۆر داواکرا. چەند خولەکێک چاوەڕێ بکە، پاشتر دووبارە هەوڵ بدەوە.",
-
       "auth_error_rate_limited": "هەوڵێکی زۆر کرا. خولەکێک چاوەڕێ بکە.",
-
       "auth_error_weak_password": "وشەی نهێنییەکی باشتر هەڵبژێرە.",
-
       "auth_error_same_password": "وشەی نهێنییەکی جیاواز لە کۆنەکە هەڵبژێرە.",
-
       "auth_error_session_expired": "ئەم بەستەرە بەسەرچووە. داوای بەستەرێکی نوێ بکە.",
-
       "auth_error_unknown": "هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەوە.",
-
       "auth_recovery_title": "وشەی نهێنییەکی نوێ هەڵبژێرە",
-
       "auth_recovery_hint": "شتێک هەڵبژێرە کە پێشتر بەکارت نەهێناوە.",
-
       "auth_recovery_done": "وشەی نهێنی نوێ کرایەوە",
-
       "auth_recovery_done_hint": "دەتگوهێنینەوە بۆ ئەپەکە.",
-
       "auth_new_password": "وشەی نهێنییەکی نوێ",
-
       "auth_save_password": "پاشەکەوتکردنی وشەی نهێنی نوێ",
-
       "auth_recovery_cancel": "هەژمارێکی تر بەکاربهێنە",
       "sign_in_insights_hint": "بچۆ ژوورەوە بۆ دەستگەیشتن بە شیکارییەکانی سەر بە زیرەکیی دەستکرد دەربارەی ڕاهاتنەکانی خوێندن و پێشکەوتنت.",
       "sign_in_title": "چوونەژوورەوە پێویستە",
@@ -2128,7 +2052,27 @@
       "quest_banked": "پاشەکەوتکراو",
       "quest_xp_short": "XP",
       "quest_complete_title": "ئامانجی ڕۆژانە تەواو بوو!",
-      "quest_complete_desc": "تۆ {{xp}} خاڵی زیاتری XP بەدەستهێنا."
+      "quest_complete_desc": "تۆ {{xp}} خاڵی زیاتری XP بەدەستهێنا.",
+      "session_save_error_title": "دانیشتن پاشە نەکرا",
+      "session_save_error_desc": "کاتی خوێندنەکەت نەتوانرا پاشە بکرێت. پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدە.",
+      "schedule_save_error_title": "تەنها لەم ئامێرەدا پاشە کرا",
+      "schedule_save_error_desc": "خشەتەکەت نەیتوانیرا بۆ هەژمارەکەت هاوکاری بکرێت. لێرەدا پارێزراوە، بەڵام لەسەر ئامێرەکانی تردا نابێت دیار.",
+      "schedule_save_failed_title": "خشەکەی خۆ نەکرا",
+      "schedule_save_failed_desc": "ئامێرەکە نەیتوانی خشەکەکەت بەکاربهێنێت، بۆیە گۆڕانکاری نەکرا. کەمێک بۆشایی ئازاد بکە و دووبارە هەوڵبدە.",
+      "landing_badge": "بەخۆڕایی · بێ ڕیکلام · بەبێ ئینتەرنێت کاردەکات",
+      "landing_title": "بە سەرنجێکی وەڕەوتر بخوێنەرەوە.",
+      "landing_subtitle": "کاتژمێرێکی وەڕ، خشتەیێ هەفتانە، تاقیکردنەوەی زیرەکی دەستکرد و شیکارییەکی ڕاستگۆ — هەموو ئەوەی خوێندنێک پێویستە، ب چوار زمان.",
+      "landing_cta_start": "بەخۆڕایی دەستپێبکە",
+      "landing_features_title": "هەموو ئەوەی خوێندنێک پێویستە",
+      "landing_feature_timer_desc": "خوێندنەوەی سەرنج ب کاتژمێر، ڕەنگی بابەت و ئامانجی ڕۆژانەیەک بە ڕاستی دەگەیتیتەوە.",
+      "landing_feature_schedule_desc": "هەفتەکە یەک جار پلان بکە، پاش بە بەرەوپێی بچۆ — ب یارمەتیی زیرەکی دەستکرد کاتێک پلانەکە کەوت.",
+      "landing_feature_quiz_desc": "ئەوەی خوێندوتە بیکە بە تاقیکردنەوەیەکی خێرا، و ئەو لەبیرچووبەکانت دووبارە بیربکەرەوە.",
+      "landing_feature_insights_desc": "زنجیرەکەت، کاتی سەرنج و لایەنەکانت ببینە بێ ئەوەی خشتەی داتا بکەیت.",
+      "landing_feature_streak_desc": "زنجیرە، خاڵەکانی XP و ئامانجەکانی ڕۆژانە ڕەفتارەکە چالاک دەگرنەوە لە ڕۆژانی سەختدا.",
+      "landing_feature_themes_desc": "شەش ڕوو و چوار زمان — هەرکات بڵێیت بگۆڕە، ئەپەکە بیر دەکاتەوە.",
+      "landing_themes_title": "شەش سەیر، یەک شوێنی کار",
+      "landing_cta_title": "خوێندنەوەی داهاتوو بە یەک کرتەیە.",
+      "landing_cta_sub": "وەک میوان تاقیبکردنەوە — پێویستی بە هەژمار نییە."
     }
   }
 }
