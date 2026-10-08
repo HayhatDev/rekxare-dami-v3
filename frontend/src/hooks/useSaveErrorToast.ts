@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
  * Tells the student when a finished session could not be persisted.
  *
  * Without this the write failed silently and the session vanished on the next
- * load — a student could study for an hour and lose it with no indication. This
+ * load - a student could study for an hour and lose it with no indication. This
  * is deliberately an error rather than a success toast: the XP was NOT banked.
  *
  * Dedupe keeps it to one toast per transition into the failed state, so a retry

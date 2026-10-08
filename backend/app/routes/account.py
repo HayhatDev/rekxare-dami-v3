@@ -72,7 +72,7 @@ async def delete_account(request: Request, user: dict = Depends(require_auth)):
     if failed:
         # Stop BEFORE deleting the auth user. Destroying it first would lock the
         # student out with no way to retry, stranding their rows in the database
-        # where they are unreachable but not erased — the worst outcome, since
+        # where they are unreachable but not erased - the worst outcome, since
         # the student would have been told their data was gone.
         logger.error(
             "Aborting account deletion for %s: could not purge %s", user_id, ", ".join(failed)

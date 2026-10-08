@@ -504,18 +504,18 @@
       "schedule_save_failed_desc": "Amarana ew lewaleyê nebirê plansaziyê te, bo vê tu plansaziyê nehat. Xatirê bîyê asan û dîsa bicêwî.",
       "landing_badge": "بەخۆڕایی · بێ وێبگەڕی هەڕەمەیی · بەبێ ئینتەرنێت کاردەکات",
       "landing_title": "بە سەرنجێکی وەڕاتر بخوێنە.",
-      "landing_subtitle": "دەمژمێرێکی وەڕ، خشتەیێ هەفتانە، تاقیکرنەوەی زیرەکی دەستکرد و شیکارییێکی ڕاستگۆ — هەموو ئەوەی دانیشتنێک پێویستە، ب چوار زمان.",
+      "landing_subtitle": "دەمژمێرێکی وەڕ، خشتەیێ هەفتانە، تاقیکرنەوەی زیرەکی دەستکرد و شیکارییێکی ڕاستگۆ - هەموو ئەوەی دانیشتنێک پێویستە، ب چوار زمان.",
       "landing_cta_start": "بەخۆڕایی دەستپێبکە",
       "landing_features_title": "هەموو ئەوەی دانیشتنێک پێویستە",
       "landing_feature_timer_desc": "دانیشتنێن سەرنج ب کاتژمێر، ڕەنگی تیپ و ئارمانجا ڕۆژانەیەک بڕاستی دەگەهیتیەوە.",
-      "landing_feature_schedule_desc": "هەفتەکەیەک جار بپلانێرە، پاشان بە بەرەوپێی بچۆ — ب یارمەتیی زیرەکی دەستکرد کاتێک پلانەکە بێر بچێت.",
+      "landing_feature_schedule_desc": "هەفتەکەیەک جار بپلانێرە، پاشان بە بەرەوپێی بچۆ - ب یارمەتیی زیرەکی دەستکرد کاتێک پلانەکە بێر بچێت.",
       "landing_feature_quiz_desc": "ئەوا تە خوێندی بگردینە تاقیکرنەکێک ب لەز، و ئەو لەبیرچووەکانت دووبارە بیربکەرەوە.",
       "landing_feature_insights_desc": "زنجیرەکەت، کاتی سەرنج و تەوەرەکانت ببینە بێ ئەوەی خشتەی داتا بکەیت.",
       "landing_feature_streak_desc": "زنجیرە، خاڵێن XP و چالاکییەکانی ڕۆژانە ڕەفتارەکە بچالاک دەگرنەوە لە ڕۆژانی سەختدا.",
-      "landing_feature_themes_desc": "شەش ڕووکار و چوار زمان — هەرکات بڵێیگۆڕە، ئەپەکە بیردەکەتەوە.",
+      "landing_feature_themes_desc": "شەش ڕووکار و چوار زمان - هەرکات بڵێیگۆڕە، ئەپەکە بیردەکەتەوە.",
       "landing_themes_title": "شەش سەیر، یەک شوێنی کار",
       "landing_cta_title": "دانیشتنێ داهاتوو بە یەک کرتەیە.",
-      "landing_cta_sub": "وەک میوان تاقیبکەوە — پێویستی بە هەژمار نییە."
+      "landing_cta_sub": "وەک میوان تاقیبکەوە - پێویستی بە هەژمار نییە."
     }
   },
   "en": {
@@ -1023,18 +1023,18 @@
       "schedule_save_failed_desc": "This device could not store your schedule, so the change was not saved. Free up some storage and try again.",
       "landing_badge": "Free · No ads · Works offline",
       "landing_title": "Study with a calmer kind of focus.",
-      "landing_subtitle": "A quiet timer, a weekly plan, AI quizzes and honest insights — everything one study session needs, in four languages.",
+      "landing_subtitle": "A quiet timer, a weekly plan, AI quizzes and honest insights - everything one study session needs, in four languages.",
       "landing_cta_start": "Start for free",
       "landing_features_title": "Everything a study session needs",
       "landing_feature_timer_desc": "Timed focus sessions, subject colors and a daily goal you can actually hit.",
-      "landing_feature_schedule_desc": "Plan the week once, then follow it — with AI help when the plan slips.",
+      "landing_feature_schedule_desc": "Plan the week once, then follow it - with AI help when the plan slips.",
       "landing_feature_quiz_desc": "Turn what you studied into a quiz in seconds, and review what you forgot.",
       "landing_feature_insights_desc": "See your streak, focus time and weak spots without a spreadsheet.",
       "landing_feature_streak_desc": "Streaks, XP and daily quests keep the habit alive on the hard days.",
-      "landing_feature_themes_desc": "Six visual themes and four languages — switch any time, it remembers.",
+      "landing_feature_themes_desc": "Six visual themes and four languages - switch any time, it remembers.",
       "landing_themes_title": "Six moods, one workspace",
       "landing_cta_title": "Your next session is one tap away.",
-      "landing_cta_sub": "Try it as a guest — no account needed."
+      "landing_cta_sub": "Try it as a guest - no account needed."
     }
   },
   "ar": {
@@ -1542,18 +1542,18 @@
       "schedule_save_failed_desc": "لم يستطع هذا الجهاز تخزين جدولك، لذلك لم يتم حفظ التغيير. حرّر بعض المساحة ثم أعد المحاولة.",
       "landing_badge": "مجاني · بلا إعلانات · يعمل دون إنترنت",
       "landing_title": "ادرس بنَفَس أكثر هدوءًا.",
-      "landing_subtitle": "مؤقت هادئ، وخطة أسبوعية، واختبارات بالذكاء الاصطناعي، وتحليلات صادقة — كل ما تحتاجه جلسة دراسة واحدة، بأربع لغات.",
+      "landing_subtitle": "مؤقت هادئ، وخطة أسبوعية، واختبارات بالذكاء الاصطناعي، وتحليلات صادقة - كل ما تحتاجه جلسة دراسة واحدة، بأربع لغات.",
       "landing_cta_start": "ابدأ مجانًا",
       "landing_features_title": "كل ما تحتاجه جلسة الدراسة",
       "landing_feature_timer_desc": "جلسات تركيز موقوتة، وألوان لكل مادة، وهدف يومي تصل إليه فعلًا.",
-      "landing_feature_schedule_desc": "خطّط للأسبوع مرة واحدة ثم التزم به — مع مساعدة الذكاء الاصطناعي عند الانحراف.",
+      "landing_feature_schedule_desc": "خطّط للأسبوع مرة واحدة ثم التزم به - مع مساعدة الذكاء الاصطناعي عند الانحراف.",
       "landing_feature_quiz_desc": "حوّل ما درسته إلى اختبار في ثوانٍ، وراجع ما نسيته.",
       "landing_feature_insights_desc": "شاهد سلسلتك ووقت تركيزك ومجالات التحسّن دون جداول بيانات.",
       "landing_feature_streak_desc": "السلسلة ونقاط الخبرة والمهام اليومية تُبقي عادة الدراسة حيّة حتى في الأيام الصعبة.",
-      "landing_feature_themes_desc": "ستة مظهرات وأربع لغات — بدّلها متى شئت، وسيتذكّرها التطبيق.",
+      "landing_feature_themes_desc": "ستة مظهرات وأربع لغات - بدّلها متى شئت، وسيتذكّرها التطبيق.",
       "landing_themes_title": "ستة أجواء، مساحة عمل واحدة",
       "landing_cta_title": "جلستك التالية على بُعد نقرة واحدة.",
-      "landing_cta_sub": "جرّبه كضيف — لا حاجة إلى حساب."
+      "landing_cta_sub": "جرّبه كضيف - لا حاجة إلى حساب."
     }
   },
   "sorani": {
@@ -2061,18 +2061,18 @@
       "schedule_save_failed_desc": "ئامێرەکە نەیتوانی خشەکەکەت بەکاربهێنێت، بۆیە گۆڕانکاری نەکرا. کەمێک بۆشایی ئازاد بکە و دووبارە هەوڵبدە.",
       "landing_badge": "بەخۆڕایی · بێ ڕیکلام · بەبێ ئینتەرنێت کاردەکات",
       "landing_title": "بە سەرنجێکی وەڕەوتر بخوێنەرەوە.",
-      "landing_subtitle": "کاتژمێرێکی وەڕ، خشتەیێ هەفتانە، تاقیکردنەوەی زیرەکی دەستکرد و شیکارییەکی ڕاستگۆ — هەموو ئەوەی خوێندنێک پێویستە، ب چوار زمان.",
+      "landing_subtitle": "کاتژمێرێکی وەڕ، خشتەیێ هەفتانە، تاقیکردنەوەی زیرەکی دەستکرد و شیکارییەکی ڕاستگۆ - هەموو ئەوەی خوێندنێک پێویستە، ب چوار زمان.",
       "landing_cta_start": "بەخۆڕایی دەستپێبکە",
       "landing_features_title": "هەموو ئەوەی خوێندنێک پێویستە",
       "landing_feature_timer_desc": "خوێندنەوەی سەرنج ب کاتژمێر، ڕەنگی بابەت و ئامانجی ڕۆژانەیەک بە ڕاستی دەگەیتیتەوە.",
-      "landing_feature_schedule_desc": "هەفتەکە یەک جار پلان بکە، پاش بە بەرەوپێی بچۆ — ب یارمەتیی زیرەکی دەستکرد کاتێک پلانەکە کەوت.",
+      "landing_feature_schedule_desc": "هەفتەکە یەک جار پلان بکە، پاش بە بەرەوپێی بچۆ - ب یارمەتیی زیرەکی دەستکرد کاتێک پلانەکە کەوت.",
       "landing_feature_quiz_desc": "ئەوەی خوێندوتە بیکە بە تاقیکردنەوەیەکی خێرا، و ئەو لەبیرچووبەکانت دووبارە بیربکەرەوە.",
       "landing_feature_insights_desc": "زنجیرەکەت، کاتی سەرنج و لایەنەکانت ببینە بێ ئەوەی خشتەی داتا بکەیت.",
       "landing_feature_streak_desc": "زنجیرە، خاڵەکانی XP و ئامانجەکانی ڕۆژانە ڕەفتارەکە چالاک دەگرنەوە لە ڕۆژانی سەختدا.",
-      "landing_feature_themes_desc": "شەش ڕوو و چوار زمان — هەرکات بڵێیت بگۆڕە، ئەپەکە بیر دەکاتەوە.",
+      "landing_feature_themes_desc": "شەش ڕوو و چوار زمان - هەرکات بڵێیت بگۆڕە، ئەپەکە بیر دەکاتەوە.",
       "landing_themes_title": "شەش سەیر، یەک شوێنی کار",
       "landing_cta_title": "خوێندنەوەی داهاتوو بە یەک کرتەیە.",
-      "landing_cta_sub": "وەک میوان تاقیبکردنەوە — پێویستی بە هەژمار نییە."
+      "landing_cta_sub": "وەک میوان تاقیبکردنەوە - پێویستی بە هەژمار نییە."
     }
   }
 }

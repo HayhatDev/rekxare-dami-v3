@@ -89,7 +89,7 @@ export function mergeImported(current: ReviewCard[], incoming: ReviewCard[]): Re
  * recover on its own. Without this, the ref keeps whatever value the failed
  * write installed: after a failed "clear all" it holds `[]` while the UI still
  * renders the full library, and the next grade computes from `[]` and persists
- * it — silently destroying every card and all review progress.
+ * it - silently destroying every card and all review progress.
  *
  * Taking the ref as a parameter keeps this testable without a DOM.
  */

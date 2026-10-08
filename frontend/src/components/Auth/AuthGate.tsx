@@ -15,7 +15,7 @@ interface AuthGateProps {
  *
  * `/` serves the public landing page, `/quiz` is the try-before-signup teaser
  * (also listed in sitemap.xml), and `/privacy` + `/terms` must stay readable
- * — they are linked from the landing page and expected to be indexable.
+ * - they are linked from the landing page and expected to be indexable.
  * Everything else is behind the auth wall.
  */
 const PUBLIC_PATHS = new Set(['/', '/privacy', '/terms', '/quiz']);

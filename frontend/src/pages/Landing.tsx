@@ -43,11 +43,11 @@ export default function Landing() {
   const features = useMemo(
     () => [
       { icon: Timer, title: t('study_timer'), desc: t('landing_feature_timer_desc', 'Timed focus sessions, subject colors and a daily goal you can actually hit.') },
-      { icon: CalendarDays, title: t('schedule_title'), desc: t('landing_feature_schedule_desc', 'Plan the week once, then follow it — with AI help when the plan slips.') },
+      { icon: CalendarDays, title: t('schedule_title'), desc: t('landing_feature_schedule_desc', 'Plan the week once, then follow it - with AI help when the plan slips.') },
       { icon: Brain, title: t('quiz_title'), desc: t('landing_feature_quiz_desc', 'Turn what you studied into a quiz in seconds, and review what you miss.') },
       { icon: LineChart, title: t('ai_insights'), desc: t('landing_feature_insights_desc', 'See your streak, focus time and weak spots without a spreadsheet.') },
       { icon: Flame, title: t('streak'), desc: t('landing_feature_streak_desc', 'Streaks, XP and daily quests keep the habit alive on the hard days.') },
-      { icon: Palette, title: t('choose_theme'), desc: t('landing_feature_themes_desc', 'Six visual themes and four languages — switch any time, it remembers.') },
+      { icon: Palette, title: t('choose_theme'), desc: t('landing_feature_themes_desc', 'Six visual themes and four languages - switch any time, it remembers.') },
     ],
     [t]
   );
@@ -58,7 +58,7 @@ export default function Landing() {
       className="min-h-[100dvh] relative overflow-x-hidden"
       style={{ backgroundColor: c.bg, color: c.ink, fontFamily: font }}
     >
-      {/* Ambient tones — the same quiet glow the sign-in screen uses */}
+      {/* Ambient tones - the same quiet glow the sign-in screen uses */}
       <div
         aria-hidden="true"
         className="absolute -top-44 -right-44 w-[520px] h-[520px] rounded-full pointer-events-none"
@@ -117,7 +117,7 @@ export default function Landing() {
             </h1>
 
             <p className="mt-4 text-[15px] sm:text-base leading-relaxed max-w-xl" style={{ color: c.inkSoft }}>
-              {t('landing_subtitle', 'A quiet timer, a weekly plan, AI quizzes and honest insights — everything one study session needs, in four languages.')}
+              {t('landing_subtitle', 'A quiet timer, a weekly plan, AI quizzes and honest insights - everything one study session needs, in four languages.')}
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
@@ -284,7 +284,7 @@ export default function Landing() {
               {t('landing_cta_title', 'Your next session is one tap away.')}
             </h2>
             <p className="mt-2 text-sm opacity-85">
-              {t('landing_cta_sub', 'Try it as a guest — no account needed.')}
+              {t('landing_cta_sub', 'Try it as a guest - no account needed.')}
             </p>
 
             <div className="mt-6 flex flex-wrap justify-center gap-3">
