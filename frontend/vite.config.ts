@@ -31,6 +31,17 @@ function buildConnectSrc(env: Record<string, string>): string {
     }
   }
 
+  const analyticsHost = env.VITE_ANALYTICS_HOST;
+  if (analyticsHost) {
+    try {
+      const u = new URL(analyticsHost);
+      const proto = u.protocol === 'https:' ? 'https:' : 'http:';
+      allowed.add(`${proto}//${u.host}`);
+    } catch {
+      /* ignore malformed URL */
+    }
+  }
+
   // If no remote hosts were configured, fall back to a permissive policy so
   // the app still works against an (as-yet unknown) Supabase/API origin.
   const hasRemote = [...allowed.values()].some((v) => v !== "'self'" && !v.startsWith('http://localhost') && !v.startsWith('http://127.0.0.1'));

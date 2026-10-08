@@ -42,7 +42,12 @@ const FIELD_ERROR_COPY: Record<string, [string, string]> = {
   passwords_dont_match: ['auth_err_passwords_match', 'The two passwords do not match.'],
 };
 
-export default function LoginPage() {
+interface LoginPageProps {
+  /** Tab the form opens on; `/signup` links deep-link into account creation. */
+  initialMode?: EmailAuthMode;
+}
+
+export default function LoginPage({ initialMode = 'signin' }: LoginPageProps) {
   const { t } = useTranslation();
   const { signInWithGoogle, signInAsGuest, loading } = useAuth();
   const { themeId, isDark } = useThemeStore();
@@ -50,7 +55,7 @@ export default function LoginPage() {
 
   const { cycleLang } = useCycleLang();
 
-  const [mode, setMode] = useState<EmailAuthMode>('signin');
+  const [mode, setMode] = useState<EmailAuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

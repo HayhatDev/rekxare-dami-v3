@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Toaster } from 'sonner';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { motionTokens } from './lib/motionTokens';
 import { useInitApp } from './hooks/useInitApp';
 import { useThemeStore } from './stores/useThemeStore';
@@ -13,8 +13,10 @@ import GuestLocked from './components/Auth/GuestLocked';
 import ErrorBoundary from './components/Auth/ErrorBoundary';
 import StudyReminder from './components/StudyReminder';
 import InstallApp from './components/InstallApp';
+import { analytics } from './services/analytics';
 
 import Home from './pages/Home';
+import Landing from './pages/Landing';
 import Schedule from './pages/Schedule';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
@@ -36,7 +38,7 @@ const queryClient = new QueryClient({
 
 function AnimatedRoutes() {
   const [location] = useLocation();
-  const { isGuest } = useAuth();
+  const { user, isGuest } = useAuth();
   const reduce = useReducedMotion();
   const y = reduce ? 0 : motionTokens.distance.sm;
   const pageVariants = {
@@ -64,7 +66,11 @@ function AnimatedRoutes() {
       >
         <ErrorBoundary>
           <Switch location={location}>
-            <Route path="/" component={Home} />
+            <Route path="/">
+              {/* Signed-out first-time visitors get the marketing page; the
+                  app itself stays at the same URL once they are in. */}
+              {user || isGuest ? <Home /> : <Landing />}
+            </Route>
             <Route path="/schedule">
               {isGuest ? <GuestLocked /> : <Schedule />}
             </Route>
@@ -126,15 +132,29 @@ function Router() {
   );
 }
 
+/**
+ * Lives outside AuthGate so route changes that swap the whole tree for the
+ * auth wall (e.g. / → /signin) are still counted. No-op unless analytics
+ * env vars are configured.
+ */
+function Pageviews() {
+  const [location] = useLocation();
+  useEffect(() => {
+    analytics.pageview(location);
+  }, [location]);
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthGate>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+          <Pageviews />
+          <AuthGate>
             <Router />
-          </WouterRouter>
-        </AuthGate>
+          </AuthGate>
+        </WouterRouter>
         <InstallApp />
       </AuthProvider>
       <ThemeTransitionOverlay />
