@@ -11,6 +11,7 @@ import { useLocation } from 'wouter';
 import { useLevelUpToast } from './useLevelUpToast';
 import { useStreakFreezeToast } from './useStreakFreezeToast';
 import { useQuestToast } from './useQuestToast';
+import { useSaveErrorToast } from './useSaveErrorToast';
 
 export interface UseTimerSessionOptions {
   /** Default minutes if PRESET_MINUTES is empty. Defaults to 25. */
@@ -52,12 +53,13 @@ export function useTimerSession(options: UseTimerSessionOptions = {}) {
     presets[presetIndex] ?? presets[0] ?? defaultMinutes
   );
 
-  const { secondsLeft, isActive, isDone, progress, toggle, reset, lastRewards } = useTimer(selectedMinutes, selectedSubject);
+  const { secondsLeft, isActive, isDone, progress, toggle, reset, lastRewards, saveError } = useTimer(selectedMinutes, selectedSubject);
   const { data: studyData, isLoading } = useStudyData();
 
   useLevelUpToast(lastRewards);
   useStreakFreezeToast(lastRewards);
   useQuestToast(lastRewards);
+  useSaveErrorToast(saveError);
 
   useEffect(() => {
     if (!subjects.includes(selectedSubject) && subjects.length > 0) {

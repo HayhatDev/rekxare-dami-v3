@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { guestKeysToClear, mergeStudyData, mergeReviewCards, userKey, guestCacheOwnedBy } from './supabase';
+import { guestKeysToClear, mergeStudyData, mergeReviewCards, userKey, guestCacheOwnedBy, classifyScheduleSaveFailure, ScheduleSaveError } from './supabase';
 import { STREAK_FREEZE_CAP, STREAK_FREEZE_STARTING_GRANT } from '../utils/rewards';
 import { GuestDeletionState } from './supabase';
 import { StudyData, ReviewCard } from '../types';
@@ -342,5 +342,27 @@ describe('mergeStudyData — review decks survive a cross-device read', () => {
       study({ review_cards: [card({ id: 'b', question: 'Q-B' })] })
     );
     expect(merged.review_cards.map((c) => c.id).sort()).toEqual(['a', 'b']);
+  });
+});
+
+
+describe('classifyScheduleSaveFailure', () => {
+  it('reports nowhere when the on-device write failed', () => {
+    const err = new ScheduleSaveError('local', 'Failed to save schedule locally: quota');
+    expect(classifyScheduleSaveFailure(err)).toBe('nowhere');
+  });
+
+  it('reports locally when only the account copy failed', () => {
+    const err = new ScheduleSaveError('cloud', 'Schedule sync failed: 500');
+    expect(classifyScheduleSaveFailure(err)).toBe('locally');
+  });
+
+  it('keeps the optimistic value for an unrecognised error rather than discarding an edit', () => {
+    expect(classifyScheduleSaveFailure(new Error('network'))).toBe('locally');
+    expect(classifyScheduleSaveFailure(undefined)).toBe('locally');
+  });
+
+  it('survives a plain-object failure without treating it as a local write failure', () => {
+    expect(classifyScheduleSaveFailure({ stage: 'local' })).toBe('locally');
   });
 });

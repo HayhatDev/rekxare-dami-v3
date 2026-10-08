@@ -200,6 +200,13 @@ function migrateLegacyData(newKey: string, legacyKey: string): void {
   } catch {}
 }
 
+/** Extracts a readable message from an unknown thrown value for error text. */
+function messageOf(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === 'string') return e;
+  return 'unknown storage error';
+}
+
 const localFallback = {
   getStudyData: async (authUser: string | null = null): Promise<StudyData> => {
     try {
@@ -215,7 +222,14 @@ const localFallback = {
     try {
       localStorage.setItem(userKey('study_data', authUser), JSON.stringify(data));
       if (!authUser) stampGuestOwner('study_data', 'guest');
-    } catch {}
+    } catch (e) {
+      // Thrown, not swallowed: for a guest this local write is the ONLY write,
+      // and the UI has already advanced XP/streak as if it succeeded. Swallowing
+      // meant an hour of study could vanish on reload with no warning. The
+      // signed-in path below already throws, so this also makes the two paths
+      // behave consistently.
+      throw new Error(`Failed to save study data locally: ${messageOf(e)}`);
+    }
   },
   getSchedule: async (authUser: string | null = null): Promise<ScheduleData> => {
     try {
@@ -231,7 +245,11 @@ const localFallback = {
     try {
       localStorage.setItem(userKey('schedule', authUser), JSON.stringify(data));
       if (!authUser) stampGuestOwner('schedule', 'guest');
-    } catch {}
+    } catch (e) {
+      // See setStudyData: a swallowed failure here loses the whole schedule,
+      // including a generated day plan the student cannot regenerate for free.
+      throw new Error(`Failed to save schedule locally: ${messageOf(e)}`);
+    }
   },
   getUserPrefs: async (authUser: string | null = null): Promise<UserPrefs> => {
     try {
@@ -244,7 +262,11 @@ const localFallback = {
     }
   },
   setUserPrefs: async (prefs: UserPrefs, authUser: string | null = null): Promise<void> => {
-    try { localStorage.setItem(userKey('prefs', authUser), JSON.stringify(prefs)); } catch {}
+    try {
+      localStorage.setItem(userKey('prefs', authUser), JSON.stringify(prefs));
+    } catch (e) {
+      throw new Error(`Failed to save preferences locally: ${messageOf(e)}`);
+    }
   }
 };
 
@@ -260,6 +282,42 @@ async function getAuthenticatedUserKey(): Promise<string | null> {
  * nothing to migrate / the server already had data). If a write failed, the flag
  * stays false so the caller preserves the local copy instead of losing it.
  */
+/**
+ * Which half of a save failed.
+ *
+ * - `local`: the on-device write failed, so the value is stored nowhere. The
+ *   caller's optimistic UI has to be rolled back.
+ * - `cloud`: the on-device write succeeded and only the account copy failed. The
+ *   value is safe locally, so rolling back would throw away a real save.
+ */
+export type ScheduleSaveStage = 'local' | 'cloud';
+
+/** Distinguishes "nowhere" from "here but not on your account". */
+export class ScheduleSaveError extends Error {
+  readonly stage: ScheduleSaveStage;
+
+  constructor(stage: ScheduleSaveStage, message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'ScheduleSaveError';
+    this.stage = stage;
+  }
+}
+
+/** How much of a failed schedule save actually survived. */
+export type ScheduleSaveOutcome = 'nowhere' | 'locally';
+
+/**
+ * Pure decision for what a failed schedule save should do to optimistic UI.
+ *
+ * An unrecognised error defaults to `locally`: when the stage is unknown, the
+ * cost of guessing wrong is asymmetric. Reverting a save that did land throws
+ * away the student's edit, whereas keeping a save that did not land only shows
+ * them a schedule that is missing on reload - recoverable by editing again.
+ */
+export function classifyScheduleSaveFailure(error: unknown): ScheduleSaveOutcome {
+  return error instanceof ScheduleSaveError && error.stage === 'local' ? 'nowhere' : 'locally';
+}
+
 export interface GuestDeletionState {
   hasStudyData: boolean;
   studyServerHasData: boolean;
@@ -408,8 +466,16 @@ export const api = {
     return localFallback.getSchedule(authUser);
   },
   async updateSchedule(schedule: ScheduleData): Promise<void> {
-    const authUser = await getAuthenticatedUserKey();
-    await localFallback.setSchedule(schedule, authUser);
+const authUser = await getAuthenticatedUserKey();
+    // Local first: this throws if storage is full or blocked, which is the only
+    // write a guest gets, so the caller must hear about it. A local failure
+    // means the schedule exists nowhere, so it is tagged `local` for the caller
+    // to roll its optimistic UI back rather than claim the edit is safe.
+    try {
+      await localFallback.setSchedule(schedule, authUser);
+    } catch (e) {
+      throw new ScheduleSaveError('local', messageOf(e), { cause: e });
+    }
     if (!supabase || !authUser) return;
     try {
       const res = await fetch(`${API_URL}/api/schedule/me`, {
@@ -418,10 +484,17 @@ export const api = {
         body: JSON.stringify(schedule),
       });
       if (!res.ok) {
-        if (import.meta.env.DEV) console.error('[Supabase] Failed to update schedule:', res.status, res.statusText);
+        // Reported rather than swallowed. Swallowing let the mutation resolve as
+        // a success, so a schedule that never reached the server looked saved -
+        // and on reload the server's older copy won, silently reverting edits
+        // (including a whole AI-generated day).
+        throw new Error(`Schedule sync failed: ${res.status} ${res.statusText}`);
       }
     } catch (e) {
       if (import.meta.env.DEV) console.warn('[Supabase] Failed to sync schedule to backend:', e);
+      // The local copy landed, so this is `cloud`: keep the edit, tell the
+      // student the account copy is behind.
+      throw new ScheduleSaveError('cloud', messageOf(e), { cause: e });
     }
   },
   async getUserPrefs(): Promise<UserPrefs> {

@@ -12,6 +12,7 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
   const [isActive, setIsActive] = useState(false);
   const [duration, setDuration] = useState(initialMinutes * 60);
   const [lastRewards, setLastRewards] = useState<RewardOutcome | null>(null);
+  const [saveError, setSaveError] = useState(false);
   const { data: studyData, updateData } = useStudyData();
   const queryClient = useQueryClient();
 
@@ -28,6 +29,7 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
   const durationRef = useRef(duration);
   const updateDataRef = useRef(updateData);
   const setLastRewardsRef = useRef(setLastRewards);
+  const setSaveErrorRef = useRef(setSaveError);
   const secondsLeftRef = useRef(secondsLeft);
   const startedAtRef = useRef<string | null>(null);
   const justCompletedRef = useRef(false);
@@ -39,6 +41,7 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
   durationRef.current = duration;
   updateDataRef.current = updateData;
   setLastRewardsRef.current = setLastRewards;
+  setSaveErrorRef.current = setSaveError;
   secondsLeftRef.current = secondsLeft;
 
   const getFreshestStudyData = (): StudyData | undefined =>
@@ -76,9 +79,14 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
             focusSeconds,
             plannedMinutes,
           });
-          setLastRewardsRef.current(rewards);
           justCompletedRef.current = true;
-          await updateDataRef.current(patch).catch(() => {});
+          // Publish the rewards only after the write lands. Setting them first
+          // meant a failed save still fired the level-up, streak and quest
+          // toasts, so a student was told XP had been banked and then found it
+          // gone after a reload.
+          await updateDataRef.current(patch);
+          setLastRewardsRef.current(rewards);
+          setSaveErrorRef.current(false);
         } else {
           const session_log = applySessionAbandoned(sd, {
             startedAt: started,
@@ -87,10 +95,24 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
             focusSeconds,
             plannedMinutes,
           });
-          await updateDataRef.current({ session_log }).catch(() => {});
+          try {
+            await updateDataRef.current({ session_log });
+            setSaveErrorRef.current(false);
+          } catch (e) {
+            // Abandoning loses only a partial session, and re-logging it would
+            // double-count on the next write. Record it, do not rethrow.
+            setSaveErrorRef.current(true);
+            if (import.meta.env.DEV) console.error('[useTimer] Failed to save abandoned session:', e);
+          }
         }
       })
-      .catch(() => {});
+      .catch((e) => {
+        // A completed session that fails to save is real data loss, so it is
+        // surfaced to the student rather than swallowed. Without this the chain
+        // would silently drop the write.
+        setSaveErrorRef.current(true);
+        if (import.meta.env.DEV) console.error('[useTimer] Failed to save session:', e);
+      });
   };
 
   useEffect(() => {
@@ -190,6 +212,7 @@ export const useTimer = (initialMinutes: number, currentSubject: string) => {
     progress,
     toggle,
     reset,
-    lastRewards
+    lastRewards,
+    saveError
   };
 };
