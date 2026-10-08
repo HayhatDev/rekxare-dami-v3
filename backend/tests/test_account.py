@@ -19,9 +19,10 @@ async def test_purge_user_data_deletes_rows_from_every_table(monkeypatch):
 
     monkeypatch.setattr(account, "supabase_request", fake_request)
 
-    purged = await account._purge_user_data("user-123")
+    purged, failed = await account._purge_user_data("user-123")
 
     assert purged == ["study_data", "user_prefs", "schedules"]
+    assert failed == []
     assert calls == [
         ("DELETE", "study_data?user_key=eq.user-123"),
         ("DELETE", "user_prefs?user_key=eq.user-123"),
@@ -37,11 +38,14 @@ async def test_purge_user_data_keeps_going_when_a_table_delete_fails(monkeypatch
 
     monkeypatch.setattr(account, "supabase_request", fake_request)
 
-    purged = await account._purge_user_data("user-123")
+    purged, failed = await account._purge_user_data("user-123")
 
     assert "user_prefs" not in purged
     assert "study_data" in purged
     assert "schedules" in purged
+    # The failure must be reported, not just logged: the caller decides whether
+    # it is safe to call the account deleted.
+    assert failed == ["user_prefs"]
 
 
 class _FakeGoTrueResponse:
@@ -95,3 +99,51 @@ async def test_delete_auth_user_raises_on_admin_api_failure(monkeypatch):
 
     with pytest.raises(RuntimeError):
         await account._delete_auth_user("abc123")
+
+@pytest.mark.asyncio
+async def test_delete_account_refuses_to_report_success_after_a_partial_purge(monkeypatch):
+    """A partial purge must not be reported as a deleted account.
+
+    Deleting the auth user anyway would strand the surviving rows: the student
+    would be locked out with no way to retry, while being told their data was
+    gone. The endpoint has to fail so the account stays usable.
+    """
+    gotrue_deleted: list[str] = []
+
+    async def fake_request(method: str, path: str, data=None, headers=None):
+        if "user_prefs" in path:
+            raise RuntimeError("boom")
+
+    async def fake_delete_auth_user(user_id: str) -> None:
+        gotrue_deleted.append(user_id)
+
+    monkeypatch.setattr(account, "supabase_request", fake_request)
+    monkeypatch.setattr(account, "_delete_auth_user", fake_delete_auth_user)
+
+    with pytest.raises(account.HTTPException) as exc:
+        await account.delete_account.__wrapped__(None, {"sub": "user-123"})
+
+    assert exc.value.status_code == 502
+    assert "user_prefs" in exc.value.detail
+    # The account must survive so the deletion can be retried.
+    assert gotrue_deleted == []
+
+
+@pytest.mark.asyncio
+async def test_delete_account_succeeds_and_reports_purged_tables(monkeypatch):
+    gotrue_deleted: list[str] = []
+
+    async def fake_request(method: str, path: str, data=None, headers=None):
+        return None
+
+    async def fake_delete_auth_user(user_id: str) -> None:
+        gotrue_deleted.append(user_id)
+
+    monkeypatch.setattr(account, "supabase_request", fake_request)
+    monkeypatch.setattr(account, "_delete_auth_user", fake_delete_auth_user)
+
+    result = await account.delete_account.__wrapped__(None, {"sub": "user-123"})
+
+    assert result["status"] == "deleted"
+    assert result["purged"] == ["study_data", "user_prefs", "schedules"]
+    assert gotrue_deleted == ["user-123"]

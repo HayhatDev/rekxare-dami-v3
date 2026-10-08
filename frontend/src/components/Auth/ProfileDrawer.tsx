@@ -25,6 +25,23 @@ interface ProfileDrawerProps {
   btnStyle?: React.CSSProperties;
 }
 
+/** Pulls the backend's human-readable reason out of a failed response. */
+async function readErrorDetail(res: Response): Promise<string> {
+  try {
+    const body = (await res.json()) as { detail?: string };
+    if (body?.detail) return body.detail;
+  } catch {
+    /* no JSON body - fall through to the status code */
+  }
+  return `HTTP ${res.status}`;
+}
+
+/** The backend's explanation, when it sent one, so the toast is actionable. */
+function serverDetailOf(e: unknown): string | undefined {
+  if (e instanceof Error && /^HTTP \d+$/.test(e.message)) return undefined;
+  return e instanceof Error ? e.message : undefined;
+}
+
 export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyle }: ProfileDrawerProps) {
   const { t } = useTranslation();
   const [location] = useLocation();
@@ -195,7 +212,7 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
         method: 'DELETE',
         headers: await getAuthHeaders(),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(await readErrorDetail(res));
       // Purge everything the app persisted for this account, then reload so every
       // in-memory store starts from the clean guest/empty state.
       try {
@@ -214,7 +231,12 @@ export default function ProfileDrawer({ ink, inkFaint, card, cardBorder, btnStyl
     } catch (e) {
       setDeleting(false);
       if (import.meta.env.DEV) console.error('Account deletion failed', e);
-      toast.error(t('account_delete_failed', 'Failed to delete your account. Please try again.'));
+      // The backend distinguishes "could not delete everything, account still
+      // active" from a transient failure, and that difference decides whether
+      // the student should retry or sign in again. Surface its reason.
+      toast.error(t('account_delete_failed', 'Failed to delete your account. Please try again.'), {
+        description: serverDetailOf(e),
+      });
     }
   };
 

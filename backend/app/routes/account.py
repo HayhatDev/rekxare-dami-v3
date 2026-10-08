@@ -41,16 +41,23 @@ async def _delete_auth_user(user_id: str) -> None:
             )
 
 
-async def _purge_user_data(user_id: str) -> list[str]:
-    """Delete every per-user table row for this user; returns purged tables."""
-    purged = []
+async def _purge_user_data(user_id: str) -> tuple[list[str], list[str]]:
+    """Delete every per-user table row for this user.
+
+    Returns (purged, failed) rather than a single list, because a partial purge
+    must be distinguishable from a complete one: the caller cannot honestly
+    report an account as deleted while rows remain behind.
+    """
+    purged: list[str] = []
+    failed: list[str] = []
     for table in USER_DATA_TABLES:
         try:
             await supabase_request("DELETE", f"{table}?user_key=eq.{user_id}")
             purged.append(table)
         except Exception as exc:
+            failed.append(table)
             logger.warning("Failed to purge %s for user %s: %s", table, user_id, exc)
-    return purged
+    return purged, failed
 
 
 @router.delete("/account")
@@ -60,7 +67,27 @@ async def delete_account(request: Request, user: dict = Depends(require_auth)):
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token payload")
 
-    await _purge_user_data(user_id)
+    purged, failed = await _purge_user_data(user_id)
+
+    if failed:
+        # Stop BEFORE deleting the auth user. Destroying it first would lock the
+        # student out with no way to retry, stranding their rows in the database
+        # where they are unreachable but not erased — the worst outcome, since
+        # the student would have been told their data was gone.
+        logger.error(
+            "Aborting account deletion for %s: could not purge %s", user_id, ", ".join(failed)
+        )
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Could not delete all of your data (failed: "
+                + ", ".join(failed)
+                + "). Your account is still active. Some data may already have been"
+                " removed - please try again."
+            ),
+        )
+
+    logger.info("Purged %s for deleted account %s", ", ".join(purged), user_id)
 
     try:
         await _delete_auth_user(user_id)
@@ -71,4 +98,4 @@ async def delete_account(request: Request, user: dict = Depends(require_auth)):
             detail="Unable to delete your account. Please try again shortly.",
         )
 
-    return {"status": "deleted"}
+    return {"status": "deleted", "purged": purged}
